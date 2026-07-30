@@ -1,0 +1,2136 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RDA — Test Fit Checker</title>
+<script src="lib/pdf.min.js"></script>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  :root{
+    --black:#1B1B1B; --white:#FFFFFF; --accent:#CFFF04; --blue:#0000FF;
+    --fail:#E1504B; --warn:#E38B00; --info:#0000FF; --ok:#16A34A;
+    --gray:#F4F4F4; --border:#D8D8D8; --soft:#8A8A8A;
+    --s-el:#7C3AED; --s-it:#0EA5E9; --s-mep:#0891B2; --s-move:#16A34A;
+    --s-fire:#E1504B; --s-prog:#D6009A; --s-dim:#D6009A; --s-note:#E38B00;
+  }
+  html,body{height:100%;}
+  body{
+    font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;
+    background:var(--white); color:var(--black);
+    font-size:13px; line-height:1.45; overflow:hidden;
+  }
+  button,input,select,textarea{font-family:inherit; border-radius:0;}
+
+  /* ---------- header ---------- */
+  header{
+    background:var(--black); color:var(--white); height:46px;
+    display:flex; align-items:center; gap:16px; padding:0 16px; flex:0 0 auto;
+  }
+  header .brand{font-size:15px; font-weight:300; letter-spacing:.02em;}
+  header .tool{font-size:9px; letter-spacing:.22em; text-transform:uppercase; opacity:.45;}
+  header .fname{
+    font-size:11px; opacity:.6; margin-inline-start:auto; max-width:280px;
+    overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+  }
+  header .hbtns{display:flex; gap:6px;}
+  .hb{
+    background:none; border:1px solid rgba(255,255,255,.28); color:var(--white);
+    font-size:10px; letter-spacing:.1em; text-transform:uppercase;
+    padding:6px 12px; cursor:pointer; transition:.15s;
+  }
+  .hb:hover{background:rgba(255,255,255,.12);}
+  .hb.on{background:var(--accent); color:var(--black); border-color:var(--accent);}
+  .accent-bar{height:3px; background:var(--accent); flex:0 0 auto;}
+
+  /* ---------- landing ---------- */
+  #uploadView{
+    height:calc(100vh - 49px); overflow:auto; display:flex;
+    align-items:center; justify-content:center; padding:32px 24px;
+  }
+  #uploadView .inner{max-width:740px; width:100%; text-align:center;}
+  .kicker{font-size:10px; letter-spacing:.32em; text-transform:uppercase; opacity:.38; margin-bottom:20px;}
+  .h1{font-size:clamp(34px,5.4vw,60px); font-weight:300; line-height:1.05; letter-spacing:-.015em; margin-bottom:18px;}
+  .h1 em{font-style:normal; background:var(--accent); padding:0 10px;}
+  .sub{font-size:15px; font-weight:300; opacity:.5; max-width:500px; margin:0 auto 38px; line-height:1.65;}
+  .dropzone{
+    border:1px dashed var(--black); padding:58px 28px; cursor:pointer;
+    transition:.18s; background:var(--white);
+  }
+  .dropzone:hover,.dropzone.drag{background:var(--gray); border-color:var(--blue);}
+  .dz-big{font-size:20px; font-weight:300; margin-bottom:6px;}
+  .dz-small{font-size:11px; opacity:.42;}
+  #fileInput,#jsonInput{display:none;}
+  .fmt{display:flex; gap:6px; justify-content:center; flex-wrap:wrap; margin-top:20px;}
+  .fmt span{font-size:10px; letter-spacing:.12em; border:1px solid var(--border); padding:5px 12px; opacity:.6;}
+  .fmt span.pri{border-color:var(--black); opacity:1; font-weight:500;}
+  .alt{margin-top:28px; font-size:11px; opacity:.5;}
+  .alt button{
+    background:none; border:none; font-family:inherit; font-size:11px;
+    text-decoration:underline; cursor:pointer; opacity:.85; padding:0 4px; color:inherit;
+  }
+  .alt button:hover{opacity:1; color:var(--blue);}
+  .loading{display:none; margin-top:18px; font-size:12px; letter-spacing:.06em;}
+  .loading.on{display:block;}
+  #loadError{
+    display:none; margin-top:18px; border:1px solid var(--fail); border-inline-start-width:3px;
+    color:var(--fail); padding:12px 16px; font-size:12px; text-align:right; line-height:1.65;
+  }
+  #loadError b{display:block; font-weight:500; margin-bottom:4px;}
+  .prog-banner{
+    display:none; margin-top:20px; border:1px solid var(--ok); border-inline-start-width:3px;
+    padding:11px 14px; font-size:11.5px; background:rgba(22,163,74,.06); text-align:right;
+  }
+  .prog-banner.loaded{display:block;}
+  .prog-banner b{font-weight:500;}
+
+  /* ---------- workspace ---------- */
+  #workView{display:none; height:calc(100vh - 49px);}
+  #workView.on{display:flex;}
+  #stage{flex:1; display:flex; flex-direction:column; min-width:0; background:var(--gray);}
+  #stagebar{
+    height:38px; flex:0 0 auto; background:var(--white); border-bottom:1px solid var(--border);
+    display:flex; align-items:center; gap:4px; padding:0 10px; overflow-x:auto; white-space:nowrap;
+  }
+  .tb{
+    background:none; border:1px solid transparent; font-size:11px; padding:5px 9px;
+    cursor:pointer; color:var(--black); transition:.12s; display:inline-flex; align-items:center; gap:5px;
+  }
+  .tb:hover{background:var(--gray);}
+  .tb.on{background:var(--black); color:var(--white);}
+  .tb.armed{background:var(--s-prog); color:#fff;}
+  .tbsep{width:1px; height:18px; background:var(--border); margin:0 5px;}
+  .zlabel{font-size:10px; opacity:.5; min-width:38px; text-align:center;}
+  #planHost{flex:1; overflow:auto; display:flex; align-items:center; justify-content:center; padding:12px;}
+  #planBox{position:relative; flex:0 0 auto; background:#fff; box-shadow:0 0 0 1px var(--border);}
+  #planCanvas,#ovl{position:absolute; inset:0; display:block;}
+  #symLayer{position:absolute; inset:0;}
+  #legend{
+    flex:0 0 auto; background:var(--white); border-top:1px solid var(--border);
+    display:flex; gap:14px; align-items:center; padding:6px 12px; font-size:10px; overflow-x:auto; white-space:nowrap;
+  }
+  .lg{display:inline-flex; align-items:center; gap:5px; opacity:.75;}
+  .lg i{width:9px; height:9px; display:inline-block;}
+
+  /* ---------- panel ---------- */
+  #panel{
+    width:400px; flex:0 0 400px; border-inline-end:1px solid var(--border);
+    display:flex; flex-direction:column; background:var(--white); min-height:0;
+  }
+  body.collapsed #panel{display:none;}
+  /* the plan must stay readable — never let the fixed panel starve it */
+  @media (max-width:1180px){ #panel{width:340px; flex-basis:340px;} }
+  @media (max-width:980px){ #panel{width:300px; flex-basis:300px;} #tiles{grid-template-columns:repeat(2,1fr);} }
+  @media (max-width:820px){
+    #workView.on{flex-direction:column;}
+    #stage{flex:1 1 58%; min-height:0;}
+    #panel{
+      width:100%; flex:1 1 42%; min-height:0;
+      border-inline-end:none; border-top:1px solid var(--black);
+    }
+    #tiles{grid-template-columns:repeat(4,1fr);}
+  }
+  #tiles{display:grid; grid-template-columns:repeat(4,1fr); gap:1px; background:var(--border); flex:0 0 auto;}
+  .tile{background:var(--white); padding:8px 9px;}
+  .tile .n{font-size:19px; font-weight:300; line-height:1.05;}
+  .tile .l{font-size:8px; letter-spacing:.1em; text-transform:uppercase; opacity:.45; margin-top:2px;}
+  #tabs{display:flex; flex:0 0 auto; border-bottom:1px solid var(--black); overflow-x:auto;}
+  .tab{
+    flex:1 0 auto; background:none; border:none; padding:10px 8px; cursor:pointer;
+    font-size:10px; letter-spacing:.06em; opacity:.5; border-bottom:2px solid transparent; white-space:nowrap;
+  }
+  .tab:hover{opacity:.85;}
+  .tab.on{opacity:1; font-weight:500; border-bottom-color:var(--accent); background:var(--gray);}
+  .tab .bdg{
+    display:inline-block; min-width:15px; padding:0 4px; margin-inline-start:4px;
+    font-size:9px; color:#fff; background:var(--soft); line-height:14px;
+  }
+  .tab .bdg.f{background:var(--fail);} .tab .bdg.w{background:var(--warn);}
+  #tabBody{flex:1; overflow-y:auto; overflow-x:hidden; padding:12px;}
+  .grp-title{font-size:9px; letter-spacing:.18em; text-transform:uppercase; opacity:.4; margin:16px 0 7px;}
+  .grp-title:first-child{margin-top:0;}
+
+  /* cards */
+  .card{
+    border:1px solid var(--border); border-inline-start:3px solid var(--soft);
+    padding:9px 11px; margin-bottom:7px; cursor:pointer; transition:.12s; background:var(--white);
+  }
+  .card:hover{background:var(--gray);}
+  .card.sel{background:rgba(207,255,4,.16); border-color:var(--black);}
+  .card.f{border-inline-start-color:var(--fail);}
+  .card.w{border-inline-start-color:var(--warn);}
+  .card.i{border-inline-start-color:var(--info);}
+  .card.o{border-inline-start-color:var(--ok);}
+  .card .ch{display:flex; align-items:center; gap:7px; margin-bottom:3px;}
+  .num{
+    flex:0 0 auto; min-width:19px; height:19px; padding:0 4px; color:#fff; font-size:10px; font-weight:600;
+    display:inline-flex; align-items:center; justify-content:center; background:var(--soft);
+  }
+  .num.f{background:var(--fail);} .num.w{background:var(--warn);}
+  .num.i{background:var(--info);} .num.o{background:var(--ok);}
+  .card .ct{font-size:12px; font-weight:500; flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .card .cs{font-size:9px; opacity:.5; flex:0 0 auto;}
+  .card .cb{font-size:11px; font-weight:300; opacity:.85; line-height:1.5;}
+  .card .cb[contenteditable="true"]:focus{outline:1px solid var(--accent); background:#fff;}
+  .card .cact{display:flex; gap:5px; margin-top:6px;}
+  .xb{
+    font-size:9px; padding:3px 7px; border:1px solid var(--border); background:var(--white);
+    cursor:pointer; letter-spacing:.05em; opacity:.7;
+  }
+  .xb:hover{opacity:1; border-color:var(--black);}
+  .empty{font-size:12px; opacity:.4; padding:18px 0; font-weight:300;}
+
+  /* iron rules */
+  .iron{border:1px solid var(--border); padding:10px 11px; margin-bottom:8px;}
+  .iron.f{border-inline-start:3px solid var(--fail);}
+  .iron.w{border-inline-start:3px solid var(--warn);}
+  .iron.o{border-inline-start:3px solid var(--ok);}
+  .iron .ih{display:flex; align-items:center; gap:8px; margin-bottom:4px;}
+  .iron .it{font-size:12px; font-weight:500; flex:1;}
+  .chip{font-size:9px; letter-spacing:.08em; padding:2px 7px; color:#fff; white-space:nowrap;}
+  .chip.f{background:var(--fail);} .chip.w{background:var(--warn);}
+  .chip.o{background:var(--ok);} .chip.n{background:var(--soft);}
+  .chip.i{background:var(--info);}
+  .iron .ib{font-size:11px; font-weight:300; opacity:.75; line-height:1.5;}
+
+  /* symbol library */
+  .symgrp{border:1px solid var(--border); margin-bottom:6px;}
+  .symgrp>summary{
+    list-style:none; cursor:pointer; padding:9px 11px; font-size:10px;
+    letter-spacing:.14em; text-transform:uppercase; display:flex; justify-content:space-between; align-items:center;
+  }
+  .symgrp>summary::-webkit-details-marker{display:none;}
+  .symgrp>summary::after{content:'+'; font-size:14px; opacity:.4;}
+  .symgrp[open]>summary::after{content:'–';}
+  .symgrp[open]>summary{background:var(--black); color:var(--white);}
+  .symwrap{display:grid; grid-template-columns:repeat(2,1fr); gap:5px; padding:8px;}
+  .symcard{
+    display:flex; align-items:center; gap:7px; border:1px solid var(--border);
+    padding:6px 7px; cursor:grab; background:var(--white); transition:.12s; user-select:none;
+  }
+  .symcard:hover{border-color:var(--black); background:var(--gray);}
+  .symcard:active{cursor:grabbing;}
+  .symcard.armed{border-color:var(--s-prog); background:rgba(214,0,154,.09);}
+  .sb{
+    flex:0 0 auto; width:22px; height:22px; color:#fff; font-size:9px; font-weight:700;
+    display:flex; align-items:center; justify-content:center; letter-spacing:-.02em;
+  }
+  .symcard .sl{font-size:10px; font-weight:300; line-height:1.25;}
+
+  /* placed symbols */
+  .sym{
+    position:absolute; transform:translate(-50%,-50%); cursor:move; z-index:5;
+    display:flex; align-items:center; gap:0; user-select:none; touch-action:none;
+  }
+  .sym .sbx{
+    width:24px; height:24px; color:#fff; font-size:9px; font-weight:700;
+    display:flex; align-items:center; justify-content:center;
+    box-shadow:0 0 0 1.5px #fff; letter-spacing:-.02em;
+  }
+  .sym .stx{
+    font-size:9px; background:#fff; padding:2px 5px; margin-inline-start:2px;
+    white-space:nowrap; box-shadow:0 0 0 1px currentColor; font-weight:500;
+  }
+  .sym.sel .sbx{box-shadow:0 0 0 2px var(--accent),0 0 0 3.5px var(--black);}
+  .sym .del{
+    position:absolute; top:-8px; inset-inline-end:-8px; width:15px; height:15px; background:var(--black);
+    color:#fff; font-size:10px; line-height:15px; text-align:center; cursor:pointer; display:none;
+  }
+  .sym:hover .del{display:block;}
+
+  /* program table */
+  table.pg{width:100%; border-collapse:collapse; font-size:11px;}
+  table.pg th{
+    font-size:8px; letter-spacing:.1em; text-transform:uppercase; opacity:.45; font-weight:400;
+    text-align:right; padding:6px 5px; border-bottom:1px solid var(--black);
+  }
+  table.pg td{padding:6px 5px; border-bottom:1px solid var(--border); font-weight:300; vertical-align:top;}
+  table.pg td.fn{font-weight:400;}
+  table.pg tr.f{background:rgba(225,80,75,.09);}
+  table.pg tr.w{background:rgba(227,139,0,.10);}
+  table.pg tr.o{background:rgba(22,163,74,.07);}
+  table.pg tr.n td{opacity:.4;}
+
+  /* tri toggle */
+  .tri{display:inline-flex; border:1px solid var(--border); flex:0 0 auto;}
+  .tri button{font-size:9px; padding:3px 8px; background:var(--white); border:none; cursor:pointer;}
+  .tri button.a-ok{background:var(--ok); color:#fff;}
+  .tri button.a-fail{background:var(--fail); color:#fff;}
+  .tri button.a-na{background:var(--soft); color:#fff;}
+
+  /* modal */
+  .modal{
+    position:fixed; inset:0; background:rgba(27,27,27,.72); z-index:200;
+    display:flex; align-items:center; justify-content:center; padding:24px;
+  }
+  .modal-box{
+    background:var(--white); border:1px solid var(--black); max-width:800px; width:100%;
+    max-height:88vh; display:flex; flex-direction:column;
+  }
+  .modal-head{
+    background:var(--black); color:var(--white); padding:12px 16px; flex:0 0 auto;
+    display:flex; justify-content:space-between; align-items:center; gap:12px; font-size:13px;
+  }
+  .modal-head small{display:block; font-size:9px; letter-spacing:.16em; text-transform:uppercase; opacity:.5; margin-top:3px;}
+  .keylist{padding:11px 16px; font-size:11px; border-bottom:1px solid var(--border); flex:0 0 auto; line-height:2;}
+  .keylist b{font-weight:500;}
+  .keylist code{
+    background:var(--gray); border:1px solid var(--border); padding:1px 5px;
+    font-size:10px; margin:0 2px; font-family:ui-monospace,Consolas,monospace;
+  }
+  .modal-body{overflow:auto; flex:1 1 auto; min-height:0;}
+  pre.json{
+    font-family:ui-monospace,Menlo,Consolas,monospace; font-size:11px; line-height:1.55;
+    padding:16px; white-space:pre; direction:ltr; text-align:left; background:var(--gray);
+  }
+  .modal-foot{
+    padding:11px 16px; border-top:1px solid var(--border); flex:0 0 auto;
+    display:flex; gap:8px; align-items:center; flex-wrap:wrap;
+  }
+  .mini{
+    font-size:10px; letter-spacing:.08em; background:none; border:1px solid var(--border);
+    padding:7px 13px; cursor:pointer; transition:.15s; font-family:inherit;
+  }
+  .mini:hover{border-color:var(--black); background:var(--gray);}
+  .mini.pri{background:var(--black); color:var(--white); border-color:var(--black);}
+  .mini.pri:hover{background:var(--accent); color:var(--black);}
+
+  #toast{
+    position:fixed; bottom:18px; left:50%; transform:translateX(-50%);
+    background:var(--black); color:var(--accent); font-size:11px; letter-spacing:.06em;
+    padding:9px 18px; z-index:99; opacity:0; pointer-events:none; transition:opacity .2s;
+  }
+  #toast.on{opacity:1;}
+  @media print{ body{overflow:visible;} header,#stagebar,#panel,#legend{display:none !important;} }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">RD&amp;A</div>
+  <div class="tool">Test Fit Checker</div>
+  <div class="fname" id="fname"></div>
+  <div class="hbtns" id="hbtns" style="display:none">
+    <button class="hb" id="btnPanel" onclick="togglePanel()">פאנל</button>
+    <button class="hb" onclick="exportHtml()">Export HTML</button>
+    <button class="hb" onclick="saveJson()">שמור JSON</button>
+    <button class="hb" onclick="location.reload()">תוכנית חדשה</button>
+  </div>
+</header>
+<div class="accent-bar"></div>
+
+<!-- ============ UPLOAD ============ -->
+<div id="uploadView">
+  <div class="inner">
+    <div class="kicker">Roy David Architects</div>
+    <h1 class="h1">בדוק <em>Test Fit</em><br>בשניות.</h1>
+    <p class="sub">העלה תוכנית — קבל בדיקה מלאה מול הפרוגרמה, כללי הברזל והסטנדרט המשרדי.</p>
+
+    <div class="dropzone" id="dropzone" onclick="document.getElementById('fileInput').click()">
+      <div class="dz-big">גרור תוכנית לכאן</div>
+      <div class="dz-small">או לחץ לבחירת קובץ</div>
+    </div>
+    <input type="file" id="fileInput" accept=".pdf,.png,.jpg,.jpeg,.json,.dwg,.dxf,.rvt,.rfa">
+    <input type="file" id="jsonInput" accept=".json,application/json">
+
+    <div class="fmt">
+      <span class="pri">PDF</span><span>PNG</span><span>JPG</span>
+      <span>JSON</span><span>DWG</span><span>RVT</span>
+    </div>
+
+    <div class="alt">
+      <button onclick="document.getElementById('jsonInput').click()">טען פרוגרמה + QA</button>·
+      <button onclick="showTemplate()">הצג תבנית JSON</button>
+    </div>
+
+    <div class="loading" id="loading">מנתח תוכנית…</div>
+    <div id="loadError"></div>
+    <div class="prog-banner" id="progBanner"></div>
+  </div>
+</div>
+
+<!-- ============ WORKSPACE ============ -->
+<div id="workView">
+  <div id="stage">
+    <div id="stagebar">
+      <button class="tb" id="tFit" onclick="setZoom(1)">Fit</button>
+      <button class="tb" onclick="setZoom(ZOOM/1.25)">−</button>
+      <span class="zlabel" id="zlabel">100%</span>
+      <button class="tb" onclick="setZoom(ZOOM*1.25)">+</button>
+      <span class="tbsep"></span>
+      <button class="tb on" id="lyNotes" onclick="toggleLayer('notes')">הערות</button>
+      <button class="tb on" id="lySyms"  onclick="toggleLayer('syms')">סימבולים</button>
+      <button class="tb on" id="lyDims"  onclick="toggleLayer('dims')">מידות</button>
+      <span class="tbsep"></span>
+      <button class="tb" id="tDim"   onclick="armTool('dim')">קו מידה</button>
+      <button class="tb" id="tCalib" onclick="armTool('calib')">כיול</button>
+      <button class="tb" id="tPin"   onclick="armTool('pin')">הערה</button>
+      <span class="tbsep"></span>
+      <button class="tb" onclick="clearMarkup()">נקה סימונים</button>
+      <span class="zlabel" id="toolHint" style="min-width:auto; opacity:.6"></span>
+    </div>
+    <div id="planHost">
+      <div id="planBox">
+        <canvas id="planCanvas"></canvas>
+        <canvas id="ovl"></canvas>
+        <div id="symLayer"></div>
+      </div>
+    </div>
+    <div id="legend">
+      <span class="lg"><i style="background:#E1504B"></i>שגוי</span>
+      <span class="lg"><i style="background:#E38B00"></i>תיקון קל</span>
+      <span class="lg"><i style="background:#0000FF"></i>מידע / לבדיקה</span>
+      <span class="lg"><i style="background:#7C3AED"></i>חשמל</span>
+      <span class="lg"><i style="background:#0EA5E9"></i>תקשורת</span>
+      <span class="lg"><i style="background:#16A34A"></i>תנועה</span>
+      <span class="lg"><i style="background:#D6009A"></i>מידות</span>
+      <span class="lg" id="calibNote" style="opacity:.5"></span>
+    </div>
+  </div>
+
+  <aside id="panel">
+    <div id="tiles"></div>
+    <div id="tabs"></div>
+    <div id="tabBody"></div>
+  </aside>
+</div>
+
+<div id="toast"></div>
+
+<script>
+pdfjsLib.GlobalWorkerOptions.workerSrc = 'lib/pdf.worker.min.js';
+
+/* =====================================================================
+   1. KNOWLEDGE BASE — office standards (fallback when no program JSON)
+   ===================================================================== */
+const RULES = {
+  boardroom:  { label:'Board Room', minArea:40, perSeatMin:1.6, perSeatMax:2.4 },
+  meeting:    { label:'Meeting Room', seatTable:[[4,10],[8,11],[10,16],[12,20],[14,22],[16,26],[24,40]], perSeatMin:1.1, perSeatMax:3.0, minNoSeats:9 },
+  altmeeting: { label:'Alternative Meeting', minArea:15 },
+  executive:  { label:'Executive / C-Level', minArea:13 },
+  vp:         { label:'VP', minArea:10.5 },
+  director:   { label:'Group Director', minArea:8.5, typMin:9.4, typMax:10.2 },
+  hrbp:       { label:'HRBP', minArea:9.5 },
+  staffroom:  { label:'חדר צוות', minArea:7.0 },
+  hr:         { label:'HR', minArea:16 },
+  facilities: { label:'Facilities', minArea:12 },
+  it:         { label:'IT / תקשורת', minArea:7, requiredPerFloor:true },
+  nursery:    { label:'חדר הנקה', minArea:5, recommended:6.2, requiredPerFloor:true },
+  kitchenette:{ label:'מטבחון / קפיטריה', minArea:20, requiredPerFloor:true },
+  wc:         { label:'שירותים', stallMin:1.5 },
+  service:    { label:'Service', minArea:15 },
+  future:     { label:'עתודה', minArea:7 },
+  openspace:  { label:'Open Space', densityMin:1.3, densityWarnLow:1.45, densityWarnHigh:2.6 },
+  phonebooth: { label:'Phone Booth', perStationsRatio:35 },
+  lounge:     { label:'Lounge' },
+  social:     { label:'Meet Up / Game Room' },
+  workstations:{ label:'עמדות לפי מחלקה' },
+  reception:  { label:'קבלה / המתנה' },
+  floor:      { label:'כללי קומה', meetingRatioMin:15 }
+};
+
+const PROGRAM_REF = [
+  { types:['openspace','workstations'], fn:'Open Space', norm:'1.45–2.6 מ״ר לעובד · אשכולות של 6 עמדות', required:true },
+  { types:['meeting'], fn:'Meeting Room', norm:'4 מק׳ ≈ 10 · 8 ≈ 11 · 10 ≈ 16 · 12 ≈ 20 · 16 ≈ 26 מ״ר', required:true },
+  { types:['boardroom'], fn:'Board Room', norm:'≥ 40 מ״ר · ~1.8 מ״ר למקום' },
+  { types:['altmeeting','social'], fn:'ישיבות לא-פורמלי / Meet Up', norm:'≥ 15 מ״ר' },
+  { types:['phonebooth'], fn:'Phone Booth', norm:'תא לכל ~35 עמדות' },
+  { types:['executive'], fn:'Executive / C-Level', norm:'≥ 13 מ״ר' },
+  { types:['vp'], fn:'VP', norm:'≥ 10.5 מ״ר' },
+  { types:['director'], fn:'Group Director', norm:'9.5–10.2 מ״ר' },
+  { types:['hrbp'], fn:'HRBP', norm:'≥ 9.5 מ״ר' },
+  { types:['staffroom'], fn:'חדר צוות / מחלקה קטנה', norm:'7–9 מ״ר · 2–3 עמדות' },
+  { types:['hr'], fn:'HR', norm:'≥ 16 מ״ר' },
+  { types:['it'], fn:'IT / תקשורת', norm:'≥ 7 מ״ר · חובה בכל קומה', required:true },
+  { types:['nursery'], fn:'חדר הנקה', norm:'≥ 5 מ״ר (מומלץ 6+) · חובה בכל קומה', required:true },
+  { types:['kitchenette'], fn:'מטבחון / קפיטריה', norm:'≥ 20 מ״ר לקומה', required:true },
+  { types:['wc'], fn:'שירותים', norm:'תא ≥ 1.5 מ״ר · תא נגיש בכל קומה' },
+  { types:['lounge'], fn:'Lounge', norm:'2–3 לקומה, בקצוות ולצד המטבחון' },
+  { types:['reception'], fn:'קבלה / המתנה', norm:'בקומת הכניסה הראשית' }
+];
+
+/* ---- symbol warehouse ---- */
+const SYMBOLS = [
+  { g:'תשתיות', items:[
+    { id:'el',   t:'EL',  n:'ארון חשמל',        c:'var(--s-el)' },
+    { id:'elm',  t:'EL+', n:'לוח חשמל ראשי',    c:'var(--s-el)' },
+    { id:'it',   t:'IT',  n:'ארון תקשורת',      c:'var(--s-it)' },
+    { id:'srv',  t:'SRV', n:'חדר שרתים / UPS',  c:'var(--s-it)' },
+    { id:'mep',  t:'AC',  n:'מיזוג / מפוח',     c:'var(--s-mep)' },
+    { id:'wtr',  t:'W',   n:'מים / ניקוז',      c:'var(--s-mep)' }
+  ]},
+  { g:'תנועה ובטיחות', items:[
+    { id:'entry',t:'IN',  n:'כניסה לקומה',      c:'var(--s-move)' },
+    { id:'exit', t:'EX',  n:'יציאת חירום',      c:'var(--s-fire)' },
+    { id:'stair',t:'ST',  n:'מדרגות',           c:'var(--s-move)' },
+    { id:'lift', t:'LF',  n:'מעלית',            c:'var(--s-move)' },
+    { id:'fire', t:'FE',  n:'ארון כיבוי אש',    c:'var(--s-fire)' },
+    { id:'shaft',t:'SH',  n:'פיר',              c:'var(--s-mep)' }
+  ]},
+  { g:'פרוגרמה', items:[
+    { id:'kit',  t:'K',   n:'מטבחון',           c:'var(--s-prog)' },
+    { id:'wc',   t:'WC',  n:'שירותים',          c:'var(--s-prog)' },
+    { id:'awc',  t:'WC♿',n:'שירותים נגישים',   c:'var(--s-prog)' },
+    { id:'nrs',  t:'NR',  n:'חדר הנקה',         c:'var(--s-prog)' },
+    { id:'pb',   t:'PB',  n:'תא טלפון',         c:'var(--s-prog)' },
+    { id:'north',t:'N↑',  n:'חץ צפון',          c:'var(--black)' }
+  ]}
+];
+const SYMMAP = {}; SYMBOLS.forEach(g => g.items.forEach(s => SYMMAP[s.id] = s));
+
+/* ---- manual checks (plan cannot reveal) ---- */
+const MANUAL_CHECKS = [
+  { id:'corridor',  n:'רוחב מסדרון ראשי',            note:'נהוג במשרד 126–197 ס״מ. מינימום נגישות — אימות יועץ.' },
+  { id:'aisle',     n:'מעברים בין עמדות',            note:'מעבר חופשי בין גבי כיסאות ושולחנות.' },
+  { id:'doors',     n:'רוחב פתח דלת חופשי',          note:'נהוג 90–110 ס״מ. מינימום נטו — אימות יועץ.' },
+  { id:'partitions',n:'גובה מחיצות ופרטי קיר',       note:'סטנדרט משרדי: רצפה-תקרה H=305 · חיזוקי TV H=150.' },
+  { id:'accwc',     n:'תא שירותים נגיש בקומה',       note:'דרישה רגולטורית — אימות יועץ נגישות.' },
+  { id:'egress',    n:'שני מוצאי מילוט ומרחקים',     note:'בדיקת יועץ בטיחות.' },
+  { id:'heights',   n:'גבהים ותקרות מונמכות',        note:'לא ניתן לבדיקה מתוכנית 2D.' },
+  { id:'hvac',      n:'מיזוג לחדרים פנימיים',        note:'חדרים ללא חזית — תיאום יועץ מיזוג.' },
+  { id:'sym_doors', n:'דלתות — כיווני פתיחה',        note:'קשת פתיחה תואמת מילוט ונגישות.' },
+  { id:'sym_core',  n:'סמלי גרעין — מדרגות/מעליות',  note:'תואמים מדידה, בלי חפיפה למחיצות חדשות.' }
+];
+
+/* ---- per-type open items (silent analysis → short notes, no citations) ---- */
+const TYPE_OPEN_ITEMS = {
+  nursery:    ['אבזור: כיור, מקרר, נעילה מבפנים', 'אוורור — חדר ללא חזית'],
+  it:         ['מיזוג ייעודי 24/7', 'גישה מבוקרת', 'עומס חשמלי ייעודי'],
+  kitchenette:['מים וניקוז', 'אוורור / מנדף', 'עומס חשמלי מוגבר'],
+  wc:         ['תא נגיש בקומה', 'אוורור מאולץ'],
+  boardroom:  ['AV ואקוסטיקה', 'תפוסה מול מוצאי מילוט'],
+  storage:    ['הפרדת אש', 'עומס רצפה'],
+  srv:        ['כיבוי ייעודי', 'מיזוג רציף']
+};
+
+/* =====================================================================
+   2. STATE
+   ===================================================================== */
+const STATE = {
+  mode:'auto', fileName:'', meta:{}, rooms:[], notes:[], symbols:[], dims:[],
+  manual:{}, open:{}, program:null, calib:null, iron:{}, seq:1
+};
+let PDFPAGE=null, BASE=null, VP1=null, ZOOM=1, TOOL=null, SEL=null, PENDING=null;
+const LAYERS = { notes:true, syms:true, dims:true };
+const $ = s => document.querySelector(s);
+
+function toast(m){ const t=$('#toast'); t.textContent=m; t.classList.add('on'); clearTimeout(t._x); t._x=setTimeout(()=>t.classList.remove('on'),2200); }
+function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+
+/* =====================================================================
+   3. PDF PARSING
+   ===================================================================== */
+const AREA_RE=/^(\d+(?:\.\d+)?)\s*m²$/;
+const PPL_RE=/^(\d+)\s*ppl(?:\s*\+\s*(\d+)\s*ppl)?$/i;
+const INLINE_PPL=/^(.*?)\s*\|\s*(\d+)(?:\s*[-–]\s*(\d+))?\s*ppl$/i;
+const RANGE_RE=/^(\d{1,2})\s*([WNES])\s*(\d{2,3})\s*[-–]\s*(\d{2,3})$/i;
+const CODE_RE=/^(?:\d{1,2}\s*[WNES]\s*\d{1,2}|R\d{3,4})$/i;
+const KEYWORD_RE=/^(kitchenette.*|cafeteria|pb|it|shower room|nursing room|nursery|lounge|storage|print( & copy)?|meet ?up( & game room)?|game room|vr|secure space|wc|vp(\s*[-–].*)?|reception|waiting area|video|deep work station.*|future stations?)$/i;
+
+async function parsePdf(data, fileName){
+  const pdf = await pdfjsLib.getDocument({data}).promise;
+  const page = await pdf.getPage(1);
+  const content = await page.getTextContent();
+
+  const buckets=[0,0,0,0], items0=[], everyText=[], seen=new Set();
+  for(const it of content.items){
+    const t=it.transform, str=it.str.trim();
+    if(!str) continue;
+    everyText.push(str.toLowerCase());
+    const k=str+'|'+Math.round(t[4])+'|'+Math.round(t[5]);
+    if(seen.has(k)) continue; seen.add(k);
+    const b=((Math.round(Math.atan2(t[1],t[0])/(Math.PI/2))%4)+4)%4;
+    buckets[b]++; items0.push({str,t,w:it.width||0,b});
+  }
+  const dom=buckets.indexOf(Math.max(...buckets));
+  const th=dom*Math.PI/2, cos=Math.round(Math.cos(th)), sin=Math.round(Math.sin(th));
+  const raw=[];
+  for(const it of items0){
+    if(it.b!==dom) continue;
+    const t=it.t, u=t[4]*cos+t[5]*sin, wv=-t[4]*sin+t[5]*cos;
+    raw.push({text:it.str, x:u+it.w/2, y:-wv, w:it.w, pdfX:t[4], pdfY:t[5]});
+  }
+  raw.sort((a,b)=>a.y-b.y||a.x-b.x);
+  const lines=[];
+  for(const r of raw){
+    const L=lines[lines.length-1];
+    const gap=L?(r.x-r.w/2)-(L.x+L.wSum/2):0;
+    if(L && Math.abs(r.y-L.y)<3 && gap>-2 && gap<15){
+      L.text+=' '+r.text;
+      const x0=Math.min(L.x-L.wSum/2, r.x-r.w/2), x1=Math.max(L.x+L.wSum/2, r.x+r.w/2);
+      L.x=(x0+x1)/2; L.wSum=x1-x0;
+    } else lines.push({text:r.text,x:r.x,y:r.y,wSum:r.w,pdfX:r.pdfX,pdfY:r.pdfY});
+  }
+
+  const used=new Array(lines.length).fill(false), tags=[];
+  lines.forEach((it,i)=>{
+    if(used[i]) return;
+    const m=AREA_RE.exec(it.text), p=PPL_RE.exec(it.text);
+    const ip=INLINE_PPL.exec(it.text), rg=RANGE_RE.exec(it.text);
+    if(!m&&!p&&!ip&&!rg) return;
+    const tag={area:null,ppl:null,stations:null,code:null,isDept:false,names:[],x:it.x,y:it.y,pdfX:it.pdfX,pdfY:it.pdfY};
+    if(m) tag.area=parseFloat(m[1]);
+    if(p) tag.ppl=parseInt(p[1])+(p[2]?parseInt(p[2]):0);
+    if(ip){ tag.ppl=Math.max(parseInt(ip[2]), ip[3]?parseInt(ip[3]):0); if(ip[1].trim()) tag.names.push([it.y,ip[1].trim()]); }
+    if(rg){
+      const lo=parseInt(rg[3]), hi=parseInt(rg[4]);
+      if(hi>lo && hi-lo<80){ tag.stations=hi-lo+1; tag.isDept=true; tag.code=rg[0]; } else return;
+    }
+    used[i]=true;
+    lines.forEach((jt,j)=>{
+      if(used[j]||j===i) return;
+      const dx=Math.abs(jt.x-it.x), dy=jt.y-it.y;
+      if(dx>60||dy<-12||dy>30) return;
+      const m2=AREA_RE.exec(jt.text), p2=PPL_RE.exec(jt.text);
+      const ip2=INLINE_PPL.exec(jt.text), rg2=RANGE_RE.exec(jt.text), cd2=CODE_RE.exec(jt.text);
+      if(ip2||rg2) return;
+      if(m2&&tag.area===null){ tag.area=parseFloat(m2[1]); used[j]=true; }
+      else if(p2&&tag.ppl===null){ tag.ppl=parseInt(p2[1])+(p2[2]?parseInt(p2[2]):0); used[j]=true; }
+      else if(cd2){ tag.code=jt.text; used[j]=true; }
+      else if(!m2&&!p2&&!/^\d+$/.test(jt.text)){
+        if(tag.names.length && KEYWORD_RE.test(jt.text)) return;
+        tag.names.push([jt.y,jt.text]); used[j]=true;
+      }
+    });
+    tag.name=tag.names.sort((a,b)=>a[0]-b[0]).map(n=>n[1]).join(' ').trim();
+    if(tag.stations && tag.ppl===null) tag.ppl=tag.stations;
+    tags.push(tag);
+  });
+  lines.forEach((it,i)=>{
+    if(used[i]||!KEYWORD_RE.test(it.text)) return;
+    tags.push({area:null,ppl:null,stations:null,code:null,isDept:false,names:[],name:it.text,x:it.x,y:it.y,pdfX:it.pdfX,pdfY:it.pdfY});
+    used[i]=true;
+  });
+
+  const vp1=page.getViewport({scale:1});
+  tags.forEach(t=>{ const p=vp1.convertToViewportPoint(t.pdfX,t.pdfY); t.nx=p[0]/vp1.width; t.ny=p[1]/vp1.height; });
+
+  return { tags, allText:everyText, page, vp1, fileName };
+}
+
+/* =====================================================================
+   4. CLASSIFICATION + ROOM RULES
+   ===================================================================== */
+function classify(name, tag){
+  const n=(name||'').toLowerCase();
+  if(tag&&tag.isDept) return 'workstations';
+  if(!n) return 'unknown';
+  if(n.includes('board')) return 'boardroom';
+  if(n.includes('alternative meeting')) return 'altmeeting';
+  if(n.includes('meet up')||n.includes('game room')) return 'social';
+  if(n.includes('meeting')) return 'meeting';
+  if(n.includes('executive')||/\bceo\b/.test(n)||/\bchro\b/.test(n)||/\bcos\b/.test(n)) return 'executive';
+  if(/\bvp\b/.test(n)) return 'vp';
+  if(n.includes('director')) return 'director';
+  if(n.includes('hrbp')) return 'hrbp';
+  if(n.includes('product')||n.includes('architect')||n.includes('admin')||n.includes('legal')||n.includes('finance')||/\bklf\b/.test(n)||n.includes('private room')) return 'staffroom';
+  if(n.includes('reception')||n.includes('waiting area')) return 'reception';
+  if(n.includes('cafeteria')) return 'kitchenette';
+  if(/^video$/.test(n)) return 'specialty';
+  if(/^hr\b/.test(n)||/\bhr$/.test(n)) return 'hr';
+  if(n.includes('facilities')) return 'facilities';
+  if(/\bit\b/.test(n)||/\bnoc\b/.test(n)) return 'it';
+  if(n.includes('nursery')||n.includes('nursing')) return 'nursery';
+  if(n.includes('kitchen')) return 'kitchenette';
+  if(/\bwc\b/.test(n)||n.includes('toilet')) return 'wc';
+  if(n.includes('shower')) return 'shower';
+  if(/\bpb\b/.test(n)||n.includes('phone')||n.includes('booth')||n.includes('nook')) return 'phonebooth';
+  if(n.includes('lounge')) return 'lounge';
+  if(n.includes('print')||n.includes('copy')) return 'printcopy';
+  if(n.includes('storage')||n.includes('secure space')) return 'storage';
+  if(n.includes('service')) return 'service';
+  if(n.includes('future')) return 'future';
+  if(/\bvr\b/.test(n)) return 'specialty';
+  if(n.includes('neighbourhood')||n.includes('neighborhood')||n.includes('open')) return 'openspace';
+  if(/^room\b/.test(n)) return 'future';
+  return 'unknown';
+}
+const TYPE_HE={
+  boardroom:'חדר דירקטוריון', meeting:'חדר ישיבות', altmeeting:'ישיבות אלטרנטיבי',
+  executive:'הנהלה', vp:'VP', director:'מנהל קבוצה', hrbp:'HRBP', staffroom:'חדר צוות',
+  hr:'HR', facilities:'תפעול', it:'IT / NOC', nursery:'הנקה', kitchenette:'מטבחון',
+  wc:'שירותים', shower:'מקלחת', service:'שירות', future:'עתודה', openspace:'Open Space',
+  workstations:'עמדות — מחלקה', phonebooth:'תא טלפון', lounge:'לאונג׳', social:'מפגש / משחק',
+  printcopy:'הדפסה', storage:'אחסון', specialty:'ייעודי', reception:'קבלה / המתנה', unknown:'לא מזוהה'
+};
+
+function interpSeat(tbl,s){
+  if(s<=tbl[0][0]) return tbl[0][1]*(s/tbl[0][0]);
+  for(let i=0;i<tbl.length-1;i++){
+    const [s1,a1]=tbl[i],[s2,a2]=tbl[i+1];
+    if(s<=s2) return a1+(a2-a1)*(s-s1)/(s2-s1);
+  }
+  const [sL,aL]=tbl[tbl.length-1]; return aL*s/sL;
+}
+
+function checkRoom(tag){
+  const type=classify(tag.name,tag), R=RULES[type]||{};
+  const out={type,level:'ok',msgs:[]};
+  const fail=m=>{out.level='fail'; out.msgs.push({l:'fail',m});};
+  const warn=m=>{if(out.level!=='fail')out.level='warn'; out.msgs.push({l:'warn',m});};
+  const info=m=>out.msgs.push({l:'info',m});
+  const ok=m=>out.msgs.push({l:'ok',m});
+
+  if(type==='unknown'){ warn(tag.name?`סוג לא מזוהה — ״${tag.name}״`:'תגית ללא שם חדר'); return out; }
+  if(type==='workstations'){
+    ok(`${tag.stations} עמדות${tag.name?' — '+tag.name:''}`);
+    if(!tag.name) warn('טווח עמדות ללא שם מחלקה');
+    return out;
+  }
+  if(['phonebooth','lounge','social','printcopy','storage','shower','specialty','reception'].includes(type)){
+    if(tag.area!=null && R.minArea!=null && tag.area<R.minArea) warn(`${tag.area} מ״ר — מתחת ל-${R.minArea}`);
+    else ok('קיים בפרוגרמה');
+    return out;
+  }
+  if(type==='openspace'){
+    if(tag.area&&tag.ppl){
+      const d=tag.area/tag.ppl;
+      if(d<R.densityMin) fail(`צפיפות ${d.toFixed(2)} מ״ר/עובד — צפוף מדי (מינ׳ ${R.densityMin})`);
+      else if(d<R.densityWarnLow) warn(`צפיפות ${d.toFixed(2)} מ״ר/עובד — קצה תחתון`);
+      else if(d>R.densityWarnHigh) warn(`צפיפות ${d.toFixed(2)} מ״ר/עובד — מעל הטווח היעיל`);
+      else ok(`צפיפות ${d.toFixed(2)} מ״ר/עובד`);
+    } else if(tag.ppl) info(`${tag.ppl} עמדות — אין תגית שטח`);
+    return out;
+  }
+  if(type==='boardroom'){
+    if(tag.area&&tag.area<R.minArea) fail(`${tag.area} מ״ר — מתחת ל-${R.minArea}`);
+    if(tag.area&&tag.ppl){
+      const d=tag.area/tag.ppl;
+      if(d<R.perSeatMin) fail(`${d.toFixed(2)} מ״ר למקום — צפוף (מינ׳ ${R.perSeatMin})`);
+      else if(d>R.perSeatMax) warn(`${d.toFixed(2)} מ״ר למקום — מעל הטווח`);
+      else ok(`${d.toFixed(2)} מ״ר למקום`);
+    }
+    return out;
+  }
+  if(type==='meeting'||type==='altmeeting'){
+    if(type==='altmeeting'){
+      if(tag.area==null) info(`אין שטח בתגית — מינימום ${R.minArea} מ״ר`);
+      else if(tag.area<R.minArea) fail(`${tag.area} מ״ר — מתחת ל-${R.minArea}`);
+      else ok('בטווח');
+      return out;
+    }
+    if(tag.ppl&&tag.area){
+      const minA=interpSeat(RULES.meeting.seatTable,tag.ppl), d=tag.area/tag.ppl;
+      if(tag.area<minA*0.93) fail(`${tag.area} מ״ר ל-${tag.ppl} מקומות — נדרש ~${minA.toFixed(1)}`);
+      else if(tag.area<minA) warn(`${tag.area} מ״ר — גבולי מול ~${minA.toFixed(1)}`);
+      else ok(`${tag.area} מ״ר / ${tag.ppl} מק׳ (${d.toFixed(2)} למקום)`);
+      if(d>RULES.meeting.perSeatMax) warn(`${d.toFixed(2)} מ״ר למקום — גדול ביחס לקיבולת`);
+    } else if(tag.area){
+      if(tag.area<R.minNoSeats) fail(`${tag.area} מ״ר — קטן ממינימום חדר ישיבות`);
+      else info('אין תגית קיבולת');
+    } else if(tag.ppl){
+      info(`${tag.ppl} מקומות — ודא ≥${interpSeat(RULES.meeting.seatTable,tag.ppl).toFixed(1)} מ״ר`);
+    }
+    return out;
+  }
+  if(type==='wc'){
+    if(tag.area&&tag.area<R.stallMin) fail(`תא ${tag.area} מ״ר — מתחת ל-${R.stallMin}`);
+    else ok('מידות תא בטווח');
+    return out;
+  }
+  if(type==='nursery'){
+    if(tag.area==null) info(`קיים בקומה — אין שטח בתגית (מינ׳ ${R.minArea})`);
+    else if(tag.area<R.minArea) fail(`${tag.area} מ״ר — מתחת ל-${R.minArea}`);
+    else if(tag.area<R.recommended) warn(`${tag.area} מ״ר — מתחת למומלץ ${R.recommended}`);
+    else ok('שטח תקין');
+    return out;
+  }
+  if(R.minArea!=null && tag.area!=null){
+    if(tag.area<R.minArea) fail(`${tag.area} מ״ר — מתחת ל-${R.minArea} (${R.label})`);
+    else if(R.typMin&&tag.area<R.typMin) warn(`${tag.area} מ״ר — מתחת לטווח הטיפוסי ${R.typMin}–${R.typMax}`);
+    else ok('בטווח');
+  }
+  if(!out.msgs.length) info('תגית ללא נתוני שטח');
+  return out;
+}
+
+/* =====================================================================
+   5. IRON RULES — gate 0
+   ===================================================================== */
+function ironChecks(parse, rooms){
+  const T=parse.allText, has=re=>T.some(t=>re.test(t));
+  const dimTok=T.filter(t=>/^\d{1,2}[.,]\d{2}$/.test(t)).length;
+  const cmTok=T.filter(t=>/^\d{3,5}$/.test(t)).length;
+  const symIds=STATE.symbols.map(s=>s.k);
+  const hasSym=(...k)=>k.some(x=>symIds.includes(x));
+  const hasDim=STATE.dims.length>0;
+  const R=[];
+
+  R.push({ id:'roomdims', n:'מידות כל חדר במטרים',
+    auto: dimTok >= Math.max(4, Math.round(rooms.length*0.5)),
+    manual: STATE.dims.length>=Math.max(2,Math.round(rooms.length*0.25)),
+    okMsg:`זוהו ${dimTok} מידות במטרים בתוכנית.`,
+    badMsg:`זוהו ${dimTok} מידות בלבד מול ${rooms.length} תגיות. סמן מידות חסרות בכלי "קו מידה".`,
+    tool:'dim' });
+
+  R.push({ id:'overall', n:'קווי מידה — אורך ורוחב',
+    auto: cmTok>=4,
+    manual: hasDim,
+    okMsg:'זוהו קווי מידה כלליים בתוכנית.',
+    badMsg:'לא זוהו קווי מידה כלליים. שרטט אורך ורוחב בכלי "קו מידה".',
+    tool:'dim' });
+
+  R.push({ id:'entry', n:'סימון כניסה ויציאה לקומה',
+    auto: has(/entrance|main entry|\bentry\b|lobby|כניסה/) && has(/exit|יציאה|egress/),
+    manual: hasSym('entry')&&hasSym('exit'),
+    okMsg:'כניסה ויציאה מסומנות.',
+    badMsg:'לא זוהה סימון כניסה/יציאה. גרור IN ו-EX מהמחסן.',
+    sym:'entry' });
+
+  R.push({ id:'panels', n:'ארונות חשמל ותקשורת',
+    auto: has(/electric|חשמל|\bel\b/) && has(/\bit\b|telecom|comm|תקשורת|mdf|idf/),
+    manual: hasSym('el','elm') && hasSym('it','srv'),
+    okMsg:'ארונות חשמל ותקשורת מסומנים.',
+    badMsg:'לא זוהה סימון ארונות. גרור EL ו-IT מהמחסן.',
+    sym:'el' });
+
+  R.forEach(r=>{
+    r.level = r.auto ? 'o' : (r.manual||STATE.iron[r.id]) ? 'o' : 'f';
+    r.src   = r.auto ? 'זוהה אוטומטית' : (r.manual||STATE.iron[r.id]) ? 'הושלם ידנית' : 'חסר';
+    r.msg   = r.level==='o' ? r.okMsg : r.badMsg;
+  });
+  return R;
+}
+
+/* =====================================================================
+   6. FLOOR CHECKS
+   ===================================================================== */
+function floorChecks(parse, rooms){
+  const out=[], present=t=>rooms.some(r=>r.check.type===t);
+  for(const [t,he] of [['kitchenette','מטבחון'],['it','חדר IT / תקשורת'],['nursery','חדר הנקה']]){
+    out.push(present(t)
+      ? {level:'ok', n:`${he} בקומה`, m:'קיים בתוכנית.'}
+      : {level:'fail', n:`${he} בקומה`, m:'לא נמצא בתגיות — חובה בכל קומה.'});
+  }
+  const meetings=rooms.filter(r=>['meeting','boardroom','altmeeting'].includes(r.check.type));
+  out.push(meetings.length
+    ? {level:'ok', n:'חדרי ישיבות', m:`${meetings.length} חדרים בקומה.`}
+    : {level:'fail', n:'חדרי ישיבות', m:'לא נמצא אף חדר ישיבות.'});
+  out.push(present('wc')
+    ? {level:'ok', n:'שירותים', m:'תאי שירותים מתויגים.'}
+    : {level:'warn', n:'שירותים', m:'לא נמצאו תגיות WC — ודא קיום בגרעין.'});
+
+  const ws=rooms.filter(r=>['openspace','workstations'].includes(r.check.type)&&r.tag.ppl).reduce((s,r)=>s+r.tag.ppl,0);
+  const seats=meetings.reduce((s,r)=>s+(r.tag.ppl||0),0);
+  if(ws>0&&seats>0){
+    const ratio=100*seats/ws, min=RULES.floor.meetingRatioMin;
+    out.push(ratio<min
+      ? {level:'warn', n:'יחס ישיבות / עמדות', m:`${ratio.toFixed(0)}% — מתחת ל-${min}%. שקול חדר נוסף.`}
+      : {level:'ok', n:'יחס ישיבות / עמדות', m:`${seats} מקומות מול ${ws} עמדות — ${ratio.toFixed(0)}%.`});
+  }
+  const pbs=rooms.filter(r=>r.check.type==='phonebooth').length;
+  if(ws>=30){
+    if(!pbs) out.push({level:'warn', n:'תאי טלפון', m:`אין תאי טלפון ל-${ws} עמדות (סטנדרט ~1:${RULES.phonebooth.perStationsRatio}).`});
+    else if(ws/pbs>RULES.phonebooth.perStationsRatio*1.5) out.push({level:'warn', n:'תאי טלפון', m:`${pbs} תאים ל-${ws} עמדות (1:${Math.round(ws/pbs)}) — מעט.`});
+    else out.push({level:'ok', n:'תאי טלפון', m:`${pbs} תאים ל-${ws} עמדות.`});
+  }
+  const unnamed=rooms.filter(r=>!r.tag.name).length;
+  if(unnamed) out.push({level:'warn', n:'תגיות חסרות', m:`${unnamed} תגיות ללא שם חדר.`});
+
+  /* data coverage — what the tool could NOT check */
+  const areaRelevant=rooms.filter(r=>RULES[r.check.type]&&(RULES[r.check.type].minArea!=null||r.check.type==='meeting'||r.check.type==='openspace'));
+  const noArea=areaRelevant.filter(r=>r.tag.area==null).length;
+  if(noArea){
+    const pct=Math.round(100*noArea/Math.max(1,areaRelevant.length));
+    out.push({ level: pct>=60?'fail':'warn', n:'כיסוי בדיקת שטחים',
+      m:`${noArea} מתוך ${areaRelevant.length} חדרים ללא תגית שטח (${pct}%) — בדיקת שטח מול הסטנדרט לא בוצעה עבורם.` });
+  }
+  const capRelevant=rooms.filter(r=>['meeting','boardroom','openspace'].includes(r.check.type));
+  const noCap=capRelevant.filter(r=>r.tag.ppl==null).length;
+  if(noCap) out.push({ level:'warn', n:'כיסוי בדיקת קיבולת',
+    m:`${noCap} מתוך ${capRelevant.length} חדרי ישיבות / Open Space ללא תגית קיבולת.` });
+  const dq=rooms.length?Math.round(100*rooms.filter(r=>r.tag.name).length/rooms.length):0;
+  out.push({level:dq>=95?'ok':dq>=80?'warn':'fail', n:'שלמות דאטה', m:`${dq}% מהתגיות עם שם חדר.`});
+  return out;
+}
+
+/* =====================================================================
+   7. OPEN ITEMS — silent analysis, short notes only
+   ===================================================================== */
+function openItems(rooms){
+  const seen={}, out=[];
+  rooms.forEach(r=>{
+    const items=TYPE_OPEN_ITEMS[r.check.type];
+    if(!items) return;
+    items.forEach(txt=>{
+      const k=r.check.type+'|'+txt;
+      if(seen[k]) return; seen[k]=1;
+      out.push({ id:k, type:r.check.type, scope:TYPE_HE[r.check.type], n:txt });
+    });
+  });
+  (STATE.program&&STATE.program.qa||[]).forEach((q,i)=>{
+    out.push({ id:'qa'+i, type:'qa', scope:'QA פרויקט', n:q.name||q });
+  });
+  return out;
+}
+
+/* =====================================================================
+   8. NOTES MODEL — everything on the plan is a note
+   ===================================================================== */
+const LV={fail:'f',warn:'w',info:'i',ok:'o'};
+function buildNotes(rooms, fc){
+  const keep=STATE.notes.filter(n=>n.src==='custom');
+  const edits={}; STATE.notes.forEach(n=>{ if(n.edited) edits[n.id]=n.body; });
+  const out=[];
+  rooms.forEach(r=>{
+    if(r.check.level==='ok') return;
+    const body=r.check.msgs.filter(m=>m.l===r.check.level).map(m=>m.m).join(' · ');
+    out.push({ id:'r'+r.i, lv:LV[r.check.level], src:'room',
+      title:r.tag.name||'תגית ללא שם', sub:TYPE_HE[r.check.type],
+      body: edits['r'+r.i]||body, edited:!!edits['r'+r.i],
+      nx:r.tag.nx, ny:r.tag.ny, area:r.tag.area, ppl:r.tag.ppl });
+  });
+  fc.forEach((c,i)=>{
+    if(c.level==='ok') return;
+    out.push({ id:'f'+i, lv:LV[c.level], src:'floor', title:c.n, sub:'בדיקה קומתית',
+      body: edits['f'+i]||c.m, edited:!!edits['f'+i], nx:null, ny:null });
+  });
+  keep.forEach(n=>out.push(n));
+  const ord={f:0,w:1,i:2,o:3};
+  out.sort((a,b)=>(ord[a.lv]-ord[b.lv]) || (a.src==='custom'?1:0)-(b.src==='custom'?1:0));
+  out.forEach((n,i)=>n.num=i+1);
+  STATE.notes=out;
+}
+
+/* =====================================================================
+   9. RENDER — fit to page, always
+   ===================================================================== */
+async function renderBase(page){
+  const vp1=page.getViewport({scale:1});
+  const s=Math.min(3, 2400/Math.max(vp1.width, vp1.height));
+  const vp=page.getViewport({scale:s});
+  const c=document.createElement('canvas');
+  c.width=Math.round(vp.width); c.height=Math.round(vp.height);
+  await page.render({canvasContext:c.getContext('2d'), viewport:vp, intent:'print'}).promise;
+  BASE=c;
+}
+
+function fitBox(){
+  const host=$('#planHost');
+  const aw=Math.max(60,host.clientWidth-24), ah=Math.max(60,host.clientHeight-24);
+  const ar=BASE.width/BASE.height;
+  let w=aw, h=w/ar;
+  if(h>ah){ h=ah; w=h*ar; }
+  return { w:w*ZOOM, h:h*ZOOM };
+}
+
+function layout(){
+  if(!BASE) return;
+  const {w,h}=fitBox();
+  const box=$('#planBox'), cv=$('#planCanvas'), ov=$('#ovl');
+  box.style.width=w+'px'; box.style.height=h+'px';
+  const dpr=Math.min(2, window.devicePixelRatio||1);
+  [cv,ov].forEach(c=>{ c.width=Math.round(w*dpr); c.height=Math.round(h*dpr); c.style.width=w+'px'; c.style.height=h+'px'; });
+  const c=cv.getContext('2d');
+  c.setTransform(dpr,0,0,dpr,0,0); c.clearRect(0,0,w,h);
+  c.imageSmoothingEnabled=true; c.imageSmoothingQuality='high';
+  c.drawImage(BASE,0,0,w,h);
+  drawOverlay(); placeSymbols();
+  $('#zlabel').textContent=Math.round(ZOOM*100)+'%';
+  $('#tFit').classList.toggle('on', Math.abs(ZOOM-1)<0.01);
+}
+
+const CLR={f:'#E1504B',w:'#E38B00',i:'#0000FF',o:'#16A34A'};
+let MARKERS=[];
+
+function drawOverlay(){
+  const ov=$('#ovl'), {w,h}=fitBox();
+  const dpr=Math.min(2, window.devicePixelRatio||1);
+  const c=ov.getContext('2d');
+  c.setTransform(dpr,0,0,dpr,0,0); c.clearRect(0,0,w,h);
+  MARKERS=[];
+
+  if(LAYERS.dims) drawDims(c,w,h);
+
+  if(LAYERS.notes){
+    STATE.notes.forEach(n=>{
+      if(n.nx==null) return;
+      const x=n.nx*w, y=n.ny*h, S=Math.max(18, Math.min(26, w/48));
+      const col=CLR[n.lv]||'#8A8A8A';
+      const bx=x+S*0.85, by=y-S*0.85-S;
+      c.strokeStyle=col; c.lineWidth=1.6;
+      c.beginPath(); c.moveTo(x,y); c.lineTo(bx,by+S); c.stroke();
+      c.fillStyle='#fff'; c.fillRect(bx-1.5,by-1.5,S+3,S+3);
+      c.fillStyle=col; c.fillRect(bx,by,S,S);
+      c.fillStyle='#fff'; c.font='700 '+Math.round(S*0.52)+'px Helvetica,Arial';
+      c.textAlign='center'; c.textBaseline='middle';
+      c.fillText(n.num, bx+S/2, by+S/2+0.5);
+      c.fillStyle=col; c.beginPath(); c.arc(x,y,3.2,0,6.284); c.fill();
+      c.strokeStyle='#fff'; c.lineWidth=1; c.stroke();
+      if(SEL===n.id){
+        c.strokeStyle='#CFFF04'; c.lineWidth=2.5; c.strokeRect(bx-3,by-3,S+6,S+6);
+        c.strokeStyle='#1B1B1B'; c.lineWidth=1; c.strokeRect(bx-4.5,by-4.5,S+9,S+9);
+      }
+      MARKERS.push({id:n.id,bx,by,S});
+    });
+  }
+  if(PENDING&&PENDING.x1!=null){
+    c.strokeStyle='#D6009A'; c.lineWidth=1.5; c.setLineDash([5,4]);
+    c.beginPath(); c.moveTo(PENDING.x1*w,PENDING.y1*h); c.lineTo(PENDING.mx*w,PENDING.my*h); c.stroke();
+    c.setLineDash([]);
+  }
+}
+
+function drawDims(c,w,h){
+  STATE.dims.forEach(d=>{
+    const x1=d.x1*w, y1=d.y1*h, x2=d.x2*w, y2=d.y2*h;
+    const col=d.calib?'#0000FF':'#D6009A';
+    c.strokeStyle=col; c.lineWidth=1.6;
+    c.beginPath(); c.moveTo(x1,y1); c.lineTo(x2,y2); c.stroke();
+    const a=Math.atan2(y2-y1,x2-x1), t=7;
+    [[x1,y1],[x2,y2]].forEach(([px,py])=>{
+      c.beginPath();
+      c.moveTo(px-Math.sin(a)*t, py+Math.cos(a)*t);
+      c.lineTo(px+Math.sin(a)*t, py-Math.cos(a)*t);
+      c.stroke();
+    });
+    const lbl=d.label||'—', mx=(x1+x2)/2, my=(y1+y2)/2;
+    c.font='600 11px Helvetica,Arial'; c.textAlign='center'; c.textBaseline='middle';
+    const tw=c.measureText(lbl).width+9;
+    c.fillStyle='#fff'; c.fillRect(mx-tw/2,my-8,tw,16);
+    c.strokeStyle=col; c.lineWidth=1.2; c.strokeRect(mx-tw/2,my-8,tw,16);
+    c.fillStyle=col; c.fillText(lbl,mx,my+0.5);
+  });
+}
+
+function placeSymbols(){
+  const L=$('#symLayer');
+  L.style.display=LAYERS.syms?'block':'none';
+  L.innerHTML='';
+  STATE.symbols.forEach(s=>{
+    const d=SYMMAP[s.k]; if(!d) return;
+    const el=document.createElement('div');
+    el.className='sym'+(SEL===s.id?' sel':'');
+    el.style.left=(s.nx*100)+'%'; el.style.top=(s.ny*100)+'%'; el.style.color=d.c;
+    el.innerHTML=`<div class="sbx" style="background:${d.c}">${esc(d.t)}</div>`+
+                 (s.label?`<div class="stx" style="color:${d.c}">${esc(s.label)}</div>`:'')+
+                 `<div class="del" title="מחק">×</div>`;
+    el.querySelector('.del').onclick=e=>{
+      e.stopPropagation();
+      STATE.symbols=STATE.symbols.filter(x=>x.id!==s.id);
+      refresh();
+    };
+    el.onpointerdown=e=>{
+      if(e.target.classList.contains('del')) return;
+      e.preventDefault(); el.setPointerCapture(e.pointerId);
+      SEL=s.id; drawOverlay();
+      const box=$('#planBox').getBoundingClientRect();
+      const mv=ev=>{
+        s.nx=Math.min(1,Math.max(0,(ev.clientX-box.left)/box.width));
+        s.ny=Math.min(1,Math.max(0,(ev.clientY-box.top)/box.height));
+        el.style.left=(s.nx*100)+'%'; el.style.top=(s.ny*100)+'%';
+      };
+      const up=()=>{ el.removeEventListener('pointermove',mv); el.removeEventListener('pointerup',up); renderPanel(); };
+      el.addEventListener('pointermove',mv); el.addEventListener('pointerup',up);
+    };
+    L.appendChild(el);
+  });
+}
+
+/* =====================================================================
+   10. PLAN INTERACTION
+   ===================================================================== */
+function planPoint(e){
+  const b=$('#planBox').getBoundingClientRect();
+  return { nx:(e.clientX-b.left)/b.width, ny:(e.clientY-b.top)/b.height };
+}
+
+function armTool(t){
+  TOOL = TOOL===t ? null : t;
+  PENDING=null;
+  ['tDim','tCalib','tPin'].forEach(id=>$('#'+id).classList.remove('armed'));
+  document.querySelectorAll('.symcard').forEach(c=>c.classList.remove('armed'));
+  const hints={ dim:'לחץ נקודת התחלה ואז נקודת סיום', calib:'שרטט קו על מידה ידועה בתוכנית', pin:'לחץ על התכנית למיקום הערה' };
+  if(TOOL){
+    const btn={dim:'tDim',calib:'tCalib',pin:'tPin'}[TOOL];
+    if(btn) $('#'+btn).classList.add('armed');
+    $('#toolHint').textContent=hints[TOOL]||'לחץ על התכנית למיקום הסימבול';
+    $('#planBox').style.cursor='crosshair';
+  } else { $('#toolHint').textContent=''; $('#planBox').style.cursor='default'; }
+  drawOverlay();
+}
+function armSymbol(k){
+  TOOL='sym:'+k; PENDING=null;
+  ['tDim','tCalib','tPin'].forEach(id=>$('#'+id).classList.remove('armed'));
+  document.querySelectorAll('.symcard').forEach(c=>c.classList.toggle('armed', c.dataset.k===k));
+  $('#toolHint').textContent='לחץ על התכנית למיקום '+(SYMMAP[k]?SYMMAP[k].n:'');
+  $('#planBox').style.cursor='crosshair';
+}
+
+$('#planBox').addEventListener('click', e=>{
+  if(e.target.closest('.sym')) return;
+  const p=planPoint(e);
+  if(!TOOL){
+    const {w,h}=fitBox(); const mx=p.nx*w, my=p.ny*h;
+    const hit=MARKERS.find(m=>mx>=m.bx-5&&mx<=m.bx+m.S+5&&my>=m.by-5&&my<=m.by+m.S+5);
+    if(hit){ selectNote(hit.id); } else { SEL=null; drawOverlay(); placeSymbols(); }
+    return;
+  }
+  if(TOOL.startsWith('sym:')){
+    const k=TOOL.slice(4);
+    STATE.symbols.push({id:'s'+(STATE.seq++), k, nx:p.nx, ny:p.ny, label:''});
+    armTool(null); refresh(); toast('סימבול נוסף — ניתן לגרור');
+    return;
+  }
+  if(TOOL==='pin'){
+    STATE.notes.push({ id:'c'+(STATE.seq++), lv:'i', src:'custom', title:'הערה', sub:'ידני',
+      body:'לחץ לעריכה', edited:true, nx:p.nx, ny:p.ny });
+    armTool(null); refresh(); toast('הערה נוספה');
+    return;
+  }
+  if(TOOL==='dim'||TOOL==='calib'){
+    if(!PENDING){ PENDING={x1:p.nx,y1:p.ny,mx:p.nx,my:p.ny}; drawOverlay(); return; }
+    const d={ id:'d'+(STATE.seq++), x1:PENDING.x1, y1:PENDING.y1, x2:p.nx, y2:p.ny, calib:TOOL==='calib' };
+    const px=dimPx(d);
+    if(TOOL==='calib'){
+      const v=prompt('אורך הקו במטרים:','');
+      const m=parseFloat(String(v).replace(',','.'));
+      if(!m||m<=0){ PENDING=null; armTool(null); drawOverlay(); return; }
+      STATE.calib={ mPerPx:m/px };
+      d.label=m.toFixed(2)+' מ׳';
+      STATE.dims.forEach(o=>{ if(!o.manualLabel) o.label=(dimPx(o)*STATE.calib.mPerPx).toFixed(2)+' מ׳'; });
+      toast('קנה מידה כויל');
+    } else if(STATE.calib){
+      d.label=(px*STATE.calib.mPerPx).toFixed(2)+' מ׳';
+    } else {
+      const v=prompt('אורך במטרים (או בטל וכייל תחילה):','');
+      const m=parseFloat(String(v).replace(',','.'));
+      if(m>0){ d.label=m.toFixed(2)+' מ׳'; d.manualLabel=true; } else d.label='?';
+    }
+    STATE.dims.push(d); PENDING=null; armTool(null); refresh();
+  }
+});
+$('#planBox').addEventListener('mousemove', e=>{
+  if(PENDING){ const p=planPoint(e); PENDING.mx=p.nx; PENDING.my=p.ny; drawOverlay(); }
+});
+$('#planBox').addEventListener('dragover', e=>e.preventDefault());
+$('#planBox').addEventListener('drop', e=>{
+  e.preventDefault();
+  const k=e.dataTransfer.getData('sym'); if(!k) return;
+  const p=planPoint(e);
+  STATE.symbols.push({id:'s'+(STATE.seq++), k, nx:p.nx, ny:p.ny, label:''});
+  refresh();
+});
+function dimPx(d){
+  const dx=(d.x2-d.x1)*BASE.width, dy=(d.y2-d.y1)*BASE.height;
+  return Math.hypot(dx,dy);
+}
+document.addEventListener('keydown', e=>{
+  if(e.key==='Escape'){ armTool(null); PENDING=null; drawOverlay(); }
+  if((e.key==='Delete'||e.key==='Backspace') && SEL && !/INPUT|TEXTAREA/.test(document.activeElement.tagName) && !document.activeElement.isContentEditable){
+    STATE.symbols=STATE.symbols.filter(s=>s.id!==SEL);
+    STATE.notes=STATE.notes.filter(n=>!(n.id===SEL&&n.src==='custom'));
+    SEL=null; refresh();
+  }
+});
+
+function setZoom(z){ ZOOM=Math.min(6,Math.max(0.3,z)); layout(); }
+function toggleLayer(k){ LAYERS[k]=!LAYERS[k]; $('#ly'+k[0].toUpperCase()+k.slice(1)).classList.toggle('on',LAYERS[k]); layout(); }
+function togglePanel(){ document.body.classList.toggle('collapsed'); $('#btnPanel').classList.toggle('on'); setTimeout(layout,30); }
+function clearMarkup(){
+  if(!confirm('למחוק את כל הסימבולים, קווי המידה וההערות הידניות?')) return;
+  STATE.symbols=[]; STATE.dims=[]; STATE.calib=null;
+  STATE.notes=STATE.notes.filter(n=>n.src!=='custom');
+  refresh();
+}
+function selectNote(id){
+  SEL=id; drawOverlay(); placeSymbols();
+  setTab('notes');
+  setTimeout(()=>{
+    const el=document.getElementById('card-'+id);
+    if(el){ el.scrollIntoView({behavior:'smooth',block:'center'}); }
+    renderPanel();
+  },10);
+}
+let RT; window.addEventListener('resize',()=>{ clearTimeout(RT); RT=setTimeout(layout,120); });
+
+/* =====================================================================
+   11. PANEL
+   ===================================================================== */
+let TAB='iron';
+const TABS=[{k:'iron',n:'ברזל'},{k:'notes',n:'הערות'},{k:'prog',n:'פרוגרמה'},{k:'open',n:'לא נראה'},{k:'sym',n:'סימבולים'}];
+function setTab(k){ TAB=k; renderPanel(); }
+
+function renderPanel(){
+  const f=STATE.notes.filter(n=>n.lv==='f').length;
+  const w=STATE.notes.filter(n=>n.lv==='w').length;
+  const ironOk=STATE.ironR.filter(r=>r.level==='o').length;
+  const ws=STATE.rooms.filter(r=>['openspace','workstations'].includes(r.check.type)&&r.tag.ppl).reduce((s,r)=>s+r.tag.ppl,0);
+  const seats=STATE.rooms.filter(r=>['meeting','boardroom'].includes(r.check.type)).reduce((s,r)=>s+(r.tag.ppl||0),0);
+  const area=STATE.rooms.reduce((s,r)=>s+(r.tag.area||0),0);
+
+  $('#tiles').innerHTML=`
+    <div class="tile"><div class="n" style="color:${f?'var(--fail)':'inherit'}">${f}</div><div class="l">שגוי</div></div>
+    <div class="tile"><div class="n" style="color:${w?'var(--warn)':'inherit'}">${w}</div><div class="l">תיקון קל</div></div>
+    <div class="tile"><div class="n" style="color:${ironOk===4?'var(--ok)':'var(--fail)'}">${ironOk}/4</div><div class="l">כללי ברזל</div></div>
+    <div class="tile"><div class="n">${STATE.rooms.length}</div><div class="l">תגיות</div></div>
+    <div class="tile"><div class="n">${ws||'—'}</div><div class="l">עמדות</div></div>
+    <div class="tile"><div class="n">${seats||'—'}</div><div class="l">מקומות</div></div>
+    <div class="tile"><div class="n">${area?area.toFixed(0):'—'}</div><div class="l">מ״ר</div></div>
+    <div class="tile"><div class="n">${STATE.symbols.length}</div><div class="l">סימבולים</div></div>`;
+
+  $('#tabs').innerHTML=TABS.map(t=>{
+    let b='';
+    if(t.k==='notes'&&(f||w)) b=`<span class="bdg ${f?'f':'w'}">${f+w}</span>`;
+    if(t.k==='iron'&&ironOk<4) b=`<span class="bdg f">${4-ironOk}</span>`;
+    return `<button class="tab ${TAB===t.k?'on':''}" onclick="setTab('${t.k}')">${t.n}${b}</button>`;
+  }).join('');
+
+  const B=$('#tabBody');
+  if(TAB==='iron') B.innerHTML=viewIron();
+  else if(TAB==='notes'){ B.innerHTML=viewNotes(); bindNotes(); }
+  else if(TAB==='prog') B.innerHTML=viewProgram();
+  else if(TAB==='open'){ B.innerHTML=viewOpen(); }
+  else if(TAB==='sym'){ B.innerHTML=viewSymbols(); bindSymCards(); }
+}
+
+function viewIron(){
+  return `<div class="grp-title">כללי ברזל — נקודת פתיחה לכל בדיקה</div>`+
+    STATE.ironR.map(r=>`
+      <div class="iron ${r.level}">
+        <div class="ih">
+          <span class="chip ${r.level==='o'?'o':'f'}">${r.level==='o'?'✓':'חסר'}</span>
+          <span class="it">${esc(r.n)}</span>
+          <span class="cs" style="font-size:9px;opacity:.5">${esc(r.src)}</span>
+        </div>
+        <div class="ib">${esc(r.msg)}</div>
+        ${r.level!=='o'?`<div class="cact">
+          ${r.tool?`<button class="xb" onclick="armTool('${r.tool}');">פתח כלי ${r.tool==='dim'?'קו מידה':''}</button>`:''}
+          ${r.sym?`<button class="xb" onclick="setTab('sym')">פתח מחסן סימבולים</button>`:''}
+          <button class="xb" onclick="STATE.iron['${r.id}']=true;refresh()">סמן כטופל</button>
+        </div>`:''}
+      </div>`).join('')+
+    `<div class="grp-title">קנה מידה</div>
+     <div class="iron ${STATE.calib?'o':'w'}">
+       <div class="ih"><span class="chip ${STATE.calib?'o':'w'}">${STATE.calib?'מכויל':'לא מכויל'}</span>
+       <span class="it">כיול מידות</span></div>
+       <div class="ib">${STATE.calib?'קווי מידה חדשים יקבלו אורך אוטומטי במטרים.':'כייל פעם אחת על מידה ידועה — לאחר מכן כל קו מידה יחושב אוטומטית.'}</div>
+       <div class="cact"><button class="xb" onclick="armTool('calib')">כייל עכשיו</button></div>
+     </div>`;
+}
+
+function viewNotes(){
+  const manualHint = STATE.mode==='manual'
+    ? `<div class="iron w" style="margin-bottom:10px">
+         <div class="ih"><span class="chip w">מצב ידני</span><span class="it">אין שכבת טקסט</span></div>
+         <div class="ib">הקובץ נטען כתמונה — אין תגיות חדרים לפענוח, ולכן לא רצה בדיקה אוטומטית.
+         כל הכלים פעילים: סימבולים, קווי מידה עם כיול, והערות ממוקמות.
+         לניתוח אוטומטי מלא — העלה PDF עם שכבת טקסט.</div>
+         <div class="cact"><button class="xb" onclick="armTool('pin')">הוסף הערה</button>
+         <button class="xb" onclick="setTab('sym')">מחסן סימבולים</button></div>
+       </div>` : '';
+  if(!STATE.notes.length)
+    return manualHint || '<div class="empty">אין הערות — התוכנית עברה את כל הבדיקות.</div>';
+  return manualHint + notesList();
+}
+function notesList(){
+  const grp=[['f','שגוי — לתיקון'],['w','תיקון קל'],['i','מידע / ידני'],['o','תקין']];
+  let h='';
+  grp.forEach(([lv,ttl])=>{
+    const list=STATE.notes.filter(n=>n.lv===lv);
+    if(!list.length) return;
+    h+=`<div class="grp-title">${ttl} · ${list.length}</div>`;
+    h+=list.map(n=>`
+      <div class="card ${n.lv} ${SEL===n.id?'sel':''}" id="card-${n.id}" data-id="${n.id}">
+        <div class="ch">
+          <span class="num ${n.lv}">${n.num}</span>
+          <span class="ct">${esc(n.title)}</span>
+          <span class="cs">${esc(n.sub)}</span>
+        </div>
+        <div class="cb" contenteditable="true" data-id="${n.id}">${esc(n.body)}</div>
+        <div class="cact">
+          ${n.nx==null?`<button class="xb" data-act="place" data-id="${n.id}">מקם על התכנית</button>`:`<button class="xb" data-act="goto" data-id="${n.id}">הצג בתכנית</button>`}
+          <button class="xb" data-act="lv" data-id="${n.id}">שנה דרגה</button>
+          ${n.src==='custom'?`<button class="xb" data-act="del" data-id="${n.id}">מחק</button>`:''}
+        </div>
+      </div>`).join('');
+  });
+  return h;
+}
+function bindNotes(){
+  $('#tabBody').querySelectorAll('.cb').forEach(el=>{
+    el.onblur=()=>{
+      const n=STATE.notes.find(x=>x.id===el.dataset.id);
+      if(n){ n.body=el.textContent.trim(); n.edited=true; }
+    };
+  });
+  $('#tabBody').querySelectorAll('.xb[data-act]').forEach(b=>{
+    b.onclick=e=>{
+      e.stopPropagation();
+      const n=STATE.notes.find(x=>x.id===b.dataset.id); if(!n) return;
+      const a=b.dataset.act;
+      if(a==='goto'){ SEL=n.id; drawOverlay(); }
+      if(a==='place'){ SEL=n.id; TOOL='place:'+n.id; $('#toolHint').textContent='לחץ על התכנית למיקום ההערה'; $('#planBox').style.cursor='crosshair'; }
+      if(a==='lv'){ const o=['f','w','i','o']; n.lv=o[(o.indexOf(n.lv)+1)%4]; buildOrder(); refresh(); }
+      if(a==='del'){ STATE.notes=STATE.notes.filter(x=>x.id!==n.id); refresh(); }
+    };
+  });
+  $('#tabBody').querySelectorAll('.card').forEach(c=>{
+    c.onclick=e=>{ if(e.target.closest('.xb')||e.target.classList.contains('cb')) return; SEL=c.dataset.id; renderPanel(); drawOverlay(); };
+  });
+}
+function buildOrder(){
+  const ord={f:0,w:1,i:2,o:3};
+  STATE.notes.sort((a,b)=>ord[a.lv]-ord[b.lv]);
+  STATE.notes.forEach((n,i)=>n.num=i+1);
+}
+
+function viewProgram(){
+  const P=STATE.program;
+  const isJson=!!(P&&P.program&&P.program.length);
+  let h=`<div class="grp-title">${isJson?'פרוגרמת הפרויקט (JSON)':'סטנדרט המשרד — לא נטענה פרוגרמה'}</div>`;
+  if(!isJson) h+=`<div class="iron w" style="margin-bottom:10px"><div class="ib">לכל תוכנית פרוגרמה משלה. טען JSON לבדיקה מול היעדים של הפרויקט.</div>
+    <div class="cact"><button class="xb" onclick="document.getElementById('jsonInput').click()">טען JSON</button>
+    <button class="xb" onclick="showTemplate()">הצג תבנית</button></div></div>`;
+  if(P&&P.meta) h+=`<div class="ib" style="font-size:11px;opacity:.65;margin-bottom:10px">${esc([P.meta.project,P.meta.floor,P.meta.client].filter(Boolean).join(' · '))}</div>`;
+
+  h+=`<table class="pg"><thead><tr><th>פונקציה</th><th>יעד</th><th>בתכנית</th><th style="width:52px">Δ</th></tr></thead><tbody>`;
+  progRows().forEach(r=>{
+    h+=`<tr class="${r.cls}"><td class="fn">${esc(r.fn)}</td><td>${esc(r.goal)}</td><td>${esc(r.found)}</td><td>${esc(r.delta)}</td></tr>`;
+  });
+  return h+'</tbody></table>';
+}
+
+function viewOpen(){
+  const items=STATE.openItems;
+  let h=`<div class="grp-title">מה שהתכנית לא מגלה — פריטים לאימות</div>`;
+  h+=MANUAL_CHECKS.concat(items.map(i=>({id:i.id,n:i.n,note:i.scope}))).map(c=>{
+    const cur=STATE.manual[c.id]||'na';
+    return `<div class="iron ${cur==='ok'?'o':cur==='fail'?'f':'w'}">
+      <div class="ih"><span class="it">${esc(c.n)}</span>
+        <span class="tri">
+          <button class="${cur==='ok'?'a-ok':''}" onclick="setManual('${c.id}','ok')">תקין</button>
+          <button class="${cur==='fail'?'a-fail':''}" onclick="setManual('${c.id}','fail')">לא תקין</button>
+          <button class="${cur==='na'?'a-na':''}" onclick="setManual('${c.id}','na')">פתוח</button>
+        </span></div>
+      <div class="ib">${esc(c.note||'')}</div>
+    </div>`;
+  }).join('');
+  return h;
+}
+function setManual(id,v){ STATE.manual[id]=v; renderPanel(); }
+
+function viewSymbols(){
+  let h=`<div class="grp-title">מחסן סימבולים — גרור לתכנית או לחץ ואז לחץ על התכנית</div>`;
+  SYMBOLS.forEach((g,i)=>{
+    h+=`<details class="symgrp" ${i===0?'open':''}><summary>${esc(g.g)}</summary><div class="symwrap">`;
+    g.items.forEach(s=>{
+      h+=`<div class="symcard" draggable="true" data-k="${s.id}">
+            <span class="sb" style="background:${s.c}">${esc(s.t)}</span>
+            <span class="sl">${esc(s.n)}</span>
+          </div>`;
+    });
+    h+='</div></details>';
+  });
+  h+=`<div class="grp-title">סימבולים על התכנית · ${STATE.symbols.length}</div>`;
+  h+= STATE.symbols.length ? STATE.symbols.map(s=>{
+    const d=SYMMAP[s.k];
+    return `<div class="card ${SEL===s.id?'sel':''}" onclick="SEL='${s.id}';renderPanel();drawOverlay();placeSymbols()">
+      <div class="ch"><span class="num" style="background:${d.c}">${esc(d.t)}</span>
+      <span class="ct">${esc(d.n)}</span>
+      <button class="xb" onclick="event.stopPropagation();STATE.symbols=STATE.symbols.filter(x=>x.id!=='${s.id}');refresh()">מחק</button></div>
+    </div>`;
+  }).join('') : '<div class="empty">טרם הוצבו סימבולים.</div>';
+
+  h+=`<div class="grp-title">קווי מידה · ${STATE.dims.length}</div>`;
+  h+= STATE.dims.length ? STATE.dims.map(d=>`
+    <div class="card i"><div class="ch">
+      <span class="num i">↔</span><span class="ct">${esc(d.label||'—')}</span>
+      <button class="xb" onclick="STATE.dims=STATE.dims.filter(x=>x.id!=='${d.id}');refresh()">מחק</button>
+    </div></div>`).join('') : '<div class="empty">טרם שורטטו קווי מידה.</div>';
+  return h;
+}
+function bindSymCards(){
+  $('#tabBody').querySelectorAll('.symcard').forEach(c=>{
+    c.ondragstart=e=>e.dataTransfer.setData('sym',c.dataset.k);
+    c.onclick=()=>armSymbol(c.dataset.k);
+  });
+}
+
+/* place-note tool hook — runs before the main handler */
+$('#planBox').addEventListener('click', e=>{
+  if(TOOL&&TOOL.startsWith('place:')){
+    e.stopPropagation();
+    const n=STATE.notes.find(x=>x.id===TOOL.slice(6));
+    if(n){ const p=planPoint(e); n.nx=p.nx; n.ny=p.ny; }
+    armTool(null); refresh(); toast('ההערה מוקמה');
+  }
+}, true);
+
+/* =====================================================================
+   12. PIPELINE
+   ===================================================================== */
+function refresh(){
+  buildOrder();
+  STATE.ironR=ironChecks(STATE.parse, STATE.rooms);
+  STATE.openItems=openItems(STATE.rooms);
+  renderPanel(); drawOverlay(); placeSymbols();
+  $('#calibNote').textContent = STATE.calib ? 'קנה מידה מכויל' : '';
+}
+
+/* image / flat-PDF workspace — no text layer, every marking is manual */
+async function runManual(canvas, name){
+  STATE.mode='manual';
+  BASE=canvas;
+  STATE.parse={ tags:[], allText:[], fileName:name };
+  STATE.fileName=name;
+  STATE.rooms=[]; STATE.floor=[];
+  STATE.notes=STATE.notes.filter(n=>n.src==='custom');
+  buildOrder();
+  STATE.ironR=ironChecks(STATE.parse, []);
+  STATE.openItems=openItems([]);
+  $('#fname').textContent=name+' · מצב ידני';
+  $('#hbtns').style.display='flex';
+  $('#uploadView').style.display='none';
+  $('#workView').classList.add('on');
+  layout(); renderPanel();
+}
+
+async function run(parse){
+  STATE.mode='auto';
+  STATE.parse=parse; STATE.fileName=parse.fileName;
+  PDFPAGE=parse.page; VP1=parse.vp1;
+  STATE.rooms=parse.tags.map((tag,i)=>({tag, i:i+1, check:checkRoom(tag)}));
+  const fc=floorChecks(parse, STATE.rooms);
+  STATE.floor=fc;
+  buildNotes(STATE.rooms, fc);
+  STATE.ironR=ironChecks(parse, STATE.rooms);
+  STATE.openItems=openItems(STATE.rooms);
+
+  $('#fname').textContent=parse.fileName;
+  $('#hbtns').style.display='flex';
+  $('#uploadView').style.display='none';
+  $('#workView').classList.add('on');
+
+  await renderBase(parse.page);
+  layout(); renderPanel();
+}
+
+/* =====================================================================
+   13. JSON PROGRAM
+   ===================================================================== */
+const VALID_KEYS=['openspace','workstations','meeting','boardroom','altmeeting','social','phonebooth',
+  'executive','vp','director','hrbp','staffroom','hr','facilities','it','nursery','kitchenette','wc',
+  'shower','lounge','reception','printcopy','storage','service','future','specialty'];
+
+const TEMPLATE={
+  _readme:'תבנית פרוגרמה + QA ל-RDA Test Fit Checker. השדות שמתחילים ב-_ הם תיעוד בלבד והמערכת מתעלמת מהם.',
+  _fields:{
+    'meta':'פרטי הפרויקט — מוצגים בכותרת הבדיקה ובקובץ ה-Export.',
+    'program[].key':'סוג החדר. חייב להיות אחד מהערכים ברשימת _validKeys.',
+    'program[].fn':'שם להצגה בטבלת הפרוגרמה.',
+    'program[].count':'כמה נדרשים בקומה. חוסר מול היעד מסומן כתום (עד 33%) או אדום (מעל).',
+    'program[].minArea':'שטח מינימלי במ״ר לחדר בודד.',
+    'program[].required':'true = חובה בקומה. חוסר מסומן אדום גם בלי count.',
+    'program[].norm':'טקסט חופשי שמוצג בעמודת היעד. אם ריק — נבנה אוטומטית מ-count ו-minArea.',
+    'qa[].name':'סעיף QA של הפרויקט. מופיע בטאב "לא נראה" עם צ׳קליסט תקין / לא תקין / פתוח.',
+    'rules':'דריסת ספי הסטנדרט המשרדי — לפרויקט הזה בלבד. השמט כדי להשתמש בברירת המחדל.'
+  },
+  _validKeys:VALID_KEYS,
+  meta:{ project:'שם הפרויקט', floor:'FL00', client:'שם הלקוח', date:'2026-01-01', areaGross:1200, headcount:120 },
+  program:[
+    { key:'openspace',   fn:'Open Space',        count:1,  norm:'1.45–2.6 מ״ר לעובד' },
+    { key:'meeting',     fn:'Meeting Room',      count:6,  minArea:11 },
+    { key:'boardroom',   fn:'Board Room',        count:1,  minArea:40, required:true },
+    { key:'altmeeting',  fn:'ישיבות לא-פורמלי',  count:2,  minArea:15 },
+    { key:'phonebooth',  fn:'Phone Booth',       count:4,  norm:'תא לכל ~35 עמדות' },
+    { key:'executive',   fn:'Executive',         count:2,  minArea:13 },
+    { key:'vp',          fn:'VP',                count:3,  minArea:10.5 },
+    { key:'director',    fn:'Group Director',    count:4,  minArea:9.5 },
+    { key:'staffroom',   fn:'חדר צוות',          count:3,  minArea:7 },
+    { key:'it',          fn:'IT / תקשורת',       count:1,  minArea:7,  required:true },
+    { key:'nursery',     fn:'חדר הנקה',          count:1,  minArea:5,  required:true },
+    { key:'kitchenette', fn:'מטבחון',            count:1,  minArea:20, required:true },
+    { key:'wc',          fn:'שירותים',           count:2,  minArea:1.5 },
+    { key:'lounge',      fn:'Lounge',            count:2 },
+    { key:'reception',   fn:'קבלה / המתנה',      count:1 }
+  ],
+  qa:[
+    { name:'אישור יועץ נגישות' },
+    { name:'אישור יועץ בטיחות ומילוט' },
+    { name:'תיאום מיזוג לחדרים פנימיים' },
+    { name:'תיאום חשמל ותקשורת מול הבניין' },
+    { name:'אישור בעל הנכס לשינויי מחיצות' },
+    { name:'תיאום אקוסטיקה בחדרי ישיבות' }
+  ],
+  rules:{
+    openspace:{ densityMin:1.3, densityWarnLow:1.45, densityWarnHigh:2.6 },
+    meeting:{ perSeatMin:1.1, perSeatMax:3.0 }
+  }
+};
+
+function templateText(){ return JSON.stringify(TEMPLATE,null,2); }
+function downloadTemplate(){
+  dl('rda-program-template.json', templateText(), 'application/json');
+}
+function showTemplate(){
+  const host=document.createElement('div');
+  host.className='modal';
+  host.innerHTML=`
+    <div class="modal-box" onclick="event.stopPropagation()">
+      <div class="modal-head">
+        <div>תבנית פרוגרמה + QA<small>JSON — נקודת הפתיחה לכל תוכנית</small></div>
+        <button class="hb" data-x>סגור</button>
+      </div>
+      <div class="keylist">
+        <b>ערכי key חוקיים:</b><br>${VALID_KEYS.map(k=>`<code>${k}</code>`).join('')}
+      </div>
+      <div class="modal-body"><pre class="json">${esc(templateText())}</pre></div>
+      <div class="modal-foot">
+        <button class="mini pri" data-dl>הורד קובץ</button>
+        <button class="mini" data-copy>העתק ללוח</button>
+        <span style="font-size:10px;opacity:.5;margin-inline-start:auto">
+          מלא את הערכים → שמור כ-.json → טען בפלטפורמה</span>
+      </div>
+    </div>`;
+  host.onclick=()=>host.remove();
+  host.querySelector('[data-x]').onclick=()=>host.remove();
+  host.querySelector('[data-dl]').onclick=()=>downloadTemplate();
+  host.querySelector('[data-copy]').onclick=async()=>{
+    try{ await navigator.clipboard.writeText(templateText()); toast('הועתק ללוח'); }
+    catch(e){
+      const pre=host.querySelector('pre.json'), r=document.createRange();
+      r.selectNodeContents(pre);
+      const s=getSelection(); s.removeAllRanges(); s.addRange(r);
+      toast('נבחר — Ctrl+C להעתקה');
+    }
+  };
+  document.body.appendChild(host);
+}
+
+function applyProgram(p){
+  STATE.program=p;
+  if(p.rules) Object.keys(p.rules).forEach(k=>{ RULES[k]=Object.assign({}, RULES[k]||{}, p.rules[k]); });
+  const b=$('#progBanner');
+  b.className='prog-banner loaded';
+  b.innerHTML=`<b>פרוגרמה נטענה.</b> ${esc([p.meta&&p.meta.project, p.meta&&p.meta.floor].filter(Boolean).join(' · '))} — ${(p.program||[]).length} סעיפי פרוגרמה, ${(p.qa||[]).length} סעיפי QA. הבדיקה תרוץ מול היעדים האלה.`;
+  if(STATE.rooms.length){
+    STATE.rooms=STATE.parse.tags.map((tag,i)=>({tag,i:i+1,check:checkRoom(tag)}));
+    buildNotes(STATE.rooms, floorChecks(STATE.parse, STATE.rooms));
+    refresh();
+  }
+  toast('פרוגרמה נטענה');
+}
+
+function saveJson(){
+  const out={
+    meta:Object.assign({file:STATE.fileName, exported:new Date().toISOString().slice(0,10)}, (STATE.program&&STATE.program.meta)||{}),
+    program:(STATE.program&&STATE.program.program)||PROGRAM_REF,
+    qa:(STATE.program&&STATE.program.qa)||[],
+    rules:(STATE.program&&STATE.program.rules)||{},
+    review:{
+      notes:STATE.notes.map(n=>({num:n.num,lv:n.lv,title:n.title,sub:n.sub,body:n.body,nx:n.nx,ny:n.ny})),
+      symbols:STATE.symbols, dims:STATE.dims, manual:STATE.manual, iron:STATE.iron, calib:STATE.calib
+    }
+  };
+  dl(STATE.fileName.replace(/\.pdf$/i,'')+'-review.json', JSON.stringify(out,null,2), 'application/json');
+}
+
+/* the anchor must be in the document — a detached one is silently dropped in some browsers */
+function dl(name, content, type){
+  const url=URL.createObjectURL(new Blob([content],{type:type+';charset=utf-8'}));
+  const a=document.createElement('a');
+  a.href=url; a.download=name; a.style.display='none';
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(()=>{ a.remove(); URL.revokeObjectURL(url); },4000);
+  toast('הורדה: '+name);
+}
+
+/* =====================================================================
+   14. INPUT WIRING
+   ===================================================================== */
+const dz=$('#dropzone');
+dz.addEventListener('dragover',e=>{e.preventDefault();dz.classList.add('drag');});
+dz.addEventListener('dragleave',()=>dz.classList.remove('drag'));
+dz.addEventListener('drop',e=>{
+  e.preventDefault(); dz.classList.remove('drag');
+  if(e.dataTransfer.files[0]) routeFile(e.dataTransfer.files[0]);
+});
+$('#fileInput').addEventListener('change',e=>{ if(e.target.files[0]) routeFile(e.target.files[0]); });
+$('#jsonInput').addEventListener('change',e=>{ if(e.target.files[0]) readJson(e.target.files[0]); });
+
+function routeFile(f){
+  const n=f.name.toLowerCase();
+  if(/\.pdf$/.test(n))            return handlePdf(f);
+  if(/\.(png|jpe?g|webp)$/.test(n)) return handleImage(f);
+  if(/\.json$/.test(n))           return readJson(f);
+  if(/\.(dwg|dxf)$/.test(n))      return needsExport(f,'DWG','AutoCAD','Plot → DWG To PDF');
+  if(/\.(rvt|rfa)$/.test(n))      return needsExport(f,'RVT','Revit','File → Export → PDF');
+  showError('<b>סוג קובץ לא נתמך</b>' + esc(f.name) + ' — נתמכים: PDF, PNG, JPG, JSON.');
+}
+
+/* DWG/RVT are proprietary binary formats — no browser can read them.
+   Say so plainly and give the 10-second workaround instead of failing silently. */
+function needsExport(f, fmt, app, path){
+  showError(
+    `<b>${fmt} הוא פורמט בינארי סגור — לא ניתן לפענוח בדפדפן.</b>`+
+    `ייצא PDF מתוך ${app} (<u>${esc(path)}</u>) והעלה אותו כאן. `+
+    `שכבת הטקסט של תגיות החדרים נשמרת בייצוא — והניתוח יהיה מלא ואוטומטי.<br>`+
+    `לחלופין, העלה תמונה (PNG/JPG) של התכנית ועבוד במצב סימון ידני עם כל הכלים.`
+  );
+}
+
+function readJson(f){
+  const r=new FileReader();
+  r.onload=()=>{
+    try{
+      const j=JSON.parse(r.result);
+      applyProgram(j);
+      if(j.review && BASE) restoreReview(j.review);
+    }catch(err){ showError('<b>JSON לא תקין</b>'+esc(err.message)); }
+  };
+  r.readAsText(f);
+}
+function restoreReview(rv){
+  if(rv.symbols) STATE.symbols=rv.symbols;
+  if(rv.dims)    STATE.dims=rv.dims;
+  if(rv.manual)  STATE.manual=rv.manual;
+  if(rv.iron)    STATE.iron=rv.iron;
+  if(rv.calib)   STATE.calib=rv.calib;
+  STATE.seq=Math.max(STATE.seq, STATE.symbols.length+STATE.dims.length+1);
+  refresh(); toast('סימונים שוחזרו');
+}
+
+async function handlePdf(file){
+  showLoading(true);
+  try{
+    const parse=await parsePdf(new Uint8Array(await file.arrayBuffer()), file.name);
+    if(!parse.tags.length){
+      /* flat / scanned PDF — still usable as a manual markup workspace */
+      await renderBase(parse.page);
+      await runManual(BASE, file.name);
+      toast('לא זוהתה שכבת טקסט — מצב סימון ידני');
+    } else await run(parse);
+  }catch(err){ showError('<b>שגיאה בניתוח</b>'+esc(err.message)); }
+  showLoading(false);
+}
+
+async function handleImage(file){
+  showLoading(true);
+  try{
+    const url=URL.createObjectURL(file);
+    const img=await new Promise((res,rej)=>{
+      const i=new Image();
+      i.onload=()=>res(i); i.onerror=()=>rej(new Error('לא ניתן לקרוא את התמונה'));
+      i.src=url;
+    });
+    const sc=Math.min(1, 2400/Math.max(img.width,img.height));
+    const c=document.createElement('canvas');
+    c.width=Math.round(img.width*sc); c.height=Math.round(img.height*sc);
+    const x=c.getContext('2d');
+    x.fillStyle='#fff'; x.fillRect(0,0,c.width,c.height);
+    x.imageSmoothingQuality='high'; x.drawImage(img,0,0,c.width,c.height);
+    URL.revokeObjectURL(url);
+    await runManual(c, file.name);
+    toast('תמונה נטענה — מצב סימון ידני');
+  }catch(e){ showError('<b>שגיאה</b>'+esc(e.message)); }
+  showLoading(false);
+}
+
+function showLoading(on){ $('#loading').classList.toggle('on',on); if(on) showError(null); }
+function showError(m){ const e=$('#loadError'); e.style.display=m?'block':'none'; e.innerHTML=m||''; }
+
+/* =====================================================================
+   15. EXPORT — same tool, different interface. Live editable, offline.
+   ===================================================================== */
+const VARHEX={'--s-el':'#7C3AED','--s-it':'#0EA5E9','--s-mep':'#0891B2','--s-move':'#16A34A',
+  '--s-fire':'#E1504B','--s-prog':'#D6009A','--black':'#1B1B1B'};
+function hex(c){ const m=/var\((--[a-z-]+)\)/.exec(c); return m?(VARHEX[m[1]]||'#8A8A8A'):c; }
+
+function progRows(){
+  const P=STATE.program;
+  const rows=(P&&P.program&&P.program.length)?P.program:PROGRAM_REF;
+  return rows.map(p=>{
+    const types=p.types||[p.key];
+    const m=STATE.rooms.filter(r=>types.includes(r.check.type));
+    let cls,found,delta;
+    if(!m.length){
+      cls=(p.required||p.count)?'f':'n'; found='לא נמצא'; delta=p.count?('−'+p.count):'—';
+    } else {
+      cls=m.some(r=>r.check.level==='fail')?'f':m.some(r=>r.check.level==='warn')?'w':'o';
+      const a=m.map(r=>r.tag.area).filter(x=>x!=null);
+      const bits=[m.length+' יח׳'];
+      if(a.length) bits.push(Math.min(...a)===Math.max(...a)?a[0]+' מ״ר':Math.min(...a)+'–'+Math.max(...a)+' מ״ר');
+      found=bits.join(' · ');
+      if(p.count){
+        const d=m.length-p.count;
+        delta=(d>=0?'+':'−')+Math.abs(d);
+        /* a shortfall against the project target outranks per-room status */
+        if(d<0){
+          const short=-d/p.count;
+          const lack=(p.required||short>=0.34)?'f':'w';
+          if(lack==='f'||cls==='o') cls=lack;
+        }
+      } else delta='✓';
+    }
+    const goal=p.norm||[p.count?p.count+' יח׳':null,p.minArea?'≥'+p.minArea+' מ״ר':null].filter(Boolean).join(' · ')||'—';
+    return { fn:p.fn||p.label||p.key, goal, found, delta, cls };
+  });
+}
+
+function exportHtml(){
+  if(!BASE){ toast('אין תוכנית טעונה'); return; }
+  const maxW=2000;
+  let img=BASE;
+  if(BASE.width>maxW){
+    const c=document.createElement('canvas');
+    c.width=maxW; c.height=Math.round(BASE.height*maxW/BASE.width);
+    const x=c.getContext('2d'); x.imageSmoothingQuality='high';
+    x.drawImage(BASE,0,0,c.width,c.height);
+    img=c;
+  }
+  const dataUrl=img.toDataURL('image/png');
+
+  const symdefs={};
+  SYMBOLS.forEach(g=>g.items.forEach(s=>{ symdefs[s.id]={t:s.t,n:s.n,c:hex(s.c)}; }));
+
+  const ws=STATE.rooms.filter(r=>['openspace','workstations'].includes(r.check.type)&&r.tag.ppl).reduce((s,r)=>s+r.tag.ppl,0);
+  const seats=STATE.rooms.filter(r=>['meeting','boardroom'].includes(r.check.type)).reduce((s,r)=>s+(r.tag.ppl||0),0);
+  const area=STATE.rooms.reduce((s,r)=>s+(r.tag.area||0),0);
+  const P=STATE.program;
+  const title=STATE.fileName.replace(/\.pdf$/i,'');
+
+  const st={
+    title,
+    date:new Date().toLocaleDateString('he-IL'),
+    imgW:img.width, imgH:img.height,
+    notes:STATE.notes.map(n=>({id:n.id,num:n.num,lv:n.lv,title:n.title,sub:n.sub,body:n.body,nx:n.nx,ny:n.ny})),
+    symbols:STATE.symbols, dims:STATE.dims, manual:STATE.manual, symdefs,
+    iron:STATE.ironR.map(r=>({n:r.n,level:r.level,src:r.src,msg:r.msg})),
+    prog:progRows(),
+    progTitle:(P&&P.program&&P.program.length)?'פרוגרמת הפרויקט':'סטנדרט המשרד',
+    openList:MANUAL_CHECKS.concat(STATE.openItems.map(i=>({id:i.id,n:i.n,note:i.scope}))),
+    stats:{ tags:STATE.rooms.length, ws, seats, area:area?area.toFixed(0):0 },
+    meta:(P&&P.meta)||{}
+  };
+
+  const css=$('#exportCSS').textContent;
+  const js=$('#exportJS').textContent;
+  const metaLine=[st.meta.project,st.meta.floor,title].filter(Boolean).join(' · ');
+
+  const html='<!DOCTYPE html>\n<html lang="he" dir="rtl">\n<head>\n<meta charset="UTF-8">\n'+
+'<meta name="viewport" content="width=device-width,initial-scale=1">\n'+
+'<title>RDA — '+esc(title)+'</title>\n<style>'+css+'</style>\n</head>\n<body>\n'+
+'<header><div class="brand">RD&amp;A</div><div class="tool">Test Fit Review</div>'+
+'<div class="meta">'+esc(metaLine)+'</div>'+
+'<button class="hb" onclick="saveCopy()">שמור עותק מעודכן</button>'+
+'<button class="hb" onclick="saveData()">JSON</button>'+
+'<button class="hb" onclick="window.print()">PDF</button></header>\n'+
+'<div class="abar"></div>\n<div id="app">\n'+
+'<div id="stage">\n<div id="sbar">'+
+'<button class="tb" onclick="zoom(1)">Fit</button>'+
+'<button class="tb" onclick="zoom(ZOOM/1.25)">−</button><span class="zl" id="zl">100%</span>'+
+'<button class="tb" onclick="zoom(ZOOM*1.25)">+</button>'+
+'<button class="tb on" id="b1" onclick="lay(\'notes\',\'b1\')">הערות</button>'+
+'<button class="tb on" id="b2" onclick="lay(\'syms\',\'b2\')">סימבולים</button>'+
+'<button class="tb on" id="b3" onclick="lay(\'dims\',\'b3\')">מידות</button></div>\n'+
+'<div id="host"><div id="box"><img id="planImg" src="'+dataUrl+'" alt="plan">'+
+'<canvas id="ov"></canvas><div id="sl"></div></div></div>\n'+
+'<div id="lg">'+
+'<span class="lg"><i style="background:#E1504B"></i>שגוי</span>'+
+'<span class="lg"><i style="background:#E38B00"></i>תיקון קל</span>'+
+'<span class="lg"><i style="background:#0000FF"></i>מידע</span>'+
+'<span class="lg"><i style="background:#7C3AED"></i>חשמל</span>'+
+'<span class="lg"><i style="background:#0EA5E9"></i>תקשורת</span>'+
+'<span class="lg"><i style="background:#16A34A"></i>תנועה</span>'+
+'<span class="lg"><i style="background:#D6009A"></i>מידות</span></div>\n</div>\n'+
+'<aside id="panel"><div id="tiles"></div><div id="tabs"></div><div id="body"></div></aside>\n'+
+'</div>\n<div id="print"></div>\n<div id="toast"></div>\n'+
+'<script type="application/json" id="stateJSON">'+JSON.stringify(st).replace(/</g,'\\u003c')+'<\/script>\n'+
+'<script>'+js+'<\/script>\n</body>\n</html>';
+
+  dl(title+'-review.html', html, 'text/html');
+  toast('Export נוצר — ניתן לערוך ולשמור מחדש');
+}
+</script>
+
+<script type="text/plain" id="exportCSS">
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--black:#1B1B1B;--accent:#CFFF04;--fail:#E1504B;--warn:#E38B00;--info:#0000FF;--ok:#16A34A;
+--gray:#F4F4F4;--border:#D8D8D8;--soft:#8A8A8A}
+html,body{height:100%}
+body{font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:13px;line-height:1.45;color:#1B1B1B;background:#fff;overflow:hidden}
+button{font-family:inherit;border-radius:0;cursor:pointer}
+header{background:#1B1B1B;color:#fff;height:46px;display:flex;align-items:center;gap:16px;padding:0 16px}
+header .brand{font-size:15px;font-weight:300}
+header .tool{font-size:9px;letter-spacing:.22em;text-transform:uppercase;opacity:.45}
+header .meta{font-size:11px;opacity:.6;margin-inline-start:auto}
+.hb{background:none;border:1px solid rgba(255,255,255,.28);color:#fff;font-size:10px;letter-spacing:.1em;
+text-transform:uppercase;padding:6px 12px}
+.hb:hover{background:rgba(255,255,255,.12)}
+.abar{height:3px;background:#CFFF04}
+#app{display:flex;height:calc(100vh - 49px)}
+#stage{flex:1;display:flex;flex-direction:column;min-width:0;background:#F4F4F4}
+#sbar{height:36px;background:#fff;border-bottom:1px solid #D8D8D8;display:flex;align-items:center;gap:4px;padding:0 10px}
+.tb{background:none;border:1px solid transparent;font-size:11px;padding:5px 9px}
+.tb:hover{background:#F4F4F4}.tb.on{background:#1B1B1B;color:#fff}
+.zl{font-size:10px;opacity:.5;min-width:38px;text-align:center}
+#host{flex:1;overflow:auto;display:flex;align-items:center;justify-content:center;padding:12px}
+#box{position:relative;flex:0 0 auto;background:#fff;box-shadow:0 0 0 1px #D8D8D8}
+#box img{display:block;width:100%;height:100%}
+#ov{position:absolute;inset:0}
+#sl{position:absolute;inset:0}
+#lg{background:#fff;border-top:1px solid #D8D8D8;display:flex;gap:14px;padding:6px 12px;font-size:10px}
+.lg{display:inline-flex;align-items:center;gap:5px;opacity:.75}
+.lg i{width:9px;height:9px;display:inline-block}
+#panel{width:400px;flex:0 0 400px;border-inline-end:1px solid #D8D8D8;display:flex;flex-direction:column;min-height:0}
+#tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:#D8D8D8}
+.tile{background:#fff;padding:8px 9px}
+.tile .n{font-size:19px;font-weight:300;line-height:1.05}
+.tile .l{font-size:8px;letter-spacing:.1em;text-transform:uppercase;opacity:.45;margin-top:2px}
+#tabs{display:flex;border-bottom:1px solid #1B1B1B}
+.tab{flex:1;background:none;border:none;padding:10px 6px;font-size:10px;opacity:.5;border-bottom:2px solid transparent}
+.tab.on{opacity:1;font-weight:500;border-bottom-color:#CFFF04;background:#F4F4F4}
+#body{flex:1;overflow-y:auto;padding:12px}
+.gt{font-size:9px;letter-spacing:.18em;text-transform:uppercase;opacity:.4;margin:16px 0 7px}
+.gt:first-child{margin-top:0}
+.card{border:1px solid #D8D8D8;border-inline-start:3px solid #8A8A8A;padding:9px 11px;margin-bottom:7px;cursor:pointer}
+.card:hover{background:#F4F4F4}
+.card.sel{background:rgba(207,255,4,.16);border-color:#1B1B1B}
+.card.f{border-inline-start-color:#E1504B}.card.w{border-inline-start-color:#E38B00}
+.card.i{border-inline-start-color:#0000FF}.card.o{border-inline-start-color:#16A34A}
+.ch{display:flex;align-items:center;gap:7px;margin-bottom:3px}
+.num{min-width:19px;height:19px;padding:0 4px;color:#fff;font-size:10px;font-weight:600;
+display:inline-flex;align-items:center;justify-content:center;background:#8A8A8A}
+.num.f{background:#E1504B}.num.w{background:#E38B00}.num.i{background:#0000FF}.num.o{background:#16A34A}
+.ct{font-size:12px;font-weight:500;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cs{font-size:9px;opacity:.5}
+.cb{font-size:11px;font-weight:300;opacity:.85;line-height:1.5}
+.cb[contenteditable=true]:focus{outline:1px solid #CFFF04;background:#fff}
+.cact{display:flex;gap:5px;margin-top:6px}
+.xb{font-size:9px;padding:3px 7px;border:1px solid #D8D8D8;background:#fff;opacity:.7}
+.xb:hover{opacity:1;border-color:#1B1B1B}
+.empty{font-size:12px;opacity:.4;padding:18px 0;font-weight:300}
+.iron{border:1px solid #D8D8D8;padding:10px 11px;margin-bottom:8px}
+.iron.f{border-inline-start:3px solid #E1504B}.iron.w{border-inline-start:3px solid #E38B00}
+.iron.o{border-inline-start:3px solid #16A34A}
+.ih{display:flex;align-items:center;gap:8px;margin-bottom:4px}
+.it{font-size:12px;font-weight:500;flex:1}
+.chip{font-size:9px;padding:2px 7px;color:#fff}
+.chip.f{background:#E1504B}.chip.w{background:#E38B00}.chip.o{background:#16A34A}.chip.n{background:#8A8A8A}
+.ib{font-size:11px;font-weight:300;opacity:.75;line-height:1.5}
+table.pg{width:100%;border-collapse:collapse;font-size:11px}
+table.pg th{font-size:8px;letter-spacing:.1em;text-transform:uppercase;opacity:.45;font-weight:400;
+text-align:right;padding:6px 5px;border-bottom:1px solid #1B1B1B}
+table.pg td{padding:6px 5px;border-bottom:1px solid #D8D8D8;font-weight:300}
+table.pg td.fn{font-weight:400}
+table.pg tr.f{background:rgba(225,80,75,.09)}table.pg tr.w{background:rgba(227,139,0,.10)}
+table.pg tr.o{background:rgba(22,163,74,.07)}table.pg tr.n td{opacity:.4}
+.sym{position:absolute;transform:translate(-50%,-50%);cursor:move;z-index:5;display:flex;align-items:center;touch-action:none}
+.sym .sbx{width:24px;height:24px;color:#fff;font-size:9px;font-weight:700;display:flex;
+align-items:center;justify-content:center;box-shadow:0 0 0 1.5px #fff}
+.sym .del{position:absolute;top:-8px;inset-inline-end:-8px;width:15px;height:15px;background:#1B1B1B;
+color:#fff;font-size:10px;line-height:15px;text-align:center;display:none}
+.sym:hover .del{display:block}
+.tri{display:inline-flex;border:1px solid #D8D8D8}
+.tri button{font-size:9px;padding:3px 8px;background:#fff;border:none}
+.tri button.a-ok{background:#16A34A;color:#fff}.tri button.a-fail{background:#E1504B;color:#fff}
+.tri button.a-na{background:#8A8A8A;color:#fff}
+#toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:#1B1B1B;color:#CFFF04;
+font-size:11px;padding:9px 18px;opacity:0;transition:opacity .2s;pointer-events:none;z-index:99}
+#toast.on{opacity:1}
+#print{display:none}
+@media print{
+  body{overflow:visible;height:auto}
+  header,#sbar,#panel,#lg,.abar{display:none!important}
+  #app{display:block;height:auto}#stage{background:#fff}
+  #host{overflow:visible;padding:0;display:block}
+  #box{width:100%!important;height:auto!important;box-shadow:none}
+  #print{display:block;padding:18px 0;page-break-before:always}
+  #print h3{font-size:12px;letter-spacing:.14em;text-transform:uppercase;font-weight:400;
+  margin:20px 0 8px;padding-bottom:5px;border-bottom:1px solid #1B1B1B}
+  #print .pi{display:flex;gap:12px;padding:7px 0;border-bottom:1px solid #E5E5E5;
+  font-size:12px;page-break-inside:avoid}
+  #print .pn{flex:0 0 22px;height:22px;display:flex;align-items:center;justify-content:center;
+  font-size:11px;font-weight:600;color:#fff}
+  #print .pr{flex:0 0 170px;font-weight:400}
+  #print .pr small{display:block;opacity:.55;font-size:10px}
+  #print .pw{flex:1;font-weight:300}
+}
+</script>
+<script type="text/plain" id="exportJS">
+var S = JSON.parse(document.getElementById('stateJSON').textContent);
+var SD = S.symdefs, ZOOM = 1, SEL = null, TAB = 'notes', TOOL = null;
+var LAY = { notes:true, syms:true, dims:true };
+var CLR = { f:'#E1504B', w:'#E38B00', i:'#0000FF', o:'#16A34A' };
+var Q = function(s){ return document.querySelector(s); };
+function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g, function(c){
+  return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
+function toast(m){ var t=Q('#toast'); t.textContent=m; t.classList.add('on');
+  clearTimeout(t._x); t._x=setTimeout(function(){t.classList.remove('on');},2000); }
+
+var IMG = Q('#planImg');
+function fit(){
+  var h=Q('#host'), aw=Math.max(60,h.clientWidth-24), ah=Math.max(60,h.clientHeight-24);
+  var ar=S.imgW/S.imgH, w=aw, hh=w/ar;
+  if(hh>ah){ hh=ah; w=hh*ar; }
+  return { w:w*ZOOM, h:hh*ZOOM };
+}
+function layout(){
+  var f=fit(), box=Q('#box'), ov=Q('#ov');
+  box.style.width=f.w+'px'; box.style.height=f.h+'px';
+  var dpr=Math.min(2, window.devicePixelRatio||1);
+  ov.width=Math.round(f.w*dpr); ov.height=Math.round(f.h*dpr);
+  ov.style.width=f.w+'px'; ov.style.height=f.h+'px';
+  Q('#zl').textContent=Math.round(ZOOM*100)+'%';
+  draw(); syms();
+}
+function draw(){
+  var f=fit(), ov=Q('#ov'), c=ov.getContext('2d');
+  var dpr=Math.min(2, window.devicePixelRatio||1);
+  c.setTransform(dpr,0,0,dpr,0,0); c.clearRect(0,0,f.w,f.h);
+  MK=[];
+  if(LAY.dims) (S.dims||[]).forEach(function(d){
+    var x1=d.x1*f.w, y1=d.y1*f.h, x2=d.x2*f.w, y2=d.y2*f.h;
+    var col=d.calib?'#0000FF':'#D6009A';
+    c.strokeStyle=col; c.lineWidth=1.6;
+    c.beginPath(); c.moveTo(x1,y1); c.lineTo(x2,y2); c.stroke();
+    var a=Math.atan2(y2-y1,x2-x1);
+    [[x1,y1],[x2,y2]].forEach(function(p){
+      c.beginPath();
+      c.moveTo(p[0]-Math.sin(a)*7, p[1]+Math.cos(a)*7);
+      c.lineTo(p[0]+Math.sin(a)*7, p[1]-Math.cos(a)*7); c.stroke();
+    });
+    var lb=d.label||'—', mx=(x1+x2)/2, my=(y1+y2)/2;
+    c.font='600 11px Helvetica,Arial'; c.textAlign='center'; c.textBaseline='middle';
+    var tw=c.measureText(lb).width+9;
+    c.fillStyle='#fff'; c.fillRect(mx-tw/2,my-8,tw,16);
+    c.strokeStyle=col; c.lineWidth=1.2; c.strokeRect(mx-tw/2,my-8,tw,16);
+    c.fillStyle=col; c.fillText(lb,mx,my+0.5);
+  });
+  if(LAY.notes) S.notes.forEach(function(n){
+    if(n.nx==null) return;
+    var x=n.nx*f.w, y=n.ny*f.h, Sz=Math.max(18,Math.min(26,f.w/48));
+    var col=CLR[n.lv]||'#8A8A8A', bx=x+Sz*0.85, by=y-Sz*0.85-Sz;
+    c.strokeStyle=col; c.lineWidth=1.6;
+    c.beginPath(); c.moveTo(x,y); c.lineTo(bx,by+Sz); c.stroke();
+    c.fillStyle='#fff'; c.fillRect(bx-1.5,by-1.5,Sz+3,Sz+3);
+    c.fillStyle=col; c.fillRect(bx,by,Sz,Sz);
+    c.fillStyle='#fff'; c.font='700 '+Math.round(Sz*0.52)+'px Helvetica,Arial';
+    c.textAlign='center'; c.textBaseline='middle';
+    c.fillText(n.num, bx+Sz/2, by+Sz/2+0.5);
+    c.fillStyle=col; c.beginPath(); c.arc(x,y,3.2,0,6.284); c.fill();
+    c.strokeStyle='#fff'; c.lineWidth=1; c.stroke();
+    if(SEL===n.id){ c.strokeStyle='#CFFF04'; c.lineWidth=2.5; c.strokeRect(bx-3,by-3,Sz+6,Sz+6); }
+    MK.push({id:n.id,bx:bx,by:by,S:Sz});
+  });
+}
+var MK=[];
+function syms(){
+  var L=Q('#sl'); L.style.display=LAY.syms?'block':'none'; L.innerHTML='';
+  (S.symbols||[]).forEach(function(s){
+    var d=SD[s.k]; if(!d) return;
+    var el=document.createElement('div');
+    el.className='sym'; el.style.left=(s.nx*100)+'%'; el.style.top=(s.ny*100)+'%';
+    el.innerHTML='<div class="sbx" style="background:'+d.c+'">'+esc(d.t)+'</div><div class="del">×</div>';
+    el.querySelector('.del').onclick=function(e){
+      e.stopPropagation();
+      S.symbols=S.symbols.filter(function(x){return x.id!==s.id;}); render();
+    };
+    el.onpointerdown=function(e){
+      if(e.target.className==='del') return;
+      e.preventDefault(); el.setPointerCapture(e.pointerId);
+      var b=Q('#box').getBoundingClientRect();
+      function mv(ev){
+        s.nx=Math.min(1,Math.max(0,(ev.clientX-b.left)/b.width));
+        s.ny=Math.min(1,Math.max(0,(ev.clientY-b.top)/b.height));
+        el.style.left=(s.nx*100)+'%'; el.style.top=(s.ny*100)+'%';
+      }
+      function up(){ el.removeEventListener('pointermove',mv); el.removeEventListener('pointerup',up); }
+      el.addEventListener('pointermove',mv); el.addEventListener('pointerup',up);
+    };
+    L.appendChild(el);
+  });
+}
+Q('#box').addEventListener('click', function(e){
+  if(e.target.closest('.sym')) return;
+  var b=Q('#box').getBoundingClientRect();
+  var nx=(e.clientX-b.left)/b.width, ny=(e.clientY-b.top)/b.height;
+  if(TOOL && TOOL.indexOf('sym:')===0){
+    S.symbols.push({id:'s'+Date.now(), k:TOOL.slice(4), nx:nx, ny:ny});
+    TOOL=null; Q('#box').style.cursor='default'; render(); return;
+  }
+  var f=fit(), mx=nx*f.w, my=ny*f.h;
+  var hit=MK.filter(function(m){
+    return mx>=m.bx-5&&mx<=m.bx+m.S+5&&my>=m.by-5&&my<=m.by+m.S+5; })[0];
+  SEL=hit?hit.id:null;
+  if(hit){ TAB='notes'; render();
+    var el=document.getElementById('c-'+hit.id);
+    if(el) el.scrollIntoView({behavior:'smooth',block:'center'});
+  } else draw();
+});
+function zoom(z){ ZOOM=Math.min(6,Math.max(0.3,z)); layout(); }
+function lay(k,btn){ LAY[k]=!LAY[k]; document.getElementById(btn).classList.toggle('on',LAY[k]); layout(); }
+
+/* ---------- panel ---------- */
+var TABS=[['iron','ברזל'],['notes','הערות'],['prog','פרוגרמה'],['open','לא נראה'],['sym','סימבולים']];
+function render(){
+  var f=S.notes.filter(function(n){return n.lv==='f';}).length;
+  var w=S.notes.filter(function(n){return n.lv==='w';}).length;
+  var io=(S.iron||[]).filter(function(r){return r.level==='o';}).length;
+  Q('#tiles').innerHTML=
+    tile(f,'שגוי',f?'#E1504B':'')+tile(w,'תיקון קל',w?'#E38B00':'')+
+    tile(io+'/4','כללי ברזל',io===4?'#16A34A':'#E1504B')+tile(S.stats.tags,'תגיות','')+
+    tile(S.stats.ws||'—','עמדות','')+tile(S.stats.seats||'—','מקומות','')+
+    tile(S.stats.area||'—','מ״ר','')+tile((S.symbols||[]).length,'סימבולים','');
+  Q('#tabs').innerHTML=TABS.map(function(t){
+    return '<button class="tab '+(TAB===t[0]?'on':'')+'" onclick="setTab(\''+t[0]+'\')">'+t[1]+'</button>';
+  }).join('');
+  var B=Q('#body');
+  if(TAB==='notes'){ B.innerHTML=vNotes(); bind(); }
+  else if(TAB==='iron') B.innerHTML=vIron();
+  else if(TAB==='prog') B.innerHTML=vProg();
+  else if(TAB==='open') B.innerHTML=vOpen();
+  else B.innerHTML=vSym();
+  buildPrint(); draw(); syms();
+}
+function tile(n,l,c){
+  return '<div class="tile"><div class="n"'+(c?' style="color:'+c+'"':'')+'>'+n+'</div><div class="l">'+l+'</div></div>';
+}
+function setTab(k){ TAB=k; render(); }
+function vNotes(){
+  if(!S.notes.length) return '<div class="empty">אין הערות.</div>';
+  var g=[['f','שגוי — לתיקון'],['w','תיקון קל'],['i','מידע / ידני'],['o','תקין']], h='';
+  g.forEach(function(x){
+    var L=S.notes.filter(function(n){return n.lv===x[0];});
+    if(!L.length) return;
+    h+='<div class="gt">'+x[1]+' · '+L.length+'</div>';
+    h+=L.map(function(n){
+      return '<div class="card '+n.lv+(SEL===n.id?' sel':'')+'" id="c-'+n.id+'" data-id="'+n.id+'">'+
+        '<div class="ch"><span class="num '+n.lv+'">'+n.num+'</span>'+
+        '<span class="ct">'+esc(n.title)+'</span><span class="cs">'+esc(n.sub)+'</span></div>'+
+        '<div class="cb" contenteditable="true" data-id="'+n.id+'">'+esc(n.body)+'</div>'+
+        '<div class="cact"><button class="xb" data-a="lv" data-id="'+n.id+'">שנה דרגה</button>'+
+        (n.nx!=null?'<button class="xb" data-a="go" data-id="'+n.id+'">הצג</button>':'')+
+        '<button class="xb" data-a="del" data-id="'+n.id+'">מחק</button></div></div>';
+    }).join('');
+  });
+  return h;
+}
+function bind(){
+  Q('#body').querySelectorAll('.cb').forEach(function(el){
+    el.onblur=function(){
+      var n=S.notes.filter(function(x){return x.id===el.dataset.id;})[0];
+      if(n) n.body=el.textContent.trim();
+    };
+  });
+  Q('#body').querySelectorAll('.xb[data-a]').forEach(function(b){
+    b.onclick=function(e){
+      e.stopPropagation();
+      var n=S.notes.filter(function(x){return x.id===b.dataset.id;})[0]; if(!n) return;
+      if(b.dataset.a==='lv'){ var o=['f','w','i','o']; n.lv=o[(o.indexOf(n.lv)+1)%4]; renum(); }
+      if(b.dataset.a==='go'){ SEL=n.id; }
+      if(b.dataset.a==='del'){ S.notes=S.notes.filter(function(x){return x.id!==n.id;}); renum(); }
+      render();
+    };
+  });
+}
+function renum(){
+  var o={f:0,w:1,i:2,o:3};
+  S.notes.sort(function(a,b){return o[a.lv]-o[b.lv];});
+  S.notes.forEach(function(n,i){ n.num=i+1; });
+}
+function vIron(){
+  return '<div class="gt">כללי ברזל</div>'+(S.iron||[]).map(function(r){
+    return '<div class="iron '+r.level+'"><div class="ih"><span class="chip '+
+      (r.level==='o'?'o':'f')+'">'+(r.level==='o'?'✓':'חסר')+'</span><span class="it">'+
+      esc(r.n)+'</span><span class="cs">'+esc(r.src)+'</span></div><div class="ib">'+esc(r.msg)+'</div></div>';
+  }).join('');
+}
+function vProg(){
+  var h='<div class="gt">'+(S.progTitle||'פרוגרמה')+'</div>';
+  h+='<table class="pg"><thead><tr><th>פונקציה</th><th>יעד</th><th>בתכנית</th><th>Δ</th></tr></thead><tbody>';
+  (S.prog||[]).forEach(function(r){
+    h+='<tr class="'+r.cls+'"><td class="fn">'+esc(r.fn)+'</td><td>'+esc(r.goal)+
+       '</td><td>'+esc(r.found)+'</td><td>'+esc(r.delta)+'</td></tr>';
+  });
+  return h+'</tbody></table>';
+}
+function vOpen(){
+  return '<div class="gt">מה שהתכנית לא מגלה</div>'+(S.openList||[]).map(function(c){
+    var cur=S.manual[c.id]||'na';
+    return '<div class="iron '+(cur==='ok'?'o':cur==='fail'?'f':'w')+'"><div class="ih">'+
+      '<span class="it">'+esc(c.n)+'</span><span class="tri">'+
+      '<button class="'+(cur==='ok'?'a-ok':'')+'" onclick="mset(\''+c.id+'\',\'ok\')">תקין</button>'+
+      '<button class="'+(cur==='fail'?'a-fail':'')+'" onclick="mset(\''+c.id+'\',\'fail\')">לא תקין</button>'+
+      '<button class="'+(cur==='na'?'a-na':'')+'" onclick="mset(\''+c.id+'\',\'na\')">פתוח</button>'+
+      '</span></div><div class="ib">'+esc(c.note||'')+'</div></div>';
+  }).join('');
+}
+function mset(id,v){ S.manual[id]=v; render(); }
+function vSym(){
+  var h='<div class="gt">הוסף סימבול — לחץ ואז לחץ על התכנית</div><div style="display:grid;grid-template-columns:repeat(2,1fr);gap:5px">';
+  Object.keys(SD).forEach(function(k){
+    var d=SD[k];
+    h+='<div class="card" style="border-inline-start-color:'+d.c+'" onclick="arm(\''+k+'\')">'+
+       '<div class="ch"><span class="num" style="background:'+d.c+'">'+esc(d.t)+
+       '</span><span class="ct" style="font-size:10px">'+esc(d.n)+'</span></div></div>';
+  });
+  h+='</div><div class="gt">על התכנית · '+(S.symbols||[]).length+'</div>';
+  h+=(S.symbols||[]).length ? S.symbols.map(function(s){
+    var d=SD[s.k];
+    return '<div class="card"><div class="ch"><span class="num" style="background:'+d.c+'">'+
+      esc(d.t)+'</span><span class="ct">'+esc(d.n)+'</span></div></div>';
+  }).join('') : '<div class="empty">אין סימבולים.</div>';
+  return h;
+}
+function arm(k){ TOOL='sym:'+k; Q('#box').style.cursor='crosshair'; toast('לחץ על התכנית'); }
+
+/* ---------- print sheet ---------- */
+function buildPrint(){
+  var g=[['f','שגוי — לתיקון'],['w','תיקון קל'],['i','מידע / ידני']], h='';
+  h+='<h3>'+esc(S.title)+' · '+esc(S.date)+'</h3>';
+  g.forEach(function(x){
+    var L=S.notes.filter(function(n){return n.lv===x[0];});
+    if(!L.length) return;
+    h+='<h3>'+x[1]+'</h3>';
+    h+=L.map(function(n){
+      return '<div class="pi"><div class="pn" style="background:'+CLR[n.lv]+'">'+n.num+
+        '</div><div class="pr">'+esc(n.title)+'<small>'+esc(n.sub)+'</small></div>'+
+        '<div class="pw">'+esc(n.body)+'</div></div>';
+    }).join('');
+  });
+  var open=(S.openList||[]).filter(function(c){ return (S.manual[c.id]||'na')!=='ok'; });
+  if(open.length){
+    h+='<h3>פריטים פתוחים לאימות</h3>';
+    h+=open.map(function(c){
+      return '<div class="pi"><div class="pn" style="background:#8A8A8A">○</div>'+
+        '<div class="pr">'+esc(c.n)+'</div><div class="pw">'+esc(c.note||'')+'</div></div>';
+    }).join('');
+  }
+  h+='<div style="margin-top:26px;padding-top:12px;border-top:1px solid #1B1B1B;font-size:10px;opacity:.6;line-height:1.7">'+
+     'הופק ע״י RDA Test Fit Checker מתוך תגיות התוכנית ובדיקה ידנית. אינו מחליף בדיקת נגישות, בטיחות, מילוט או אישור יועצים. Roy David Architects · roydavid.co</div>';
+  Q('#print').innerHTML=h;
+}
+
+/* ---------- save updated copy ---------- */
+function saveCopy(){
+  document.getElementById('stateJSON').textContent=JSON.stringify(S);
+  Q('#tiles').innerHTML=''; Q('#tabs').innerHTML=''; Q('#body').innerHTML='';
+  Q('#sl').innerHTML=''; Q('#print').innerHTML='';
+  var html='<!DOCTYPE html>\n'+document.documentElement.outerHTML;
+  var b=new Blob([html],{type:'text/html;charset=utf-8'});
+  var a=document.createElement('a');
+  a.href=URL.createObjectURL(b);
+  a.download=(S.title||'testfit')+'-review.html';
+  a.click();
+  setTimeout(function(){ URL.revokeObjectURL(a.href); },4000);
+  render();
+  toast('עותק מעודכן נשמר');
+}
+function saveData(){
+  var out={ meta:{title:S.title,date:S.date}, notes:S.notes, symbols:S.symbols,
+    dims:S.dims, manual:S.manual, program:S.prog };
+  var b=new Blob([JSON.stringify(out,null,2)],{type:'application/json;charset=utf-8'});
+  var a=document.createElement('a');
+  a.href=URL.createObjectURL(b); a.download=(S.title||'testfit')+'-data.json'; a.click();
+}
+window.addEventListener('resize', function(){ clearTimeout(window._rt); window._rt=setTimeout(layout,120); });
+document.addEventListener('keydown', function(e){ if(e.key==='Escape'){ TOOL=null; Q('#box').style.cursor='default'; } });
+if(IMG.complete) { layout(); render(); }
+else IMG.onload=function(){ layout(); render(); };
+</script>
+
+</body>
+</html>

@@ -1,0 +1,2 @@
+* text=auto eol=lf
+lib/*.js -text -diff

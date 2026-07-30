@@ -1,0 +1,18 @@
+# דאטה של לקוחות — אסור בריפו
+testfit-assets/
+plans/
+*.pdf
+*.dwg
+*.dxf
+*.rvt
+*.rfa
+
+# תוצרי עבודה
+*-review.json
+*-data.json
+*-export.html
+
+# מקומי
+.DS_Store
+Thumbs.db
+.claude/
