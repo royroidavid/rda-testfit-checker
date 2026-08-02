@@ -43,6 +43,22 @@
   .hb.on{background:var(--accent); color:var(--black); border-color:var(--accent);}
   .accent-bar{height:3px; background:var(--accent); flex:0 0 auto;}
 
+  /* export dropdown */
+  .hmenu{position:relative;}
+  .hdrop{
+    display:none; position:absolute; top:calc(100% + 4px); inset-inline-start:0; z-index:150;
+    background:var(--white); border:1px solid var(--black); min-width:230px;
+    box-shadow:0 6px 22px rgba(0,0,0,.22);
+  }
+  .hmenu.open .hdrop{display:block;}
+  .hdrop button{
+    display:block; width:100%; text-align:start; background:none; border:none; cursor:pointer;
+    padding:9px 13px; font-size:11.5px; color:var(--black); border-bottom:1px solid var(--border);
+  }
+  .hdrop button:last-child{border-bottom:none;}
+  .hdrop button:hover{background:var(--accent);}
+  .hdrop button small{display:block; font-size:9px; opacity:.5; margin-top:2px; letter-spacing:.04em;}
+
   /* ---------- landing ---------- */
   #uploadView{
     height:calc(100vh - 49px); overflow:auto; display:flex;
@@ -295,13 +311,105 @@
   .mini.pri{background:var(--black); color:var(--white); border-color:var(--black);}
   .mini.pri:hover{background:var(--accent); color:var(--black);}
 
+  /* project-details form */
+  .frm{padding:16px; display:grid; grid-template-columns:1fr 1fr; gap:12px 14px;}
+  .frm label{display:block; font-size:9px; letter-spacing:.16em; text-transform:uppercase; opacity:.45; margin-bottom:4px;}
+  .frm input{
+    width:100%; border:1px solid var(--border); padding:8px 10px; font-size:13px;
+    background:var(--white); color:var(--black);
+  }
+  .frm input:focus{outline:none; border-color:var(--black); box-shadow:inset 0 -2px 0 var(--accent);}
+  .frm .wide{grid-column:1 / -1;}
+
   #toast{
     position:fixed; bottom:18px; left:50%; transform:translateX(-50%);
     background:var(--black); color:var(--accent); font-size:11px; letter-spacing:.06em;
     padding:9px 18px; z-index:99; opacity:0; pointer-events:none; transition:opacity .2s;
   }
   #toast.on{opacity:1;}
-  @media print{ body{overflow:visible;} header,#stagebar,#panel,#legend{display:none !important;} }
+
+  /* ---------- printed report ---------- */
+  #report{display:none;}
+  body.printing{overflow:auto; background:var(--gray);}
+  body.printing>header, body.printing>.accent-bar,
+  body.printing #uploadView, body.printing #workView, body.printing #toast{display:none !important;}
+  body.printing #report{display:block;}
+  .sheet{
+    width:297mm; height:210mm; padding:11mm 13mm 9mm; box-sizing:border-box;
+    background:var(--white); color:var(--black); position:relative; overflow:hidden;
+    display:flex; flex-direction:column; margin:0 auto 8mm; box-shadow:0 0 0 1px var(--border);
+    page-break-after:always; break-after:page;
+  }
+  .sheet:last-child{page-break-after:auto; break-after:auto;}
+  .sh-head{
+    flex:0 0 auto; display:flex; align-items:flex-end; justify-content:space-between; gap:12px;
+    border-bottom:1px solid var(--black); padding-bottom:4mm;
+  }
+  .sh-brand{font-size:12px; font-weight:300; letter-spacing:.02em;}
+  .sh-brand span{font-size:8px; letter-spacing:.22em; text-transform:uppercase; opacity:.45; margin-inline-start:8px;}
+  .sh-proj{font-size:10px; opacity:.6; text-align:end; line-height:1.5;}
+  .sh-title{
+    flex:0 0 auto; font-size:17px; font-weight:300; margin:5mm 0 3mm; letter-spacing:-.01em;
+    display:flex; align-items:baseline; gap:10px;
+  }
+  .sh-title em{font-style:normal; background:var(--accent); padding:0 7px;}
+  .sh-title small{font-size:9px; letter-spacing:.16em; text-transform:uppercase; opacity:.4;}
+  .sh-body{flex:1 1 auto; min-height:0; overflow:hidden;}
+  .sh-foot{
+    flex:0 0 auto; border-top:1px solid var(--border); padding-top:2.5mm; margin-top:3mm;
+    display:flex; justify-content:space-between; align-items:center; gap:12px;
+    font-size:8.5px; opacity:.55; line-height:1.5;
+  }
+  .sh-foot b{font-weight:500; opacity:.9;}
+
+  /* cover */
+  .cov{flex:1; display:flex; flex-direction:column; justify-content:center;}
+  .cov .ck{font-size:9px; letter-spacing:.32em; text-transform:uppercase; opacity:.4; margin-bottom:6mm;}
+  .cov h1{font-size:44px; font-weight:300; line-height:1.06; letter-spacing:-.02em; margin-bottom:4mm;}
+  .cov .csub{font-size:15px; font-weight:300; opacity:.55; margin-bottom:9mm;}
+  .cov .csub em{font-style:normal; background:var(--accent); padding:0 8px; opacity:1;}
+  .covgrid{display:grid; grid-template-columns:repeat(4,1fr); gap:0 1px; background:var(--border); margin-bottom:7mm;}
+  .covgrid div{background:var(--white); padding:3mm 4mm;}
+  .covgrid .k{font-size:8px; letter-spacing:.14em; text-transform:uppercase; opacity:.4; margin-bottom:1.5mm;}
+  .covgrid .v{font-size:13px; font-weight:300;}
+  .covstat{display:grid; grid-template-columns:repeat(6,1fr); gap:1px; background:var(--border);}
+  .covstat div{background:var(--white); padding:3mm 4mm;}
+  .covstat .n{font-size:26px; font-weight:300; line-height:1;}
+  .covstat .l{font-size:8px; letter-spacing:.12em; text-transform:uppercase; opacity:.45; margin-top:1.5mm;}
+
+  /* plan sheet — the image flexes, the legend keeps its own strip */
+  .sh-body.plan{display:flex; flex-direction:column;}
+  .planwrap{flex:1 1 auto; min-height:0; display:flex; align-items:center; justify-content:center;}
+  .planwrap img{max-width:100%; max-height:100%; object-fit:contain; display:block;}
+  .rlg{flex:0 0 auto; display:flex; gap:14px; flex-wrap:wrap; font-size:8.5px; opacity:.7; margin-top:2mm;}
+  .rlg span{display:inline-flex; align-items:center; gap:4px;}
+  .rlg i{width:8px; height:8px; display:inline-block;}
+
+  /* report tables */
+  table.rt{width:100%; border-collapse:collapse; font-size:10px;}
+  table.rt th{
+    font-size:8px; letter-spacing:.12em; text-transform:uppercase; opacity:.45; font-weight:400;
+    text-align:right; padding:2.5mm 2mm; border-bottom:1px solid var(--black); white-space:nowrap;
+  }
+  table.rt td{padding:2.2mm 2mm; border-bottom:1px solid var(--border); font-weight:300; vertical-align:top; line-height:1.5;}
+  table.rt td.b{font-weight:400;}
+  table.rt tr.f td{background:rgba(225,80,75,.07);}
+  table.rt tr.w td{background:rgba(227,139,0,.08);}
+  table.rt tr.o td{background:rgba(22,163,74,.06);}
+  table.rt tr.n td{opacity:.45;}
+  .rnum{
+    display:inline-flex; align-items:center; justify-content:center; min-width:16px; height:16px;
+    padding:0 4px; color:#fff; font-size:9px; font-weight:600;
+  }
+  .rchip{display:inline-block; padding:1px 6px; color:#fff; font-size:8px; letter-spacing:.06em; white-space:nowrap;}
+  .rempty{font-size:11px; opacity:.4; padding:6mm 0; font-weight:300;}
+
+  @media print{
+    @page{ size:A4 landscape; margin:0; }
+    html,body{height:auto;}
+    body.printing{background:var(--white); overflow:visible;}
+    .sheet{margin:0; box-shadow:none; break-inside:avoid;}
+  }
 </style>
 </head>
 <body>
@@ -312,8 +420,16 @@
   <div class="fname" id="fname"></div>
   <div class="hbtns" id="hbtns" style="display:none">
     <button class="hb" id="btnPanel" onclick="togglePanel()">פאנל</button>
-    <button class="hb" onclick="exportHtml()">Export HTML</button>
-    <button class="hb" onclick="saveJson()">שמור JSON</button>
+    <button class="hb" onclick="projectModal()">פרטי פרויקט</button>
+    <div class="hmenu" id="hmenu">
+      <button class="hb" onclick="toggleExportMenu(event)">Export ▾</button>
+      <div class="hdrop">
+        <button onclick="exportPdf()">PDF — דוח מודפס<small>כותרת פרויקט · תכנית · טבלאות · מספור עמודים</small></button>
+        <button onclick="exportXlsx()">Excel — טבלאות<small>.xlsx · הערות · פרוגרמה · חדרים · מדידות</small></button>
+        <button onclick="exportHtml()">HTML — דוח אינטראקטיבי<small>עצמאי, ניתן לעריכה אצל הלקוח</small></button>
+        <button onclick="saveJson()">JSON — שמירת מצב<small>לטעינה חוזרת בפלטפורמה</small></button>
+      </div>
+    </div>
     <button class="hb" onclick="location.reload()">תוכנית חדשה</button>
   </div>
 </header>
@@ -328,19 +444,13 @@
 
     <div class="dropzone" id="dropzone" onclick="document.getElementById('fileInput').click()">
       <div class="dz-big">גרור תוכנית לכאן</div>
-      <div class="dz-small">או לחץ לבחירת קובץ</div>
+      <div class="dz-small">PDF מיוצא מ-Revit · או לחץ לבחירת קובץ</div>
     </div>
-    <input type="file" id="fileInput" accept=".pdf,.png,.jpg,.jpeg,.json,.dwg,.dxf,.rvt,.rfa">
+    <input type="file" id="fileInput" accept=".pdf,.rvt,.rfa,.png,.jpg,.jpeg">
     <input type="file" id="jsonInput" accept=".json,application/json">
 
     <div class="fmt">
-      <span class="pri">PDF</span><span>PNG</span><span>JPG</span>
-      <span>JSON</span><span>DWG</span><span>RVT</span>
-    </div>
-
-    <div class="alt">
-      <button onclick="document.getElementById('jsonInput').click()">טען פרוגרמה + QA</button>·
-      <button onclick="showTemplate()">הצג תבנית JSON</button>
+      <span class="pri">PDF</span><span>RVT — בקרוב</span>
     </div>
 
     <div class="loading" id="loading">מנתח תוכנית…</div>
@@ -361,10 +471,14 @@
       <button class="tb on" id="lyNotes" onclick="toggleLayer('notes')">הערות</button>
       <button class="tb on" id="lySyms"  onclick="toggleLayer('syms')">סימבולים</button>
       <button class="tb on" id="lyDims"  onclick="toggleLayer('dims')">מידות</button>
+      <button class="tb on" id="lyAreas" onclick="toggleLayer('areas')">שטחים</button>
       <span class="tbsep"></span>
       <button class="tb" id="tDim"   onclick="armTool('dim')">קו מידה</button>
+      <button class="tb" id="tArea"  onclick="armTool('area')">מדידת שטח</button>
       <button class="tb" id="tCalib" onclick="armTool('calib')">כיול</button>
-      <button class="tb" id="tPin"   onclick="armTool('pin')">הערה</button>
+      <span class="tbsep"></span>
+      <button class="tb" id="tPin"   onclick="armTool('pin')">הערה ממוספרת</button>
+      <button class="tb" id="tCloud" onclick="armTool('cloud')">ענן הערה</button>
       <span class="tbsep"></span>
       <button class="tb" onclick="clearMarkup()">נקה סימונים</button>
       <span class="zlabel" id="toolHint" style="min-width:auto; opacity:.6"></span>
@@ -383,7 +497,8 @@
       <span class="lg"><i style="background:#7C3AED"></i>חשמל</span>
       <span class="lg"><i style="background:#0EA5E9"></i>תקשורת</span>
       <span class="lg"><i style="background:#16A34A"></i>תנועה</span>
-      <span class="lg"><i style="background:#D6009A"></i>מידות</span>
+      <span class="lg"><i style="background:#D6009A"></i>קווי מידה</span>
+      <span class="lg"><i style="background:#0000FF"></i>מדידת שטח</span>
       <span class="lg" id="calibNote" style="opacity:.5"></span>
     </div>
   </div>
@@ -396,9 +511,14 @@
 </div>
 
 <div id="toast"></div>
+<div id="report"></div>
 
 <script>
-pdfjsLib.GlobalWorkerOptions.workerSrc = 'lib/pdf.worker.min.js';
+/* pdf.js is loaded from lib/ next to this file. If it is missing, fail loudly
+   on the page instead of throwing here — an uncaught error on this line kills
+   the whole script, and every button on the page goes dead with no explanation. */
+const PDFJS_OK = (typeof pdfjsLib !== 'undefined');
+if(PDFJS_OK) pdfjsLib.GlobalWorkerOptions.workerSrc = 'lib/pdf.worker.min.js';
 
 /* =====================================================================
    1. KNOWLEDGE BASE — office standards (fallback when no program JSON)
@@ -507,11 +627,11 @@ const TYPE_OPEN_ITEMS = {
    2. STATE
    ===================================================================== */
 const STATE = {
-  mode:'auto', fileName:'', meta:{}, rooms:[], notes:[], symbols:[], dims:[],
+  mode:'auto', fileName:'', meta:{}, rooms:[], notes:[], symbols:[], dims:[], areas:[],
   manual:{}, open:{}, program:null, calib:null, iron:{}, seq:1
 };
 let PDFPAGE=null, BASE=null, VP1=null, ZOOM=1, TOOL=null, SEL=null, PENDING=null;
-const LAYERS = { notes:true, syms:true, dims:true };
+const LAYERS = { notes:true, syms:true, dims:true, areas:true };
 const $ = s => document.querySelector(s);
 
 function toast(m){ const t=$('#toast'); t.textContent=m; t.classList.add('on'); clearTimeout(t._x); t._x=setTimeout(()=>t.classList.remove('on'),2200); }
@@ -869,7 +989,7 @@ function openItems(rooms){
    ===================================================================== */
 const LV={fail:'f',warn:'w',info:'i',ok:'o'};
 function buildNotes(rooms, fc){
-  const keep=STATE.notes.filter(n=>n.src==='custom');
+  const keep=STATE.notes.filter(n=>n.src==='custom'||n.src==='cloud');
   const edits={}; STATE.notes.forEach(n=>{ if(n.edited) edits[n.id]=n.body; });
   const out=[];
   rooms.forEach(r=>{
@@ -886,8 +1006,8 @@ function buildNotes(rooms, fc){
       body: edits['f'+i]||c.m, edited:!!edits['f'+i], nx:null, ny:null });
   });
   keep.forEach(n=>out.push(n));
-  const ord={f:0,w:1,i:2,o:3};
-  out.sort((a,b)=>(ord[a.lv]-ord[b.lv]) || (a.src==='custom'?1:0)-(b.src==='custom'?1:0));
+  const ord={f:0,w:1,i:2,o:3}, man=n=>(n.src==='custom'||n.src==='cloud')?1:0;
+  out.sort((a,b)=>(ord[a.lv]-ord[b.lv]) || man(a)-man(b));
   out.forEach((n,i)=>n.num=i+1);
   STATE.notes=out;
 }
@@ -931,53 +1051,164 @@ function layout(){
 }
 
 const CLR={f:'#E1504B',w:'#E38B00',i:'#0000FF',o:'#16A34A'};
+const DIM_CLR='#D6009A', AREA_CLR='#0000FF';
 let MARKERS=[];
 
-function drawOverlay(){
-  const ov=$('#ovl'), {w,h}=fitBox();
-  const dpr=Math.min(2, window.devicePixelRatio||1);
-  const c=ov.getContext('2d');
-  c.setTransform(dpr,0,0,dpr,0,0); c.clearRect(0,0,w,h);
-  MARKERS=[];
+function lvColor(lv){ return CLR[lv]||'#8A8A8A'; }
 
-  if(LAYERS.dims) drawDims(c,w,h);
-
-  if(LAYERS.notes){
-    STATE.notes.forEach(n=>{
-      if(n.nx==null) return;
-      const x=n.nx*w, y=n.ny*h, S=Math.max(18, Math.min(26, w/48));
-      const col=CLR[n.lv]||'#8A8A8A';
-      const bx=x+S*0.85, by=y-S*0.85-S;
-      c.strokeStyle=col; c.lineWidth=1.6;
-      c.beginPath(); c.moveTo(x,y); c.lineTo(bx,by+S); c.stroke();
-      c.fillStyle='#fff'; c.fillRect(bx-1.5,by-1.5,S+3,S+3);
-      c.fillStyle=col; c.fillRect(bx,by,S,S);
-      c.fillStyle='#fff'; c.font='700 '+Math.round(S*0.52)+'px Helvetica,Arial';
-      c.textAlign='center'; c.textBaseline='middle';
-      c.fillText(n.num, bx+S/2, by+S/2+0.5);
-      c.fillStyle=col; c.beginPath(); c.arc(x,y,3.2,0,6.284); c.fill();
-      c.strokeStyle='#fff'; c.lineWidth=1; c.stroke();
-      if(SEL===n.id){
-        c.strokeStyle='#CFFF04'; c.lineWidth=2.5; c.strokeRect(bx-3,by-3,S+6,S+6);
-        c.strokeStyle='#1B1B1B'; c.lineWidth=1; c.strokeRect(bx-4.5,by-4.5,S+9,S+9);
-      }
-      MARKERS.push({id:n.id,bx,by,S});
-    });
+/* ---- polygon helpers (all in normalised 0..1 space) ---- */
+function polyBounds(pts){
+  let x0=1,y0=1,x1=0,y1=0;
+  pts.forEach(p=>{ if(p.x<x0)x0=p.x; if(p.y<y0)y0=p.y; if(p.x>x1)x1=p.x; if(p.y>y1)y1=p.y; });
+  return {x0,y0,x1,y1};
+}
+/* signed — the sign gives the winding, the magnitude feeds the m² maths */
+function shoelace(pts){
+  let s=0;
+  for(let i=0;i<pts.length;i++){ const a=pts[i], b=pts[(i+1)%pts.length]; s+=a.x*b.y-b.x*a.y; }
+  return s/2;
+}
+function polyCentroid(pts){
+  const A=shoelace(pts);
+  if(Math.abs(A)<1e-9){ const b=polyBounds(pts); return {x:(b.x0+b.x1)/2, y:(b.y0+b.y1)/2}; }
+  let cx=0, cy=0;
+  for(let i=0;i<pts.length;i++){
+    const a=pts[i], b=pts[(i+1)%pts.length], f=a.x*b.y-b.x*a.y;
+    cx+=(a.x+b.x)*f; cy+=(a.y+b.y)*f;
   }
-  if(PENDING&&PENDING.x1!=null){
-    c.strokeStyle='#D6009A'; c.lineWidth=1.5; c.setLineDash([5,4]);
-    c.beginPath(); c.moveTo(PENDING.x1*w,PENDING.y1*h); c.lineTo(PENDING.mx*w,PENDING.my*h); c.stroke();
-    c.setLineDash([]);
+  return { x:cx/(6*A), y:cy/(6*A) };
+}
+function wrapLines(c, text, maxW, maxLines){
+  const words=String(text||'').split(/\s+/).filter(Boolean), out=[];
+  let line='';
+  words.forEach(wd=>{
+    const t=line?line+' '+wd:wd;
+    if(c.measureText(t).width>maxW && line){ out.push(line); line=wd; }
+    else line=t;
+  });
+  if(line) out.push(line);
+  if(out.length>maxLines){ const cut=out.slice(0,maxLines); cut[maxLines-1]+='…'; return cut; }
+  return out;
+}
+
+/* =====================================================================
+   ONE painter for both the live overlay and the flattened export image.
+   Every size scales off k, so a 2400px print composite reads like the
+   400px-wide screen version instead of collapsing to hairlines.
+   ===================================================================== */
+function paintMarkup(c, w, h, opt){
+  const o = opt||{};
+  const L = o.layers||LAYERS, sel = o.sel;
+  const k = Math.max(0.7, w/900);
+  const marks = [];
+  if(L.areas) paintAreas(c,w,h,k);
+  if(L.dims)  paintDims(c,w,h,k);
+  if(L.notes){
+    /* clouds first — the numbered pins must stay readable on top of them */
+    STATE.notes.forEach(n=>{ if(n.shape==='cloud'){ const m=paintCloud(c,w,h,k,n,sel); if(m) marks.push(m); } });
+    STATE.notes.forEach(n=>{ if(n.shape!=='cloud'){ const m=paintPin(c,w,h,k,n,sel); if(m) marks.push(m); } });
+  }
+  return marks;
+}
+
+function paintBadge(c,k,n,bx,by,S,col,sel){
+  c.fillStyle='#fff'; c.fillRect(bx-1.5*k,by-1.5*k,S+3*k,S+3*k);
+  c.fillStyle=col; c.fillRect(bx,by,S,S);
+  c.fillStyle='#fff'; c.font='700 '+(S*0.52).toFixed(1)+'px Helvetica,Arial';
+  c.textAlign='center'; c.textBaseline='middle'; c.direction='ltr';
+  c.fillText(n.num, bx+S/2, by+S/2+0.5*k);
+  if(sel===n.id){
+    c.strokeStyle='#CFFF04'; c.lineWidth=2.5*k; c.strokeRect(bx-3*k,by-3*k,S+6*k,S+6*k);
+    c.strokeStyle='#1B1B1B'; c.lineWidth=1*k;   c.strokeRect(bx-4.5*k,by-4.5*k,S+9*k,S+9*k);
   }
 }
 
-function drawDims(c,w,h){
+function paintPin(c,w,h,k,n,sel){
+  if(n.nx==null) return null;
+  const x=n.nx*w, y=n.ny*h, S=20*k, col=lvColor(n.lv);
+  const bx=x+S*0.85, by=y-S*1.85;
+  c.strokeStyle=col; c.lineWidth=1.6*k;
+  c.beginPath(); c.moveTo(x,y); c.lineTo(bx,by+S); c.stroke();
+  paintBadge(c,k,n,bx,by,S,col,sel);
+  c.fillStyle=col; c.beginPath(); c.arc(x,y,3.2*k,0,6.284); c.fill();
+  c.strokeStyle='#fff'; c.lineWidth=1*k; c.stroke();
+  return {id:n.id,bx,by,S};
+}
+
+/* revision cloud — constant-radius arcs walked along the closed path,
+   always bulging away from the interior. Text sits in a boxed caption
+   under the cloud so it stays legible over dense drawings. */
+function paintCloud(c,w,h,k,n,sel){
+  const pn=n.pts||[];
+  if(pn.length<2) return null;
+  const col=lvColor(n.lv);
+  const r=Math.max(4, 7*k);
+  /* canvas angles grow toward +y (down), so a clockwise-on-screen path needs
+     anticlockwise=false for the scallops to bulge away from the interior */
+  const out=shoelace(pn)<0;
+  const pts=pn.map(p=>({x:p.x*w, y:p.y*h}));
+
+  const path=[]; let carry=0;
+  for(let i=0;i<pts.length;i++){
+    const a=pts[i], b=pts[(i+1)%pts.length];
+    const seg=Math.hypot(b.x-a.x, b.y-a.y);
+    if(seg<0.01) continue;
+    let d=carry;
+    while(d<seg){ path.push({x:a.x+(b.x-a.x)*d/seg, y:a.y+(b.y-a.y)*d/seg}); d+=2*r; }
+    carry=d-seg;
+  }
+  if(path.length<2) return null;
+
+  c.save();
+  c.strokeStyle=col; c.lineWidth=Math.max(1.3, 1.9*k); c.lineJoin='round';
+  c.beginPath();
+  for(let i=0;i<path.length;i++){
+    const a=path[i], b=path[(i+1)%path.length];
+    const rad=Math.hypot(b.x-a.x, b.y-a.y)/2;
+    if(rad<0.4) continue;
+    c.arc((a.x+b.x)/2, (a.y+b.y)/2, rad, Math.atan2(b.y-a.y,b.x-a.x)+Math.PI, Math.atan2(b.y-a.y,b.x-a.x), out);
+  }
+  c.stroke();
+  if(sel===n.id){
+    c.strokeStyle='#CFFF04'; c.lineWidth=Math.max(1,1.1*k); c.setLineDash([4*k,3*k]);
+    c.beginPath();
+    pts.forEach((p,i)=> i?c.lineTo(p.x,p.y):c.moveTo(p.x,p.y));
+    c.closePath(); c.stroke(); c.setLineDash([]);
+  }
+  c.restore();
+
+  const bb=polyBounds(pn);
+  const S=20*k, bx=Math.max(2*k, bb.x0*w-S*0.25), by=Math.max(2*k, bb.y0*h-S*1.2);
+  paintBadge(c,k,n,bx,by,S,col,sel);
+
+  if(n.body){
+    c.save();
+    c.font='500 '+(11*k).toFixed(1)+'px Helvetica,Arial';
+    c.direction='rtl'; c.textAlign='right'; c.textBaseline='top';
+    const maxW=Math.max(150*k, (bb.x1-bb.x0)*w);
+    const lines=wrapLines(c, n.body, maxW, 3);
+    const lh=14*k, pad=5*k;
+    const tw=Math.max.apply(null, lines.map(l=>c.measureText(l).width))+pad*2;
+    const th=lines.length*lh+pad*2;
+    let tx=Math.min(w-2*k, bb.x1*w), ty=bb.y1*h+5*k;
+    if(ty+th>h) ty=Math.max(2*k, bb.y0*h-th-5*k);
+    if(tx-tw<0) tx=tw+2*k;
+    c.fillStyle='rgba(255,255,255,.94)'; c.fillRect(tx-tw,ty,tw,th);
+    c.strokeStyle=col; c.lineWidth=Math.max(1,1.2*k); c.strokeRect(tx-tw,ty,tw,th);
+    c.fillStyle=col;
+    lines.forEach((l,i)=> c.fillText(l, tx-pad, ty+pad+i*lh));
+    c.restore();
+  }
+  return {id:n.id,bx,by,S};
+}
+
+function paintDims(c,w,h,k){
   STATE.dims.forEach(d=>{
     const x1=d.x1*w, y1=d.y1*h, x2=d.x2*w, y2=d.y2*h;
-    const col=d.calib?'#0000FF':'#D6009A';
-    c.strokeStyle=col; c.lineWidth=1.6;
+    const col=d.calib?'#0000FF':DIM_CLR;
+    c.strokeStyle=col; c.lineWidth=1.6*k;
     c.beginPath(); c.moveTo(x1,y1); c.lineTo(x2,y2); c.stroke();
-    const a=Math.atan2(y2-y1,x2-x1), t=7;
+    const a=Math.atan2(y2-y1,x2-x1), t=7*k;
     [[x1,y1],[x2,y2]].forEach(([px,py])=>{
       c.beginPath();
       c.moveTo(px-Math.sin(a)*t, py+Math.cos(a)*t);
@@ -985,11 +1216,124 @@ function drawDims(c,w,h){
       c.stroke();
     });
     const lbl=d.label||'—', mx=(x1+x2)/2, my=(y1+y2)/2;
-    c.font='600 11px Helvetica,Arial'; c.textAlign='center'; c.textBaseline='middle';
-    const tw=c.measureText(lbl).width+9;
-    c.fillStyle='#fff'; c.fillRect(mx-tw/2,my-8,tw,16);
-    c.strokeStyle=col; c.lineWidth=1.2; c.strokeRect(mx-tw/2,my-8,tw,16);
-    c.fillStyle=col; c.fillText(lbl,mx,my+0.5);
+    c.font='600 '+(11*k).toFixed(1)+'px Helvetica,Arial';
+    c.textAlign='center'; c.textBaseline='middle'; c.direction='rtl';
+    const tw=c.measureText(lbl).width+9*k, th=16*k;
+    c.fillStyle='#fff'; c.fillRect(mx-tw/2,my-th/2,tw,th);
+    c.strokeStyle=col; c.lineWidth=1.2*k; c.strokeRect(mx-tw/2,my-th/2,tw,th);
+    c.fillStyle=col; c.fillText(lbl,mx,my+0.5*k);
+  });
+}
+
+function paintAreas(c,w,h,k){
+  STATE.areas.forEach(a=>{
+    const pts=(a.pts||[]).map(p=>({x:p.x*w, y:p.y*h}));
+    if(pts.length<3) return;
+    c.save();
+    c.beginPath();
+    pts.forEach((p,i)=> i?c.lineTo(p.x,p.y):c.moveTo(p.x,p.y));
+    c.closePath();
+    c.fillStyle='rgba(0,0,255,.07)'; c.fill();
+    c.strokeStyle=AREA_CLR; c.lineWidth=Math.max(1.2,1.6*k);
+    c.setLineDash([6*k,3*k]); c.stroke(); c.setLineDash([]);
+    c.fillStyle=AREA_CLR;
+    pts.forEach(p=>{ c.beginPath(); c.arc(p.x,p.y,2.4*k,0,6.284); c.fill(); });
+
+    const ct=polyCentroid(a.pts);
+    const lines=[a.label||'—'];
+    if(a.name) lines.unshift(a.name);
+    c.font='600 '+(11.5*k).toFixed(1)+'px Helvetica,Arial';
+    c.textAlign='center'; c.textBaseline='middle'; c.direction='rtl';
+    const tw=Math.max.apply(null, lines.map(l=>c.measureText(l).width))+11*k;
+    const lh=14*k, th=lines.length*lh+6*k;
+    const cx=ct.x*w, cy=ct.y*h;
+    c.fillStyle='rgba(255,255,255,.94)'; c.fillRect(cx-tw/2, cy-th/2, tw, th);
+    c.strokeStyle=AREA_CLR; c.lineWidth=Math.max(1,1.2*k); c.strokeRect(cx-tw/2, cy-th/2, tw, th);
+    c.fillStyle=AREA_CLR;
+    lines.forEach((l,i)=> c.fillText(l, cx, cy-th/2+3*k+lh/2+i*lh));
+    if(SEL===a.id){
+      c.strokeStyle='#CFFF04'; c.lineWidth=2*k;
+      c.strokeRect(cx-tw/2-3*k, cy-th/2-3*k, tw+6*k, th+6*k);
+    }
+    c.restore();
+  });
+}
+
+function drawOverlay(){
+  const ov=$('#ovl'), {w,h}=fitBox();
+  const dpr=Math.min(2, window.devicePixelRatio||1);
+  const c=ov.getContext('2d');
+  c.setTransform(dpr,0,0,dpr,0,0); c.clearRect(0,0,w,h);
+  MARKERS=paintMarkup(c,w,h,{layers:LAYERS, sel:SEL});
+  drawPending(c,w,h);
+}
+
+/* rubber-band feedback for the in-progress dim / polygon / cloud */
+function drawPending(c,w,h){
+  if(!PENDING) return;
+  c.save();
+  if(PENDING.kind==='dim' && PENDING.x1!=null){
+    c.strokeStyle=DIM_CLR; c.lineWidth=1.5; c.setLineDash([5,4]);
+    c.beginPath(); c.moveTo(PENDING.x1*w,PENDING.y1*h); c.lineTo(PENDING.mx*w,PENDING.my*h); c.stroke();
+  }
+  if(PENDING.kind==='area' && PENDING.pts.length){
+    const p=PENDING.pts;
+    c.strokeStyle=AREA_CLR; c.lineWidth=1.6; c.setLineDash([6,3]);
+    c.beginPath();
+    p.forEach((q,i)=> i?c.lineTo(q.x*w,q.y*h):c.moveTo(q.x*w,q.y*h));
+    if(PENDING.mx!=null) c.lineTo(PENDING.mx*w, PENDING.my*h);
+    c.stroke(); c.setLineDash([]);
+    c.fillStyle=AREA_CLR;
+    p.forEach(q=>{ c.beginPath(); c.arc(q.x*w,q.y*h,3,0,6.284); c.fill(); });
+    /* the closing target — click it, or press Enter */
+    c.strokeStyle='#CFFF04'; c.lineWidth=2;
+    c.beginPath(); c.arc(p[0].x*w,p[0].y*h,6,0,6.284); c.stroke();
+    if(p.length>=2 && STATE.calib){
+      const closed=p.concat(PENDING.mx!=null?[{x:PENDING.mx,y:PENDING.my}]:[]);
+      const m2=polyArea(closed);
+      if(m2>0){
+        c.font='600 11px Helvetica,Arial'; c.textAlign='center'; c.textBaseline='middle'; c.direction='rtl';
+        const ct=polyCentroid(closed), t=m2.toFixed(2)+' מ״ר';
+        const tw=c.measureText(t).width+10;
+        c.fillStyle='rgba(255,255,255,.9)'; c.fillRect(ct.x*w-tw/2, ct.y*h-9, tw, 18);
+        c.fillStyle=AREA_CLR; c.fillText(t, ct.x*w, ct.y*h);
+      }
+    }
+  }
+  if(PENDING.kind==='cloud' && PENDING.pts.length>1){
+    c.strokeStyle=CLR.f; c.lineWidth=1.6; c.setLineDash([4,3]);
+    c.beginPath();
+    PENDING.pts.forEach((q,i)=> i?c.lineTo(q.x*w,q.y*h):c.moveTo(q.x*w,q.y*h));
+    c.stroke();
+  }
+  c.restore();
+  c.setLineDash([]);
+}
+
+/* px² → m², using the single calibration the user drew once */
+function polyArea(pts){
+  if(!STATE.calib || pts.length<3) return 0;
+  const px=pts.map(p=>({x:p.x*BASE.width, y:p.y*BASE.height}));
+  return Math.abs(shoelace(px))*STATE.calib.mPerPx*STATE.calib.mPerPx;
+}
+function polyPerimeter(pts){
+  if(!STATE.calib || pts.length<2) return 0;
+  let s=0;
+  for(let i=0;i<pts.length;i++){
+    const a=pts[i], b=pts[(i+1)%pts.length];
+    s+=Math.hypot((b.x-a.x)*BASE.width, (b.y-a.y)*BASE.height);
+  }
+  return s*STATE.calib.mPerPx;
+}
+function relabelMeasures(){
+  STATE.dims.forEach(d=>{
+    if(!d.manualLabel && STATE.calib) d.label=(dimPx(d)*STATE.calib.mPerPx).toFixed(2)+' מ׳';
+  });
+  STATE.areas.forEach(a=>{
+    const m2=polyArea(a.pts);
+    a.m2=m2||null;
+    a.perim=polyPerimeter(a.pts)||null;
+    a.label=m2?m2.toFixed(2)+' מ״ר':'כייל לקבלת מ״ר';
   });
 }
 
@@ -1035,35 +1379,53 @@ function planPoint(e){
   return { nx:(e.clientX-b.left)/b.width, ny:(e.clientY-b.top)/b.height };
 }
 
+const TOOLBTN={dim:'tDim', area:'tArea', calib:'tCalib', pin:'tPin', cloud:'tCloud'};
+const TOOLHINT={
+  dim:'לחץ נקודת התחלה ואז נקודת סיום',
+  area:'לחץ נקודה-נקודה על קונטור החדר · Enter או לחיצה על הנקודה הראשונה לסגירה',
+  calib:'שרטט קו על מידה ידועה בתוכנית',
+  pin:'לחץ על התכנית למיקום הערה ממוספרת',
+  cloud:'גרור סביב האזור להקפה בענן — ואז הקלד את ההערה'
+};
+function clearArmed(){ Object.keys(TOOLBTN).forEach(k=>{ const b=$('#'+TOOLBTN[k]); if(b) b.classList.remove('armed'); }); }
+
 function armTool(t){
   TOOL = TOOL===t ? null : t;
   PENDING=null;
-  ['tDim','tCalib','tPin'].forEach(id=>$('#'+id).classList.remove('armed'));
+  clearArmed();
   document.querySelectorAll('.symcard').forEach(c=>c.classList.remove('armed'));
-  const hints={ dim:'לחץ נקודת התחלה ואז נקודת סיום', calib:'שרטט קו על מידה ידועה בתוכנית', pin:'לחץ על התכנית למיקום הערה' };
   if(TOOL){
-    const btn={dim:'tDim',calib:'tCalib',pin:'tPin'}[TOOL];
-    if(btn) $('#'+btn).classList.add('armed');
-    $('#toolHint').textContent=hints[TOOL]||'לחץ על התכנית למיקום הסימבול';
+    if(TOOLBTN[TOOL]) $('#'+TOOLBTN[TOOL]).classList.add('armed');
+    $('#toolHint').textContent=TOOLHINT[TOOL]||'לחץ על התכנית למיקום הסימבול';
     $('#planBox').style.cursor='crosshair';
+    if(TOOL==='area'&&!STATE.calib) toast('לא כויל קנה מידה — השטח יחושב אחרי כיול');
   } else { $('#toolHint').textContent=''; $('#planBox').style.cursor='default'; }
   drawOverlay();
 }
 function armSymbol(k){
   TOOL='sym:'+k; PENDING=null;
-  ['tDim','tCalib','tPin'].forEach(id=>$('#'+id).classList.remove('armed'));
+  clearArmed();
   document.querySelectorAll('.symcard').forEach(c=>c.classList.toggle('armed', c.dataset.k===k));
   $('#toolHint').textContent='לחץ על התכנית למיקום '+(SYMMAP[k]?SYMMAP[k].n:'');
   $('#planBox').style.cursor='crosshair';
 }
 
+/* A freehand drag ends with pointerup and is normally followed by a click we
+   must swallow. Time-boxing it instead of a sticky flag means a drag that ends
+   off-canvas (or a pointercancel) cannot eat the user's next real click. */
+let SKIPUNTIL=0;
+function skipNextClick(){ SKIPUNTIL=Date.now()+300; }
 $('#planBox').addEventListener('click', e=>{
   if(e.target.closest('.sym')) return;
+  if(Date.now()<SKIPUNTIL){ SKIPUNTIL=0; return; }
   const p=planPoint(e);
   if(!TOOL){
     const {w,h}=fitBox(); const mx=p.nx*w, my=p.ny*h;
     const hit=MARKERS.find(m=>mx>=m.bx-5&&mx<=m.bx+m.S+5&&my>=m.by-5&&my<=m.by+m.S+5);
-    if(hit){ selectNote(hit.id); } else { SEL=null; drawOverlay(); placeSymbols(); }
+    if(hit){ selectNote(hit.id); return; }
+    const ah=STATE.areas.find(a=>pointInPoly(p,a.pts));
+    if(ah){ SEL=ah.id; setTab('sym'); drawOverlay(); return; }
+    SEL=null; drawOverlay(); placeSymbols();
     return;
   }
   if(TOOL.startsWith('sym:')){
@@ -1078,8 +1440,19 @@ $('#planBox').addEventListener('click', e=>{
     armTool(null); refresh(); toast('הערה נוספה');
     return;
   }
+  if(TOOL==='area'){
+    if(!PENDING) PENDING={kind:'area', pts:[], mx:p.nx, my:p.ny};
+    const first=PENDING.pts[0];
+    /* clicking back on the first vertex closes the loop */
+    if(first && PENDING.pts.length>=3){
+      const {w,h}=fitBox();
+      if(Math.hypot((p.nx-first.x)*w,(p.ny-first.y)*h)<10){ finishArea(); return; }
+    }
+    PENDING.pts.push({x:p.nx,y:p.ny}); drawOverlay();
+    return;
+  }
   if(TOOL==='dim'||TOOL==='calib'){
-    if(!PENDING){ PENDING={x1:p.nx,y1:p.ny,mx:p.nx,my:p.ny}; drawOverlay(); return; }
+    if(!PENDING){ PENDING={kind:'dim', x1:p.nx,y1:p.ny,mx:p.nx,my:p.ny}; drawOverlay(); return; }
     const d={ id:'d'+(STATE.seq++), x1:PENDING.x1, y1:PENDING.y1, x2:p.nx, y2:p.ny, calib:TOOL==='calib' };
     const px=dimPx(d);
     if(TOOL==='calib'){
@@ -1088,9 +1461,12 @@ $('#planBox').addEventListener('click', e=>{
       if(!m||m<=0){ PENDING=null; armTool(null); drawOverlay(); return; }
       STATE.calib={ mPerPx:m/px };
       d.label=m.toFixed(2)+' מ׳';
-      STATE.dims.forEach(o=>{ if(!o.manualLabel) o.label=(dimPx(o)*STATE.calib.mPerPx).toFixed(2)+' מ׳'; });
-      toast('קנה מידה כויל');
-    } else if(STATE.calib){
+      STATE.dims.push(d); PENDING=null; armTool(null);
+      relabelMeasures(); refresh();
+      toast('קנה מידה כויל — כל המידות והשטחים חושבו מחדש');
+      return;
+    }
+    if(STATE.calib){
       d.label=(px*STATE.calib.mPerPx).toFixed(2)+' מ׳';
     } else {
       const v=prompt('אורך במטרים (או בטל וכייל תחילה):','');
@@ -1100,9 +1476,71 @@ $('#planBox').addEventListener('click', e=>{
     STATE.dims.push(d); PENDING=null; armTool(null); refresh();
   }
 });
-$('#planBox').addEventListener('mousemove', e=>{
-  if(PENDING){ const p=planPoint(e); PENDING.mx=p.nx; PENDING.my=p.ny; drawOverlay(); }
+$('#planBox').addEventListener('dblclick', e=>{
+  if(TOOL==='area'&&PENDING&&PENDING.pts.length>=3){ e.preventDefault(); skipNextClick(); finishArea(); }
 });
+$('#planBox').addEventListener('mousemove', e=>{
+  if(PENDING&&PENDING.kind!=='cloud'){ const p=planPoint(e); PENDING.mx=p.nx; PENDING.my=p.ny; drawOverlay(); }
+});
+
+function finishArea(){
+  if(!PENDING||PENDING.pts.length<3){ PENDING=null; armTool(null); drawOverlay(); return; }
+  const pts=PENDING.pts.slice();
+  const name=(prompt('שם החדר (אופציונלי):','')||'').trim();
+  const a={ id:'a'+(STATE.seq++), pts, name };
+  STATE.areas.push(a);
+  PENDING=null; armTool(null);
+  relabelMeasures(); refresh();
+  toast(a.m2 ? 'שטח נמדד: '+a.m2.toFixed(2)+' מ״ר' : 'קונטור נשמר — כייל קנה מידה לקבלת מ״ר');
+}
+function pointInPoly(p, pts){
+  if(!pts||pts.length<3) return false;
+  let inside=false;
+  for(let i=0,j=pts.length-1;i<pts.length;j=i++){
+    const a=pts[i], b=pts[j];
+    if((a.y>p.ny)!==(b.y>p.ny) && p.nx < (b.x-a.x)*(p.ny-a.y)/(b.y-a.y)+a.x) inside=!inside;
+  }
+  return inside;
+}
+
+/* ---- revision cloud: freehand drag, sampled so the arc walk stays even ---- */
+$('#planBox').addEventListener('pointerdown', e=>{
+  if(TOOL!=='cloud'||e.button!==0) return;
+  e.preventDefault();
+  const box=$('#planBox');
+  box.setPointerCapture(e.pointerId);
+  const p=planPoint(e);
+  PENDING={kind:'cloud', pts:[{x:p.nx,y:p.ny}]};
+  const mv=ev=>{
+    const q=planPoint(ev), last=PENDING.pts[PENDING.pts.length-1];
+    const {w,h}=fitBox();
+    if(Math.hypot((q.nx-last.x)*w,(q.ny-last.y)*h)<8) return;
+    PENDING.pts.push({x:q.nx,y:q.ny}); drawOverlay();
+  };
+  const up=()=>{
+    box.removeEventListener('pointermove',mv); box.removeEventListener('pointerup',up);
+    box.removeEventListener('pointercancel',up);
+    skipNextClick();
+    finishCloud();
+  };
+  box.addEventListener('pointermove',mv);
+  box.addEventListener('pointerup',up);
+  box.addEventListener('pointercancel',up);
+});
+
+function finishCloud(){
+  const pts=(PENDING&&PENDING.pts)||[];
+  PENDING=null;
+  if(pts.length<3){ armTool(null); drawOverlay(); toast('הקפה קצרה מדי — גרור סביב האזור'); return; }
+  const body=(prompt('ההערה שתופיע בענן:','')||'').trim();
+  if(!body){ armTool(null); drawOverlay(); return; }
+  STATE.notes.push({
+    id:'cl'+(STATE.seq++), lv:'f', src:'cloud', shape:'cloud',
+    title:body.length>34?body.slice(0,34)+'…':body, sub:'ענן על התכנית',
+    body, edited:true, pts, nx:null, ny:null
+  });
+  armTool(null); refresh(); toast('ענן הערה נוסף');
+}
 $('#planBox').addEventListener('dragover', e=>e.preventDefault());
 $('#planBox').addEventListener('drop', e=>{
   e.preventDefault();
@@ -1116,10 +1554,15 @@ function dimPx(d){
   return Math.hypot(dx,dy);
 }
 document.addEventListener('keydown', e=>{
-  if(e.key==='Escape'){ armTool(null); PENDING=null; drawOverlay(); }
-  if((e.key==='Delete'||e.key==='Backspace') && SEL && !/INPUT|TEXTAREA/.test(document.activeElement.tagName) && !document.activeElement.isContentEditable){
+  const typing = /INPUT|TEXTAREA/.test(document.activeElement.tagName) || document.activeElement.isContentEditable;
+  if(e.key==='Escape'){ armTool(null); PENDING=null; drawOverlay(); closeExportMenu(); }
+  if(e.key==='Enter' && TOOL==='area' && PENDING && PENDING.pts.length>=3 && !typing){
+    e.preventDefault(); finishArea();
+  }
+  if((e.key==='Delete'||e.key==='Backspace') && SEL && !typing){
     STATE.symbols=STATE.symbols.filter(s=>s.id!==SEL);
-    STATE.notes=STATE.notes.filter(n=>!(n.id===SEL&&n.src==='custom'));
+    STATE.areas=STATE.areas.filter(a=>a.id!==SEL);
+    STATE.notes=STATE.notes.filter(n=>!(n.id===SEL&&(n.src==='custom'||n.src==='cloud')));
     SEL=null; refresh();
   }
 });
@@ -1128,9 +1571,9 @@ function setZoom(z){ ZOOM=Math.min(6,Math.max(0.3,z)); layout(); }
 function toggleLayer(k){ LAYERS[k]=!LAYERS[k]; $('#ly'+k[0].toUpperCase()+k.slice(1)).classList.toggle('on',LAYERS[k]); layout(); }
 function togglePanel(){ document.body.classList.toggle('collapsed'); $('#btnPanel').classList.toggle('on'); setTimeout(layout,30); }
 function clearMarkup(){
-  if(!confirm('למחוק את כל הסימבולים, קווי המידה וההערות הידניות?')) return;
-  STATE.symbols=[]; STATE.dims=[]; STATE.calib=null;
-  STATE.notes=STATE.notes.filter(n=>n.src!=='custom');
+  if(!confirm('למחוק את כל הסימבולים, קווי המידה, מדידות השטח, העננים וההערות הידניות?')) return;
+  STATE.symbols=[]; STATE.dims=[]; STATE.areas=[]; STATE.calib=null;
+  STATE.notes=STATE.notes.filter(n=>n.src!=='custom'&&n.src!=='cloud');
   refresh();
 }
 function selectNote(id){
@@ -1148,7 +1591,7 @@ let RT; window.addEventListener('resize',()=>{ clearTimeout(RT); RT=setTimeout(l
    11. PANEL
    ===================================================================== */
 let TAB='iron';
-const TABS=[{k:'iron',n:'ברזל'},{k:'notes',n:'הערות'},{k:'prog',n:'פרוגרמה'},{k:'open',n:'לא נראה'},{k:'sym',n:'סימבולים'}];
+const TABS=[{k:'iron',n:'ברזל'},{k:'notes',n:'הערות'},{k:'prog',n:'פרוגרמה'},{k:'open',n:'לא נראה'},{k:'sym',n:'סימונים'}];
 function setTab(k){ TAB=k; renderPanel(); }
 
 function renderPanel(){
@@ -1235,13 +1678,17 @@ function notesList(){
         <div class="ch">
           <span class="num ${n.lv}">${n.num}</span>
           <span class="ct">${esc(n.title)}</span>
-          <span class="cs">${esc(n.sub)}</span>
+          <span class="cs">${n.shape==='cloud'?'☁ ':''}${esc(n.sub)}</span>
         </div>
         <div class="cb" contenteditable="true" data-id="${n.id}">${esc(n.body)}</div>
         <div class="cact">
-          ${n.nx==null?`<button class="xb" data-act="place" data-id="${n.id}">מקם על התכנית</button>`:`<button class="xb" data-act="goto" data-id="${n.id}">הצג בתכנית</button>`}
+          ${n.shape==='cloud'
+            ? `<button class="xb" data-act="goto" data-id="${n.id}">הצג בתכנית</button>`
+            : (n.nx==null
+                ? `<button class="xb" data-act="place" data-id="${n.id}">מקם על התכנית</button>`
+                : `<button class="xb" data-act="goto" data-id="${n.id}">הצג בתכנית</button>`)}
           <button class="xb" data-act="lv" data-id="${n.id}">שנה דרגה</button>
-          ${n.src==='custom'?`<button class="xb" data-act="del" data-id="${n.id}">מחק</button>`:''}
+          ${(n.src==='custom'||n.src==='cloud')?`<button class="xb" data-act="del" data-id="${n.id}">מחק</button>`:''}
         </div>
       </div>`).join('');
   });
@@ -1334,11 +1781,38 @@ function viewSymbols(){
 
   h+=`<div class="grp-title">קווי מידה · ${STATE.dims.length}</div>`;
   h+= STATE.dims.length ? STATE.dims.map(d=>`
-    <div class="card i"><div class="ch">
-      <span class="num i">↔</span><span class="ct">${esc(d.label||'—')}</span>
+    <div class="card" style="border-inline-start-color:${d.calib?'#0000FF':DIM_CLR}"><div class="ch">
+      <span class="num" style="background:${d.calib?'#0000FF':DIM_CLR}">↔</span>
+      <span class="ct">${esc(d.label||'—')}${d.calib?' · קו הכיול':''}</span>
       <button class="xb" onclick="STATE.dims=STATE.dims.filter(x=>x.id!=='${d.id}');refresh()">מחק</button>
     </div></div>`).join('') : '<div class="empty">טרם שורטטו קווי מידה.</div>';
+
+  const tot=STATE.areas.reduce((s,a)=>s+(a.m2||0),0);
+  h+=`<div class="grp-title">מדידות שטח · ${STATE.areas.length}${tot?' · סה״כ '+tot.toFixed(2)+' מ״ר':''}</div>`;
+  if(!STATE.calib) h+=`<div class="iron w" style="margin-bottom:8px">
+    <div class="ib">קנה המידה לא כויל — קונטורים נשמרים אך לא מומרים למ״ר.</div>
+    <div class="cact"><button class="xb" onclick="armTool('calib')">כייל עכשיו</button></div></div>`;
+  h+= STATE.areas.length ? STATE.areas.map(a=>`
+    <div class="card ${SEL===a.id?'sel':''}" style="border-inline-start-color:${AREA_CLR}"
+         onclick="SEL='${a.id}';renderPanel();drawOverlay()">
+      <div class="ch">
+        <span class="num" style="background:${AREA_CLR}">⬚</span>
+        <span class="ct">${esc(a.name||'חדר ללא שם')}</span>
+        <span class="cs">${esc(a.label||'—')}</span>
+      </div>
+      <div class="cb">${a.perim?'היקף '+a.perim.toFixed(2)+' מ׳ · ':''}${(a.pts||[]).length} נקודות</div>
+      <div class="cact">
+        <button class="xb" onclick="event.stopPropagation();renameArea('${a.id}')">שנה שם</button>
+        <button class="xb" onclick="event.stopPropagation();STATE.areas=STATE.areas.filter(x=>x.id!=='${a.id}');refresh()">מחק</button>
+      </div>
+    </div>`).join('') : '<div class="empty">טרם נמדדו שטחים. בחר "מדידת שטח" וסמן את קונטור החדר.</div>';
   return h;
+}
+function renameArea(id){
+  const a=STATE.areas.find(x=>x.id===id); if(!a) return;
+  const v=prompt('שם החדר:', a.name||'');
+  if(v===null) return;
+  a.name=v.trim(); refresh();
 }
 function bindSymCards(){
   $('#tabBody').querySelectorAll('.symcard').forEach(c=>{
@@ -1362,6 +1836,7 @@ $('#planBox').addEventListener('click', e=>{
    ===================================================================== */
 function refresh(){
   buildOrder();
+  if(BASE) relabelMeasures();
   STATE.ironR=ironChecks(STATE.parse, STATE.rooms);
   STATE.openItems=openItems(STATE.rooms);
   renderPanel(); drawOverlay(); placeSymbols();
@@ -1379,7 +1854,7 @@ async function runManual(canvas, name){
   buildOrder();
   STATE.ironR=ironChecks(STATE.parse, []);
   STATE.openItems=openItems([]);
-  $('#fname').textContent=name+' · מצב ידני';
+  stampHeader();
   $('#hbtns').style.display='flex';
   $('#uploadView').style.display='none';
   $('#workView').classList.add('on');
@@ -1397,7 +1872,7 @@ async function run(parse){
   STATE.ironR=ironChecks(parse, STATE.rooms);
   STATE.openItems=openItems(STATE.rooms);
 
-  $('#fname').textContent=parse.fileName;
+  stampHeader();
   $('#hbtns').style.display='flex';
   $('#uploadView').style.display='none';
   $('#workView').classList.add('on');
@@ -1498,6 +1973,83 @@ function showTemplate(){
   document.body.appendChild(host);
 }
 
+/* =====================================================================
+   13a. PROJECT DETAILS — the titles every export is built around
+   ===================================================================== */
+function guessFloor(name){
+  const m=/(?:\bFL|\bfloor|קומה)[\s_-]*(\d{1,2})/i.exec(name||'');
+  return m?('FL'+String(m[1]).padStart(2,'0')):'';
+}
+/* the typed-in details win; a loaded program JSON is the fallback */
+function metaGet(){
+  const pm=(STATE.program&&STATE.program.meta)||{};
+  const base=STATE.fileName.replace(/\.(pdf|png|jpe?g)$/i,'');
+  const m=STATE.meta||{};
+  return {
+    project: m.project || pm.project || base || 'Test Fit',
+    client:  m.client  || pm.client  || '',
+    floor:   m.floor   || pm.floor   || guessFloor(STATE.fileName) || '',
+    date:    m.date    || pm.date    || new Date().toLocaleDateString('he-IL'),
+    author:  m.author  || '',
+    file:    STATE.fileName
+  };
+}
+function floorTitle(){
+  const f=metaGet().floor;
+  if(!f) return 'תכנית Test Fit';
+  return /^\d+$/.test(f) ? ('תכנית Test Fit — קומה '+f) : ('תכנית Test Fit — '+f);
+}
+function projectModal(){
+  const m=metaGet();
+  const host=document.createElement('div');
+  host.className='modal';
+  host.innerHTML=`
+    <div class="modal-box" style="max-width:600px" onclick="event.stopPropagation()">
+      <div class="modal-head">
+        <div>פרטי הפרויקט<small>מופיעים בכותרת כל ייצוא — PDF, Excel ו-HTML</small></div>
+        <button class="hb" data-x>סגור</button>
+      </div>
+      <div class="frm">
+        <div class="wide"><label>שם הפרויקט</label><input id="mProject" value="${esc(m.project)}"></div>
+        <div><label>לקוח</label><input id="mClient" value="${esc(m.client)}"></div>
+        <div><label>קומה</label><input id="mFloor" value="${esc(m.floor)}" placeholder="FL03 / 3"></div>
+        <div><label>תאריך</label><input id="mDate" value="${esc(m.date)}"></div>
+        <div><label>נבדק ע״י</label><input id="mAuthor" value="${esc(m.author)}" placeholder="שם הבודק"></div>
+      </div>
+      <div class="modal-foot">
+        <button class="mini pri" data-save>שמור</button>
+        <span style="font-size:10px;opacity:.5;margin-inline-start:auto">
+          הקומה נוחשה מתוך שם הקובץ — ניתן לתקן</span>
+      </div>
+    </div>`;
+  const close=()=>host.remove();
+  host.onclick=close;
+  host.querySelector('[data-x]').onclick=close;
+  host.querySelector('[data-save]').onclick=()=>{
+    STATE.meta={
+      project:host.querySelector('#mProject').value.trim(),
+      client: host.querySelector('#mClient').value.trim(),
+      floor:  host.querySelector('#mFloor').value.trim(),
+      date:   host.querySelector('#mDate').value.trim(),
+      author: host.querySelector('#mAuthor').value.trim()
+    };
+    close(); stampHeader(); toast('פרטי הפרויקט נשמרו');
+  };
+  document.body.appendChild(host);
+  setTimeout(()=>host.querySelector('#mProject').focus(),30);
+}
+function stampHeader(){
+  const m=metaGet();
+  $('#fname').textContent=[m.project, m.floor, STATE.mode==='manual'?'מצב ידני':''].filter(Boolean).join(' · ');
+}
+
+function toggleExportMenu(e){
+  e.stopPropagation();
+  $('#hmenu').classList.toggle('open');
+}
+function closeExportMenu(){ const m=$('#hmenu'); if(m) m.classList.remove('open'); }
+document.addEventListener('click', e=>{ if(!e.target.closest('#hmenu')) closeExportMenu(); });
+
 function applyProgram(p){
   STATE.program=p;
   if(p.rules) Object.keys(p.rules).forEach(k=>{ RULES[k]=Object.assign({}, RULES[k]||{}, p.rules[k]); });
@@ -1513,28 +2065,302 @@ function applyProgram(p){
 }
 
 function saveJson(){
+  closeExportMenu();
   const out={
-    meta:Object.assign({file:STATE.fileName, exported:new Date().toISOString().slice(0,10)}, (STATE.program&&STATE.program.meta)||{}),
+    meta:Object.assign({file:STATE.fileName, exported:new Date().toISOString().slice(0,10)},
+      (STATE.program&&STATE.program.meta)||{}, metaGet()),
     program:(STATE.program&&STATE.program.program)||PROGRAM_REF,
     qa:(STATE.program&&STATE.program.qa)||[],
     rules:(STATE.program&&STATE.program.rules)||{},
     review:{
-      notes:STATE.notes.map(n=>({num:n.num,lv:n.lv,title:n.title,sub:n.sub,body:n.body,nx:n.nx,ny:n.ny})),
-      symbols:STATE.symbols, dims:STATE.dims, manual:STATE.manual, iron:STATE.iron, calib:STATE.calib
+      notes:STATE.notes.map(n=>({id:n.id,num:n.num,lv:n.lv,src:n.src,shape:n.shape,
+        title:n.title,sub:n.sub,body:n.body,nx:n.nx,ny:n.ny,pts:n.pts})),
+      symbols:STATE.symbols, dims:STATE.dims, areas:STATE.areas,
+      manual:STATE.manual, iron:STATE.iron, calib:STATE.calib
     }
   };
-  dl(STATE.fileName.replace(/\.pdf$/i,'')+'-review.json', JSON.stringify(out,null,2), 'application/json');
+  dl(exportBase()+'-review.json', JSON.stringify(out,null,2), 'application/json');
+}
+/* one filename stem for every export, built from the project details */
+function exportBase(){
+  const m=metaGet();
+  return [m.project, m.floor].filter(Boolean).join('-')
+    .replace(/[\\/:*?"<>|]/g,'-').replace(/\s+/g,' ').trim() || 'testfit';
 }
 
 /* the anchor must be in the document — a detached one is silently dropped in some browsers */
-function dl(name, content, type){
-  const url=URL.createObjectURL(new Blob([content],{type:type+';charset=utf-8'}));
+function dlBlob(name, blob){
+  const url=URL.createObjectURL(blob);
   const a=document.createElement('a');
   a.href=url; a.download=name; a.style.display='none';
   document.body.appendChild(a);
   a.click();
   setTimeout(()=>{ a.remove(); URL.revokeObjectURL(url); },4000);
   toast('הורדה: '+name);
+}
+function dl(name, content, type){
+  dlBlob(name, new Blob([content],{type:type+';charset=utf-8'}));
+}
+
+/* =====================================================================
+   14a. XLSX WRITER — store-only ZIP + SpreadsheetML, no dependencies.
+   An HTML table renamed .xls trips Excel's format warning, so this
+   builds the real thing: one part per sheet, RTL, styled.
+   ===================================================================== */
+const CRC_T=(()=>{
+  const t=new Uint32Array(256);
+  for(let n=0;n<256;n++){ let c=n; for(let k=0;k<8;k++) c=(c&1)?(0xEDB88320^(c>>>1)):(c>>>1); t[n]=c>>>0; }
+  return t;
+})();
+function crc32(u8){
+  let c=0xFFFFFFFF;
+  for(let i=0;i<u8.length;i++) c=CRC_T[(c^u8[i])&0xFF]^(c>>>8);
+  return (c^0xFFFFFFFF)>>>0;
+}
+function zipStore(files){
+  const enc=new TextEncoder(), parts=[], central=[];
+  let offset=0;
+  files.forEach(f=>{
+    const nb=enc.encode(f.name), data=f.data, crc=crc32(data);
+    const lh=new Uint8Array(30+nb.length), v=new DataView(lh.buffer);
+    v.setUint32(0,0x04034b50,true); v.setUint16(4,20,true); v.setUint16(6,0x0800,true);
+    v.setUint16(8,0,true); v.setUint16(10,0,true); v.setUint16(12,0x2921,true);
+    v.setUint32(14,crc,true); v.setUint32(18,data.length,true); v.setUint32(22,data.length,true);
+    v.setUint16(26,nb.length,true); v.setUint16(28,0,true);
+    lh.set(nb,30);
+    parts.push(lh, data);
+
+    const ch=new Uint8Array(46+nb.length), w=new DataView(ch.buffer);
+    w.setUint32(0,0x02014b50,true); w.setUint16(4,20,true); w.setUint16(6,20,true);
+    w.setUint16(8,0x0800,true); w.setUint16(10,0,true); w.setUint16(12,0,true);
+    w.setUint16(14,0x2921,true); w.setUint32(16,crc,true);
+    w.setUint32(20,data.length,true); w.setUint32(24,data.length,true);
+    w.setUint16(28,nb.length,true); w.setUint16(30,0,true); w.setUint16(32,0,true);
+    w.setUint16(34,0,true); w.setUint16(36,0,true); w.setUint32(38,0,true);
+    w.setUint32(42,offset,true);
+    ch.set(nb,46);
+    central.push(ch);
+    offset+=lh.length+data.length;
+  });
+  const cdSize=central.reduce((s,c)=>s+c.length,0);
+  const eocd=new Uint8Array(22), e=new DataView(eocd.buffer);
+  e.setUint32(0,0x06054b50,true); e.setUint16(4,0,true); e.setUint16(6,0,true);
+  e.setUint16(8,files.length,true); e.setUint16(10,files.length,true);
+  e.setUint32(12,cdSize,true); e.setUint32(16,offset,true); e.setUint16(20,0,true);
+  return new Blob(parts.concat(central,[eocd]), {type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+}
+
+const XS={ BODY:0, HEAD:1, TITLE:2, BOLD:3, FAIL:4, WARN:5, OK:6, NUM:7 };
+const LVSTYLE={f:XS.FAIL, w:XS.WARN, o:XS.OK, i:XS.BODY, n:XS.BODY};
+function xlEsc(s){
+  return String(s==null?'':s)
+    .replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]))
+    .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F]/g,'');
+}
+function colName(i){
+  let s=''; i++;
+  while(i>0){ const m=(i-1)%26; s=String.fromCharCode(65+m)+s; i=Math.floor((i-1)/26); }
+  return s;
+}
+function sheetXml(sh){
+  const cols=(sh.cols&&sh.cols.length)
+    ? '<cols>'+sh.cols.map((w,i)=>`<col min="${i+1}" max="${i+1}" width="${w}" customWidth="1"/>`).join('')+'</cols>'
+    : '';
+  const rows=sh.rows.map((r,ri)=>{
+    const cells=r.map((c,ci)=>{
+      if(c==null||c==='') return '';
+      const o=(typeof c==='object')?c:{v:c};
+      if(o.v==null||o.v==='') return '';
+      const ref=colName(ci)+(ri+1);
+      if(typeof o.v==='number' && isFinite(o.v)){
+        const s=(o.s!=null)?o.s:(Number.isInteger(o.v)?XS.BODY:XS.NUM);
+        return `<c r="${ref}" s="${s}"><v>${o.v}</v></c>`;
+      }
+      return `<c r="${ref}" s="${o.s!=null?o.s:XS.BODY}" t="inlineStr"><is><t xml:space="preserve">${xlEsc(o.v)}</t></is></c>`;
+    }).join('');
+    return cells?`<row r="${ri+1}">${cells}</row>`:'';
+  }).join('');
+  return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'+
+    '<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">'+
+    '<sheetViews><sheetView rightToLeft="1" workbookViewId="0"/></sheetViews>'+
+    '<sheetFormatPr defaultRowHeight="15"/>'+cols+
+    '<sheetData>'+rows+'</sheetData></worksheet>';
+}
+const STYLES_XML='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'+
+'<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">'+
+'<numFmts count="1"><numFmt numFmtId="164" formatCode="0.00"/></numFmts>'+
+'<fonts count="4">'+
+'<font><sz val="11"/><name val="Arial"/></font>'+
+'<font><b/><sz val="11"/><color rgb="FFFFFFFF"/><name val="Arial"/></font>'+
+'<font><b/><sz val="16"/><name val="Arial"/></font>'+
+'<font><b/><sz val="11"/><name val="Arial"/></font>'+
+'</fonts>'+
+'<fills count="6">'+
+'<fill><patternFill patternType="none"/></fill>'+
+'<fill><patternFill patternType="gray125"/></fill>'+
+'<fill><patternFill patternType="solid"><fgColor rgb="FF1B1B1B"/><bgColor indexed="64"/></patternFill></fill>'+
+'<fill><patternFill patternType="solid"><fgColor rgb="FFFBE1E0"/><bgColor indexed="64"/></patternFill></fill>'+
+'<fill><patternFill patternType="solid"><fgColor rgb="FFFCEEDA"/><bgColor indexed="64"/></patternFill></fill>'+
+'<fill><patternFill patternType="solid"><fgColor rgb="FFE2F2E7"/><bgColor indexed="64"/></patternFill></fill>'+
+'</fills>'+
+'<borders count="1"><border><left/><right/><top/><bottom/><diagonal/></border></borders>'+
+'<cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>'+
+'<cellXfs count="8">'+
+'<xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0" applyAlignment="1"><alignment vertical="top" wrapText="1" readingOrder="2"/></xf>'+
+'<xf numFmtId="0" fontId="1" fillId="2" borderId="0" xfId="0" applyFont="1" applyFill="1" applyAlignment="1"><alignment vertical="center" readingOrder="2"/></xf>'+
+'<xf numFmtId="0" fontId="2" fillId="0" borderId="0" xfId="0" applyFont="1" applyAlignment="1"><alignment readingOrder="2"/></xf>'+
+'<xf numFmtId="0" fontId="3" fillId="0" borderId="0" xfId="0" applyFont="1" applyAlignment="1"><alignment vertical="top" wrapText="1" readingOrder="2"/></xf>'+
+'<xf numFmtId="0" fontId="0" fillId="3" borderId="0" xfId="0" applyFill="1" applyAlignment="1"><alignment vertical="top" wrapText="1" readingOrder="2"/></xf>'+
+'<xf numFmtId="0" fontId="0" fillId="4" borderId="0" xfId="0" applyFill="1" applyAlignment="1"><alignment vertical="top" wrapText="1" readingOrder="2"/></xf>'+
+'<xf numFmtId="0" fontId="0" fillId="5" borderId="0" xfId="0" applyFill="1" applyAlignment="1"><alignment vertical="top" wrapText="1" readingOrder="2"/></xf>'+
+'<xf numFmtId="164" fontId="0" fillId="0" borderId="0" xfId="0" applyNumberFormat="1" applyAlignment="1"><alignment vertical="top" readingOrder="2"/></xf>'+
+'</cellXfs>'+
+'<cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles>'+
+'</styleSheet>';
+
+function buildXlsx(sheets){
+  const enc=new TextEncoder(), U=s=>enc.encode(s);
+  const n=sheets.length;
+  const ct='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'+
+    '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">'+
+    '<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>'+
+    '<Default Extension="xml" ContentType="application/xml"/>'+
+    '<Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>'+
+    sheets.map((s,i)=>`<Override PartName="/xl/worksheets/sheet${i+1}.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>`).join('')+
+    '<Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>'+
+    '</Types>';
+  const rootRels='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'+
+    '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'+
+    '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/>'+
+    '</Relationships>';
+  const wb='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'+
+    '<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" '+
+    'xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets>'+
+    sheets.map((s,i)=>`<sheet name="${xlEsc(s.name).slice(0,31)}" sheetId="${i+1}" r:id="rId${i+1}"/>`).join('')+
+    '</sheets></workbook>';
+  const wbRels='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'+
+    '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'+
+    sheets.map((s,i)=>`<Relationship Id="rId${i+1}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet${i+1}.xml"/>`).join('')+
+    `<Relationship Id="rId${n+1}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>`+
+    '</Relationships>';
+  const files=[
+    {name:'[Content_Types].xml', data:U(ct)},
+    {name:'_rels/.rels',         data:U(rootRels)},
+    {name:'xl/workbook.xml',     data:U(wb)},
+    {name:'xl/_rels/workbook.xml.rels', data:U(wbRels)},
+    {name:'xl/styles.xml',       data:U(STYLES_XML)}
+  ];
+  sheets.forEach((s,i)=>files.push({name:`xl/worksheets/sheet${i+1}.xml`, data:U(sheetXml(s))}));
+  return zipStore(files);
+}
+
+/* =====================================================================
+   14b. EXCEL EXPORT — the review as tables the office can work with
+   ===================================================================== */
+function hrow(cells){ return cells.map(c=>({v:c, s:XS.HEAD})); }
+
+function exportXlsx(){
+  closeExportMenu();
+  if(!BASE){ toast('אין תוכנית טעונה'); return; }
+  const m=metaGet();
+  const f=STATE.notes.filter(n=>n.lv==='f').length;
+  const w=STATE.notes.filter(n=>n.lv==='w').length;
+  const ironOk=(STATE.ironR||[]).filter(r=>r.level==='o').length;
+  const ws=STATE.rooms.filter(r=>['openspace','workstations'].includes(r.check.type)&&r.tag.ppl).reduce((s,r)=>s+r.tag.ppl,0);
+  const seats=STATE.rooms.filter(r=>['meeting','boardroom'].includes(r.check.type)).reduce((s,r)=>s+(r.tag.ppl||0),0);
+  const tagged=STATE.rooms.reduce((s,r)=>s+(r.tag.area||0),0);
+  const measured=STATE.areas.reduce((s,a)=>s+(a.m2||0),0);
+
+  const sum={ name:'סיכום', cols:[34,46,20,20], rows:[
+    [{v:m.project, s:XS.TITLE}],
+    [{v:floorTitle(), s:XS.BOLD}],
+    [],
+    hrow(['פרט','ערך']),
+    [{v:'לקוח', s:XS.BOLD}, m.client||'—'],
+    [{v:'קומה', s:XS.BOLD}, m.floor||'—'],
+    [{v:'תאריך', s:XS.BOLD}, m.date],
+    [{v:'נבדק ע״י', s:XS.BOLD}, m.author||'—'],
+    [{v:'קובץ מקור', s:XS.BOLD}, m.file||'—'],
+    [{v:'מצב ניתוח', s:XS.BOLD}, STATE.mode==='auto'?'אוטומטי — שכבת טקסט':'ידני — ללא שכבת טקסט'],
+    [{v:'קנה מידה', s:XS.BOLD}, STATE.calib?'מכויל':'לא מכויל'],
+    [{v:'בסיס הבדיקה', s:XS.BOLD}, (STATE.program&&STATE.program.program&&STATE.program.program.length)?'פרוגרמת הפרויקט':'סטנדרט המשרד'],
+    [],
+    hrow(['מדד','ערך']),
+    [{v:'הערות שגוי', s:XS.BOLD}, {v:f, s:f?XS.FAIL:XS.BODY}],
+    [{v:'הערות תיקון קל', s:XS.BOLD}, {v:w, s:w?XS.WARN:XS.BODY}],
+    [{v:'כללי ברזל שהושלמו', s:XS.BOLD}, {v:ironOk+' / 4', s:ironOk===4?XS.OK:XS.FAIL}],
+    [{v:'תגיות חדרים', s:XS.BOLD}, STATE.rooms.length],
+    [{v:'עמדות', s:XS.BOLD}, ws||'—'],
+    [{v:'מקומות ישיבה', s:XS.BOLD}, seats||'—'],
+    [{v:'מ״ר מתגיות התכנית', s:XS.BOLD}, tagged?+tagged.toFixed(2):'—'],
+    [{v:'מ״ר שנמדדו ידנית', s:XS.BOLD}, measured?+measured.toFixed(2):'—'],
+    [{v:'סימבולים', s:XS.BOLD}, STATE.symbols.length],
+    [{v:'קווי מידה', s:XS.BOLD}, STATE.dims.length],
+    [{v:'מדידות שטח', s:XS.BOLD}, STATE.areas.length],
+    [],
+    hrow(['כלל ברזל','סטטוס','מקור','פירוט'])
+  ]};
+  (STATE.ironR||[]).forEach(r=>sum.rows.push([
+    {v:r.n, s:XS.BOLD}, {v:r.level==='o'?'תקין':'חסר', s:r.level==='o'?XS.OK:XS.FAIL},
+    r.src, r.msg ]));
+  sum.rows.push([], [{v:'הופק ע״י RDA Test Fit Checker. אינו מחליף בדיקת נגישות, בטיחות, מילוט או אישור יועצים.'}]);
+
+  const notes={ name:'הערות', cols:[7,14,40,24,70,14], rows:[hrow(['#','דרגה','נושא','מקור','הערה','על התכנית'])] };
+  STATE.notes.forEach(n=>notes.rows.push([
+    {v:n.num, s:LVSTYLE[n.lv]}, {v:LVNAME[n.lv]||'', s:LVSTYLE[n.lv]},
+    {v:n.title, s:XS.BOLD}, n.sub, n.body,
+    n.shape==='cloud'?'ענן':(n.nx!=null?'סמן '+n.num:'—')
+  ]));
+  if(STATE.notes.length===0) notes.rows.push([{v:'אין הערות — התוכנית עברה את כל הבדיקות שבוצעו.'}]);
+
+  const prog={ name:'פרוגרמה', cols:[34,44,34,10], rows:[hrow(['פונקציה','יעד','בתכנית','Δ'])] };
+  progRows().forEach(r=>prog.rows.push([
+    {v:r.fn, s:XS.BOLD}, {v:r.goal, s:LVSTYLE[r.cls]}, {v:r.found, s:LVSTYLE[r.cls]}, {v:r.delta, s:LVSTYLE[r.cls]}
+  ]));
+
+  const rooms={ name:'חדרים', cols:[7,34,22,13,11,13,60], rows:[hrow(['#','שם בתגית','סוג','שטח מ״ר','קיבולת','סטטוס','ממצאים'])] };
+  STATE.rooms.forEach(r=>{
+    const lv={fail:'f',warn:'w',info:'i',ok:'o'}[r.check.level];
+    rooms.rows.push([
+      r.i, {v:r.tag.name||'—', s:XS.BOLD}, TYPE_HE[r.check.type]||r.check.type,
+      r.tag.area!=null?r.tag.area:'—', r.tag.ppl!=null?r.tag.ppl:'—',
+      {v:LVNAME[lv]||'', s:LVSTYLE[lv]},
+      r.check.msgs.map(x=>x.m).join(' · ')
+    ]);
+  });
+  if(!STATE.rooms.length) rooms.rows.push([{v:'לא זוהו תגיות חדרים — הקובץ נטען במצב סימון ידני.'}]);
+
+  const meas={ name:'מדידות', cols:[34,18,18,14], rows:[hrow(['חדר / אזור','שטח מדוד מ״ר','היקף מ׳','נקודות'])] };
+  STATE.areas.forEach(a=>meas.rows.push([
+    {v:a.name||'חדר ללא שם', s:XS.BOLD},
+    a.m2?+a.m2.toFixed(2):'לא מכויל',
+    a.perim?+a.perim.toFixed(2):'—',
+    (a.pts||[]).length
+  ]));
+  if(measured) meas.rows.push([{v:'סה״כ שטח מדוד', s:XS.BOLD}, {v:+measured.toFixed(2), s:XS.OK}]);
+  if(!STATE.areas.length) meas.rows.push([{v:'לא נמדדו שטחים.'}]);
+  meas.rows.push([], hrow(['קו מידה','אורך','מקור','']));
+  STATE.dims.forEach((d,i)=>meas.rows.push([
+    {v:'קו '+(i+1)+(d.calib?' — קו הכיול':''), s:XS.BOLD},
+    d.label||'—',
+    d.calib?'הוזן ידנית — בסיס הכיול':(d.manualLabel?'הוזן ידנית':'חושב מקנה המידה')
+  ]));
+  if(!STATE.dims.length) meas.rows.push([{v:'לא שורטטו קווי מידה.'}]);
+
+  const openList=MANUAL_CHECKS.concat((STATE.openItems||[]).map(i=>({id:i.id,n:i.n,note:i.scope})));
+  const open={ name:'פריטים לאימות', cols:[46,14,60], rows:[hrow(['סעיף','סטטוס','הערה'])] };
+  openList.forEach(c=>{
+    const cur=STATE.manual[c.id]||'na';
+    const lbl={ok:'תקין',fail:'לא תקין',na:'פתוח'}[cur];
+    open.rows.push([{v:c.n, s:XS.BOLD}, {v:lbl, s:cur==='ok'?XS.OK:cur==='fail'?XS.FAIL:XS.WARN}, c.note||'']);
+  });
+
+  try{
+    dlBlob(exportBase()+'-review.xlsx', buildXlsx([sum,notes,prog,rooms,meas,open]));
+  }catch(err){
+    toast('שגיאה ביצירת Excel');
+    showError('<b>שגיאה ביצירת קובץ Excel</b>'+esc(err.message));
+  }
 }
 
 /* =====================================================================
@@ -1556,11 +2382,22 @@ function routeFile(f){
   if(/\.(png|jpe?g|webp)$/.test(n)) return handleImage(f);
   if(/\.json$/.test(n))           return readJson(f);
   if(/\.(dwg|dxf)$/.test(n))      return needsExport(f,'DWG','AutoCAD','Plot → DWG To PDF');
-  if(/\.(rvt|rfa)$/.test(n))      return needsExport(f,'RVT','Revit','File → Export → PDF');
+  if(/\.(rvt|rfa)$/.test(n))      return rvtPending(f);
   showError('<b>סוג קובץ לא נתמך</b>' + esc(f.name) + ' — נתמכים: PDF, PNG, JPG, JSON.');
 }
 
-/* DWG/RVT are proprietary binary formats — no browser can read them.
+/* RVT is a closed binary format — a browser alone cannot open it. The plan is
+   a server-side converter; until that exists, say so and give the PDF route. */
+function rvtPending(f){
+  showError(
+    `<b>חיבור RVT — בהכנה.</b>`+
+    `הקובץ <u>${esc(f.name)}</u> זוהה, אך פענוח Revit דורש שירות המרה בצד שרת — דפדפן לבדו לא קורא את הפורמט. `+
+    `נחבר את המסלול הזה בשלב הבא.<br>`+
+    `בינתיים: Revit → File → Export → PDF, והעלה את ה-PDF כאן. שכבת הטקסט של תגיות החדרים נשמרת בייצוא, והניתוח יהיה מלא ואוטומטי.`
+  );
+}
+
+/* DWG is likewise a proprietary binary format.
    Say so plainly and give the 10-second workaround instead of failing silently. */
 function needsExport(f, fmt, app, path){
   showError(
@@ -1585,14 +2422,20 @@ function readJson(f){
 function restoreReview(rv){
   if(rv.symbols) STATE.symbols=rv.symbols;
   if(rv.dims)    STATE.dims=rv.dims;
+  if(rv.areas)   STATE.areas=rv.areas;
   if(rv.manual)  STATE.manual=rv.manual;
   if(rv.iron)    STATE.iron=rv.iron;
   if(rv.calib)   STATE.calib=rv.calib;
-  STATE.seq=Math.max(STATE.seq, STATE.symbols.length+STATE.dims.length+1);
+  /* hand-made markup only — the rule-derived notes are rebuilt from the plan */
+  (rv.notes||[]).filter(n=>n.src==='custom'||n.src==='cloud').forEach(n=>{
+    if(!STATE.notes.some(x=>x.id===n.id)) STATE.notes.push(Object.assign({edited:true}, n));
+  });
+  STATE.seq=Math.max(STATE.seq, STATE.symbols.length+STATE.dims.length+STATE.areas.length+STATE.notes.length+1);
   refresh(); toast('סימונים שוחזרו');
 }
 
 async function handlePdf(file){
+  if(!PDFJS_OK){ showError(PDFJS_MSG); return; }
   showLoading(true);
   try{
     const parse=await parsePdf(new Uint8Array(await file.arrayBuffer()), file.name);
@@ -1630,6 +2473,15 @@ async function handleImage(file){
 
 function showLoading(on){ $('#loading').classList.toggle('on',on); if(on) showError(null); }
 function showError(m){ const e=$('#loadError'); e.style.display=m?'block':'none'; e.innerHTML=m||''; }
+
+const PDFJS_MSG =
+  '<b>מנוע קריאת ה-PDF לא נטען.</b>'+
+  'הקובץ <u>lib/pdf.min.js</u> חייב לשבת בתיקייה ליד הדף הזה. '+
+  'בנוסף — יש לפתוח את הדף דרך שרת מקומי (http://localhost) ולא בלחיצה כפולה על הקובץ, '+
+  'כי דפדפנים חוסמים את ה-worker של pdf.js בכתובות <u>file://</u>.<br>'+
+  'העלאת PNG/JPG של התכנית עובדת גם בלי המנוע — במצב סימון ידני.';
+/* surface it the moment the page opens, not only after a failed upload */
+if(!PDFJS_OK) showError(PDFJS_MSG);
 
 /* =====================================================================
    15. EXPORT — same tool, different interface. Live editable, offline.
@@ -1669,7 +2521,247 @@ function progRows(){
   });
 }
 
+/* =====================================================================
+   15a. FLATTENED PLAN — base render + every markup layer on one canvas.
+   Shared by the PDF report and anything else that needs a still image.
+   ===================================================================== */
+function paintSymbolsOn(c,w,h){
+  const k=Math.max(0.7, w/900), S=24*k;
+  STATE.symbols.forEach(s=>{
+    const d=SYMMAP[s.k]; if(!d) return;
+    const col=hex(d.c), x=s.nx*w, y=s.ny*h;
+    c.fillStyle='#fff'; c.fillRect(x-S/2-1.5*k, y-S/2-1.5*k, S+3*k, S+3*k);
+    c.fillStyle=col;    c.fillRect(x-S/2, y-S/2, S, S);
+    c.fillStyle='#fff'; c.font='700 '+(S*0.36).toFixed(1)+'px Helvetica,Arial';
+    c.textAlign='center'; c.textBaseline='middle'; c.direction='ltr';
+    c.fillText(d.t, x, y+0.5*k);
+    if(s.label){
+      c.font='500 '+(9*k).toFixed(1)+'px Helvetica,Arial';
+      c.direction='rtl'; c.textAlign='right';
+      const tw=c.measureText(s.label).width+6*k;
+      c.fillStyle='#fff'; c.fillRect(x-S/2-tw-2*k, y-7*k, tw, 14*k);
+      c.strokeStyle=col; c.lineWidth=1*k; c.strokeRect(x-S/2-tw-2*k, y-7*k, tw, 14*k);
+      c.fillStyle=col; c.fillText(s.label, x-S/2-5*k, y);
+    }
+  });
+}
+function renderComposite(maxW){
+  const W=Math.min(maxW||2000, BASE.width);
+  const H=Math.round(BASE.height*W/BASE.width);
+  const c=document.createElement('canvas');
+  c.width=W; c.height=H;
+  const x=c.getContext('2d');
+  x.fillStyle='#fff'; x.fillRect(0,0,W,H);
+  x.imageSmoothingEnabled=true; x.imageSmoothingQuality='high';
+  x.drawImage(BASE,0,0,W,H);
+  paintMarkup(x,W,H,{layers:{notes:true,syms:true,dims:true,areas:true}, sel:null});
+  paintSymbolsOn(x,W,H);
+  return c;
+}
+
+/* =====================================================================
+   15b. PDF REPORT — real A4 sheets, numbered, printed by the browser.
+   No PDF library ships with this file, and none of them set Hebrew
+   type properly without an embedded font; the print pipeline does.
+   ===================================================================== */
+const LVNAME={f:'שגוי',w:'תיקון קל',i:'מידע / ידני',o:'תקין'};
+function chunk(a,n){ const o=[]; for(let i=0;i<a.length;i+=n) o.push(a.slice(i,i+n)); return o; }
+
+function coverSheet(){
+  const m=metaGet();
+  const f=STATE.notes.filter(n=>n.lv==='f').length;
+  const w=STATE.notes.filter(n=>n.lv==='w').length;
+  const ironOk=(STATE.ironR||[]).filter(r=>r.level==='o').length;
+  const ws=STATE.rooms.filter(r=>['openspace','workstations'].includes(r.check.type)&&r.tag.ppl).reduce((s,r)=>s+r.tag.ppl,0);
+  const seats=STATE.rooms.filter(r=>['meeting','boardroom'].includes(r.check.type)).reduce((s,r)=>s+(r.tag.ppl||0),0);
+  const tagged=STATE.rooms.reduce((s,r)=>s+(r.tag.area||0),0);
+  const measured=STATE.areas.reduce((s,a)=>s+(a.m2||0),0);
+  const head = f ? `<em>${f}</em> נושאים לתיקון` : (w ? `<em>${w}</em> תיקונים קלים` : 'לא נמצאו חריגות');
+  return `
+    <div class="cov">
+      <div class="ck">Roy David Architects · Test Fit Checker</div>
+      <h1>${esc(m.project)}</h1>
+      <div class="csub">${esc([m.floor&&floorTitle(), m.client].filter(Boolean).join(' · ') || 'דוח בדיקת Test Fit')} — ${head}</div>
+      <div class="covgrid">
+        <div><div class="k">לקוח</div><div class="v">${esc(m.client||'—')}</div></div>
+        <div><div class="k">קומה</div><div class="v">${esc(m.floor||'—')}</div></div>
+        <div><div class="k">תאריך</div><div class="v">${esc(m.date)}</div></div>
+        <div><div class="k">נבדק ע״י</div><div class="v">${esc(m.author||'—')}</div></div>
+        <div><div class="k">קובץ מקור</div><div class="v" style="font-size:10px">${esc(m.file||'—')}</div></div>
+        <div><div class="k">מצב ניתוח</div><div class="v" style="font-size:11px">${STATE.mode==='auto'?'אוטומטי — שכבת טקסט':'ידני — ללא שכבת טקסט'}</div></div>
+        <div><div class="k">קנה מידה</div><div class="v" style="font-size:11px">${STATE.calib?'מכויל':'לא מכויל'}</div></div>
+        <div><div class="k">פרוגרמה</div><div class="v" style="font-size:11px">${(STATE.program&&STATE.program.program&&STATE.program.program.length)?'פרוגרמת הפרויקט':'סטנדרט המשרד'}</div></div>
+      </div>
+      <div class="covstat">
+        <div><div class="n" style="color:${f?'var(--fail)':'inherit'}">${f}</div><div class="l">שגוי</div></div>
+        <div><div class="n" style="color:${w?'var(--warn)':'inherit'}">${w}</div><div class="l">תיקון קל</div></div>
+        <div><div class="n" style="color:${ironOk===4?'var(--ok)':'var(--fail)'}">${ironOk}/4</div><div class="l">כללי ברזל</div></div>
+        <div><div class="n">${STATE.rooms.length||'—'}</div><div class="l">תגיות</div></div>
+        <div><div class="n">${ws||'—'}</div><div class="l">עמדות</div></div>
+        <div><div class="n">${measured?measured.toFixed(0):(tagged?tagged.toFixed(0):'—')}</div><div class="l">מ״ר${measured?' נמדד':''}</div></div>
+      </div>
+    </div>`;
+}
+
+function planSheet(dataUrl){
+  return `
+    <div class="planwrap"><img src="${dataUrl}" alt="plan"></div>
+    <div class="rlg">
+      <span><i style="background:#E1504B"></i>שגוי / ענן הערה</span>
+      <span><i style="background:#E38B00"></i>תיקון קל</span>
+      <span><i style="background:#0000FF"></i>מידע · מדידת שטח</span>
+      <span><i style="background:#16A34A"></i>תקין · תנועה</span>
+      <span><i style="background:#D6009A"></i>קווי מידה</span>
+      <span><i style="background:#7C3AED"></i>חשמל</span>
+      <span><i style="background:#0EA5E9"></i>תקשורת</span>
+    </div>`;
+}
+
+function notesTable(rows){
+  return `<table class="rt"><thead><tr>
+      <th style="width:12mm">#</th><th style="width:22mm">דרגה</th><th style="width:58mm">נושא</th>
+      <th style="width:34mm">מקור</th><th>הערה</th><th style="width:20mm">על התכנית</th>
+    </tr></thead><tbody>`+
+    rows.map(n=>`<tr class="${n.lv}">
+      <td><span class="rnum" style="background:${lvColor(n.lv)}">${n.num}</span></td>
+      <td><span class="rchip" style="background:${lvColor(n.lv)}">${LVNAME[n.lv]||''}</span></td>
+      <td class="b">${esc(n.title)}</td>
+      <td>${esc(n.sub)}</td>
+      <td>${esc(n.body)}</td>
+      <td>${n.shape==='cloud'?'ענן':(n.nx!=null?'סמן '+n.num:'—')}</td>
+    </tr>`).join('')+'</tbody></table>';
+}
+function progTable(rows){
+  return `<table class="rt"><thead><tr>
+      <th style="width:60mm">פונקציה</th><th>יעד</th><th>בתכנית</th><th style="width:18mm">Δ</th>
+    </tr></thead><tbody>`+
+    rows.map(r=>`<tr class="${r.cls}"><td class="b">${esc(r.fn)}</td><td>${esc(r.goal)}</td>
+      <td>${esc(r.found)}</td><td>${esc(r.delta)}</td></tr>`).join('')+'</tbody></table>';
+}
+function openTable(rows){
+  const st={ok:['תקין','#16A34A'], fail:['לא תקין','#E1504B'], na:['פתוח','#8A8A8A']};
+  return `<table class="rt"><thead><tr>
+      <th style="width:70mm">סעיף</th><th style="width:22mm">סטטוס</th><th>הערה</th>
+    </tr></thead><tbody>`+
+    rows.map(c=>{
+      const s=st[STATE.manual[c.id]||'na'];
+      return `<tr><td class="b">${esc(c.n)}</td>
+        <td><span class="rchip" style="background:${s[1]}">${s[0]}</span></td>
+        <td>${esc(c.note||'')}</td></tr>`;
+    }).join('')+'</tbody></table>';
+}
+function measureTable(){
+  let h='';
+  if(STATE.areas.length){
+    const tot=STATE.areas.reduce((s,a)=>s+(a.m2||0),0);
+    h+=`<table class="rt" style="margin-bottom:6mm"><thead><tr>
+        <th style="width:70mm">חדר / אזור</th><th style="width:30mm">שטח מדוד</th>
+        <th style="width:30mm">היקף</th><th>נקודות קונטור</th>
+      </tr></thead><tbody>`+
+      STATE.areas.map(a=>`<tr><td class="b">${esc(a.name||'חדר ללא שם')}</td>
+        <td>${a.m2?a.m2.toFixed(2)+' מ״ר':'לא מכויל'}</td>
+        <td>${a.perim?a.perim.toFixed(2)+' מ׳':'—'}</td>
+        <td>${(a.pts||[]).length}</td></tr>`).join('')+
+      (tot?`<tr class="o"><td class="b">סה״כ שטח מדוד</td><td class="b">${tot.toFixed(2)} מ״ר</td><td></td><td></td></tr>`:'')+
+      '</tbody></table>';
+  }
+  if(STATE.dims.length){
+    h+=`<table class="rt"><thead><tr>
+        <th style="width:70mm">קו מידה</th><th style="width:40mm">אורך</th><th>מקור</th>
+      </tr></thead><tbody>`+
+      STATE.dims.map((d,i)=>`<tr><td class="b">קו ${i+1}${d.calib?' — קו הכיול':''}</td>
+        <td>${esc(d.label||'—')}</td>
+        <td>${d.calib?'הוזן ידנית — בסיס הכיול':(d.manualLabel?'הוזן ידנית':'חושב מקנה המידה')}</td></tr>`).join('')+
+      '</tbody></table>';
+  }
+  return h||'<div class="rempty">לא בוצעו מדידות.</div>';
+}
+
+function buildReport(){
+  const m=metaGet();
+  const img=renderComposite(2000).toDataURL('image/png');
+  const sheets=[];
+  sheets.push({cover:true, html:coverSheet()});
+  sheets.push({title:floorTitle(), kicker:'תכנית מסומנת', cls:'plan', html:planSheet(img)});
+
+  const notes=STATE.notes.slice();
+  if(notes.length) chunk(notes,11).forEach((c,i,all)=>sheets.push({
+    title:'הערות הבדיקה', kicker:all.length>1?`${i+1} מתוך ${all.length}`:`${notes.length} הערות`,
+    html:notesTable(c) }));
+  else sheets.push({title:'הערות הבדיקה', kicker:'נקי', html:'<div class="rempty">אין הערות — התוכנית עברה את כל הבדיקות שבוצעו.</div>'});
+
+  const prog=progRows();
+  chunk(prog,16).forEach((c,i,all)=>sheets.push({
+    title:(STATE.program&&STATE.program.program&&STATE.program.program.length)?'פרוגרמת הפרויקט':'סטנדרט המשרד',
+    kicker:all.length>1?`${i+1} מתוך ${all.length}`:'השוואה מול היעד', html:progTable(c) }));
+
+  if(STATE.areas.length||STATE.dims.length)
+    sheets.push({title:'מדידות מהתכנית', kicker:'שטחים וקווי מידה', html:measureTable()});
+
+  const iron=(STATE.ironR||[]);
+  if(iron.length) sheets.push({ title:'כללי ברזל', kicker:'נקודת פתיחה לכל בדיקה', html:
+    `<table class="rt"><thead><tr><th style="width:60mm">כלל</th><th style="width:24mm">סטטוס</th>
+      <th style="width:30mm">מקור</th><th>פירוט</th></tr></thead><tbody>`+
+    iron.map(r=>`<tr class="${r.level==='o'?'o':'f'}"><td class="b">${esc(r.n)}</td>
+      <td><span class="rchip" style="background:${r.level==='o'?'#16A34A':'#E1504B'}">${r.level==='o'?'תקין':'חסר'}</span></td>
+      <td>${esc(r.src)}</td><td>${esc(r.msg)}</td></tr>`).join('')+'</tbody></table>' });
+
+  const open=MANUAL_CHECKS.concat((STATE.openItems||[]).map(i=>({id:i.id,n:i.n,note:i.scope})));
+  chunk(open,14).forEach((c,i,all)=>sheets.push({
+    title:'מה שהתכנית לא מגלה', kicker:all.length>1?`${i+1} מתוך ${all.length}`:'פריטים לאימות',
+    html:openTable(c) }));
+
+  const total=sheets.length;
+  const projLine=esc([m.project, m.floor, m.client].filter(Boolean).join(' · '));
+  const disc='הופק ע״י RDA Test Fit Checker מתוך תגיות התוכנית ובדיקה ידנית. '+
+             'אינו מחליף בדיקת נגישות, בטיחות, מילוט או אישור יועצים.';
+  $('#report').innerHTML = sheets.map((s,i)=>`
+    <section class="sheet">
+      <div class="sh-head">
+        <div class="sh-brand">RD&amp;A<span>Test Fit Checker</span></div>
+        <div class="sh-proj">${projLine}<br>${esc(m.date)}</div>
+      </div>
+      ${s.cover ? s.html : `
+        <div class="sh-title">${esc(s.title)}${s.kicker?`<small>${esc(s.kicker)}</small>`:''}</div>
+        <div class="sh-body ${s.cls||''}">${s.html}</div>`}
+      <div class="sh-foot"><span>${disc}</span><span><b>עמוד ${i+1} / ${total}</b></span></div>
+    </section>`).join('');
+  return total;
+}
+
+async function exportPdf(){
+  closeExportMenu();
+  if(!BASE){ toast('אין תוכנית טעונה'); return; }
+  toast('בונה דוח…');
+  /* let the toast paint before the composite render blocks the thread */
+  await new Promise(r=>setTimeout(r,40));
+  const n=buildReport();
+  document.body.classList.add('printing');
+
+  /* the plan sheet holds a ~1MB data-URI PNG; printing before it decodes
+     yields a blank or mis-scaled page, so wait for it explicitly */
+  const img=$('#report .planwrap img');
+  if(img && !img.complete){
+    await new Promise(res=>{ img.onload=res; img.onerror=res; setTimeout(res,6000); });
+  }
+  if(img && img.decode){
+    try{ await Promise.race([img.decode(), new Promise(r=>setTimeout(r,4000))]); }catch(e){}
+  }
+  await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
+
+  const done=()=>{
+    document.body.classList.remove('printing');
+    $('#report').innerHTML='';
+    window.removeEventListener('afterprint',done);
+    layout();
+  };
+  window.addEventListener('afterprint',done);
+  toast(n+' עמודים — בחר "שמור כ-PDF" בתיבת ההדפסה');
+  window.print();
+}
+
 function exportHtml(){
+  closeExportMenu();
   if(!BASE){ toast('אין תוכנית טעונה'); return; }
   const maxW=2000;
   let img=BASE;
@@ -1689,25 +2781,29 @@ function exportHtml(){
   const seats=STATE.rooms.filter(r=>['meeting','boardroom'].includes(r.check.type)).reduce((s,r)=>s+(r.tag.ppl||0),0);
   const area=STATE.rooms.reduce((s,r)=>s+(r.tag.area||0),0);
   const P=STATE.program;
-  const title=STATE.fileName.replace(/\.pdf$/i,'');
+  const M=metaGet();
+  const title=M.project;
 
   const st={
     title,
-    date:new Date().toLocaleDateString('he-IL'),
+    date:M.date,
+    floorTitle:floorTitle(),
     imgW:img.width, imgH:img.height,
-    notes:STATE.notes.map(n=>({id:n.id,num:n.num,lv:n.lv,title:n.title,sub:n.sub,body:n.body,nx:n.nx,ny:n.ny})),
-    symbols:STATE.symbols, dims:STATE.dims, manual:STATE.manual, symdefs,
+    notes:STATE.notes.map(n=>({id:n.id,num:n.num,lv:n.lv,shape:n.shape,pts:n.pts,
+      title:n.title,sub:n.sub,body:n.body,nx:n.nx,ny:n.ny})),
+    symbols:STATE.symbols, dims:STATE.dims, areas:STATE.areas, manual:STATE.manual, symdefs,
     iron:STATE.ironR.map(r=>({n:r.n,level:r.level,src:r.src,msg:r.msg})),
     prog:progRows(),
     progTitle:(P&&P.program&&P.program.length)?'פרוגרמת הפרויקט':'סטנדרט המשרד',
     openList:MANUAL_CHECKS.concat(STATE.openItems.map(i=>({id:i.id,n:i.n,note:i.scope}))),
-    stats:{ tags:STATE.rooms.length, ws, seats, area:area?area.toFixed(0):0 },
-    meta:(P&&P.meta)||{}
+    stats:{ tags:STATE.rooms.length, ws, seats, area:area?area.toFixed(0):0,
+            measured:STATE.areas.reduce((s,a)=>s+(a.m2||0),0).toFixed(0) },
+    meta:M
   };
 
   const css=$('#exportCSS').textContent;
   const js=$('#exportJS').textContent;
-  const metaLine=[st.meta.project,st.meta.floor,title].filter(Boolean).join(' · ');
+  const metaLine=[M.project,M.floor,M.client].filter(Boolean).join(' · ');
 
   const html='<!DOCTYPE html>\n<html lang="he" dir="rtl">\n<head>\n<meta charset="UTF-8">\n'+
 '<meta name="viewport" content="width=device-width,initial-scale=1">\n'+
@@ -1724,7 +2820,8 @@ function exportHtml(){
 '<button class="tb" onclick="zoom(ZOOM*1.25)">+</button>'+
 '<button class="tb on" id="b1" onclick="lay(\'notes\',\'b1\')">הערות</button>'+
 '<button class="tb on" id="b2" onclick="lay(\'syms\',\'b2\')">סימבולים</button>'+
-'<button class="tb on" id="b3" onclick="lay(\'dims\',\'b3\')">מידות</button></div>\n'+
+'<button class="tb on" id="b3" onclick="lay(\'dims\',\'b3\')">מידות</button>'+
+'<button class="tb on" id="b4" onclick="lay(\'areas\',\'b4\')">שטחים</button></div>\n'+
 '<div id="host"><div id="box"><img id="planImg" src="'+dataUrl+'" alt="plan">'+
 '<canvas id="ov"></canvas><div id="sl"></div></div></div>\n'+
 '<div id="lg">'+
@@ -1740,7 +2837,7 @@ function exportHtml(){
 '<script type="application/json" id="stateJSON">'+JSON.stringify(st).replace(/</g,'\\u003c')+'<\/script>\n'+
 '<script>'+js+'<\/script>\n</body>\n</html>';
 
-  dl(title+'-review.html', html, 'text/html');
+  dl(exportBase()+'-review.html', html, 'text/html');
   toast('Export נוצר — ניתן לערוך ולשמור מחדש');
 }
 </script>
@@ -1852,8 +2949,29 @@ font-size:11px;padding:9px 18px;opacity:0;transition:opacity .2s;pointer-events:
 <script type="text/plain" id="exportJS">
 var S = JSON.parse(document.getElementById('stateJSON').textContent);
 var SD = S.symdefs, ZOOM = 1, SEL = null, TAB = 'notes', TOOL = null;
-var LAY = { notes:true, syms:true, dims:true };
+var LAY = { notes:true, syms:true, dims:true, areas:true };
 var CLR = { f:'#E1504B', w:'#E38B00', i:'#0000FF', o:'#16A34A' };
+var AREA_CLR = '#0000FF';
+function lvc(lv){ return CLR[lv]||'#8A8A8A'; }
+function shoe(p){ var s=0,i; for(i=0;i<p.length;i++){ var a=p[i],b=p[(i+1)%p.length]; s+=a.x*b.y-b.x*a.y; } return s/2; }
+function bnds(p){ var r={x0:1,y0:1,x1:0,y1:0}; p.forEach(function(q){
+  if(q.x<r.x0)r.x0=q.x; if(q.y<r.y0)r.y0=q.y; if(q.x>r.x1)r.x1=q.x; if(q.y>r.y1)r.y1=q.y; }); return r; }
+function cent(p){
+  var A=shoe(p); if(Math.abs(A)<1e-9){ var b=bnds(p); return {x:(b.x0+b.x1)/2,y:(b.y0+b.y1)/2}; }
+  var cx=0,cy=0,i;
+  for(i=0;i<p.length;i++){ var a=p[i],b2=p[(i+1)%p.length],f=a.x*b2.y-b2.x*a.y; cx+=(a.x+b2.x)*f; cy+=(a.y+b2.y)*f; }
+  return {x:cx/(6*A), y:cy/(6*A)};
+}
+function wrapL(c,t,mw,ml){
+  var out=[], line='';
+  String(t||'').split(/\s+/).filter(Boolean).forEach(function(w){
+    var s=line?line+' '+w:w;
+    if(c.measureText(s).width>mw&&line){ out.push(line); line=w; } else line=s;
+  });
+  if(line) out.push(line);
+  if(out.length>ml){ var cut=out.slice(0,ml); cut[ml-1]+='…'; return cut; }
+  return out;
+}
 var Q = function(s){ return document.querySelector(s); };
 function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g, function(c){
   return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
@@ -1876,45 +2994,127 @@ function layout(){
   Q('#zl').textContent=Math.round(ZOOM*100)+'%';
   draw(); syms();
 }
+function badge(c,k,n,bx,by,Sz,col){
+  c.fillStyle='#fff'; c.fillRect(bx-1.5*k,by-1.5*k,Sz+3*k,Sz+3*k);
+  c.fillStyle=col; c.fillRect(bx,by,Sz,Sz);
+  c.fillStyle='#fff'; c.font='700 '+(Sz*0.52).toFixed(1)+'px Helvetica,Arial';
+  c.textAlign='center'; c.textBaseline='middle'; c.direction='ltr';
+  c.fillText(n.num, bx+Sz/2, by+Sz/2+0.5*k);
+  if(SEL===n.id){ c.strokeStyle='#CFFF04'; c.lineWidth=2.5*k; c.strokeRect(bx-3*k,by-3*k,Sz+6*k,Sz+6*k); }
+}
+function cloud(c,f,k,n){
+  var pn=n.pts||[]; if(pn.length<2) return null;
+  var col=lvc(n.lv), r=Math.max(4,7*k), out=shoe(pn)<0;
+  var pts=pn.map(function(p){ return {x:p.x*f.w, y:p.y*f.h}; });
+  var path=[], carry=0, i;
+  for(i=0;i<pts.length;i++){
+    var a=pts[i], b=pts[(i+1)%pts.length];
+    var seg=Math.hypot(b.x-a.x,b.y-a.y);
+    if(seg<0.01) continue;
+    var d=carry;
+    while(d<seg){ path.push({x:a.x+(b.x-a.x)*d/seg, y:a.y+(b.y-a.y)*d/seg}); d+=2*r; }
+    carry=d-seg;
+  }
+  if(path.length<2) return null;
+  c.save();
+  c.strokeStyle=col; c.lineWidth=Math.max(1.3,1.9*k); c.lineJoin='round';
+  c.beginPath();
+  for(i=0;i<path.length;i++){
+    var p1=path[i], p2=path[(i+1)%path.length];
+    var rad=Math.hypot(p2.x-p1.x,p2.y-p1.y)/2;
+    if(rad<0.4) continue;
+    var ang=Math.atan2(p2.y-p1.y,p2.x-p1.x);
+    c.arc((p1.x+p2.x)/2,(p1.y+p2.y)/2,rad,ang+Math.PI,ang,out);
+  }
+  c.stroke(); c.restore();
+  var bb=bnds(pn), Sz=20*k;
+  var bx=Math.max(2*k, bb.x0*f.w-Sz*0.25), by=Math.max(2*k, bb.y0*f.h-Sz*1.2);
+  badge(c,k,n,bx,by,Sz,col);
+  if(n.body){
+    c.save();
+    c.font='500 '+(11*k).toFixed(1)+'px Helvetica,Arial';
+    c.direction='rtl'; c.textAlign='right'; c.textBaseline='top';
+    var lines=wrapL(c,n.body,Math.max(150*k,(bb.x1-bb.x0)*f.w),3);
+    var lh=14*k, pad=5*k;
+    var tw=Math.max.apply(null,lines.map(function(l){return c.measureText(l).width;}))+pad*2;
+    var th=lines.length*lh+pad*2;
+    var tx=Math.min(f.w-2*k, bb.x1*f.w), ty=bb.y1*f.h+5*k;
+    if(ty+th>f.h) ty=Math.max(2*k, bb.y0*f.h-th-5*k);
+    if(tx-tw<0) tx=tw+2*k;
+    c.fillStyle='rgba(255,255,255,.94)'; c.fillRect(tx-tw,ty,tw,th);
+    c.strokeStyle=col; c.lineWidth=Math.max(1,1.2*k); c.strokeRect(tx-tw,ty,tw,th);
+    c.fillStyle=col;
+    lines.forEach(function(l,j){ c.fillText(l, tx-pad, ty+pad+j*lh); });
+    c.restore();
+  }
+  return {id:n.id,bx:bx,by:by,S:Sz};
+}
 function draw(){
   var f=fit(), ov=Q('#ov'), c=ov.getContext('2d');
   var dpr=Math.min(2, window.devicePixelRatio||1);
+  var k=Math.max(0.7, f.w/900);
   c.setTransform(dpr,0,0,dpr,0,0); c.clearRect(0,0,f.w,f.h);
   MK=[];
+  if(LAY.areas) (S.areas||[]).forEach(function(a){
+    var pts=(a.pts||[]).map(function(p){ return {x:p.x*f.w, y:p.y*f.h}; });
+    if(pts.length<3) return;
+    c.save();
+    c.beginPath();
+    pts.forEach(function(p,i){ i?c.lineTo(p.x,p.y):c.moveTo(p.x,p.y); });
+    c.closePath();
+    c.fillStyle='rgba(0,0,255,.07)'; c.fill();
+    c.strokeStyle=AREA_CLR; c.lineWidth=Math.max(1.2,1.6*k);
+    c.setLineDash([6*k,3*k]); c.stroke(); c.setLineDash([]);
+    c.fillStyle=AREA_CLR;
+    pts.forEach(function(p){ c.beginPath(); c.arc(p.x,p.y,2.4*k,0,6.284); c.fill(); });
+    var ct=cent(a.pts), lines=[a.label||'—'];
+    if(a.name) lines.unshift(a.name);
+    c.font='600 '+(11.5*k).toFixed(1)+'px Helvetica,Arial';
+    c.textAlign='center'; c.textBaseline='middle'; c.direction='rtl';
+    var tw=Math.max.apply(null,lines.map(function(l){return c.measureText(l).width;}))+11*k;
+    var lh=14*k, th=lines.length*lh+6*k, cx=ct.x*f.w, cy=ct.y*f.h;
+    c.fillStyle='rgba(255,255,255,.94)'; c.fillRect(cx-tw/2,cy-th/2,tw,th);
+    c.strokeStyle=AREA_CLR; c.lineWidth=Math.max(1,1.2*k); c.strokeRect(cx-tw/2,cy-th/2,tw,th);
+    c.fillStyle=AREA_CLR;
+    lines.forEach(function(l,i){ c.fillText(l, cx, cy-th/2+3*k+lh/2+i*lh); });
+    c.restore();
+  });
   if(LAY.dims) (S.dims||[]).forEach(function(d){
     var x1=d.x1*f.w, y1=d.y1*f.h, x2=d.x2*f.w, y2=d.y2*f.h;
     var col=d.calib?'#0000FF':'#D6009A';
-    c.strokeStyle=col; c.lineWidth=1.6;
+    c.strokeStyle=col; c.lineWidth=1.6*k;
     c.beginPath(); c.moveTo(x1,y1); c.lineTo(x2,y2); c.stroke();
-    var a=Math.atan2(y2-y1,x2-x1);
+    var a=Math.atan2(y2-y1,x2-x1), t=7*k;
     [[x1,y1],[x2,y2]].forEach(function(p){
       c.beginPath();
-      c.moveTo(p[0]-Math.sin(a)*7, p[1]+Math.cos(a)*7);
-      c.lineTo(p[0]+Math.sin(a)*7, p[1]-Math.cos(a)*7); c.stroke();
+      c.moveTo(p[0]-Math.sin(a)*t, p[1]+Math.cos(a)*t);
+      c.lineTo(p[0]+Math.sin(a)*t, p[1]-Math.cos(a)*t); c.stroke();
     });
     var lb=d.label||'—', mx=(x1+x2)/2, my=(y1+y2)/2;
-    c.font='600 11px Helvetica,Arial'; c.textAlign='center'; c.textBaseline='middle';
-    var tw=c.measureText(lb).width+9;
-    c.fillStyle='#fff'; c.fillRect(mx-tw/2,my-8,tw,16);
-    c.strokeStyle=col; c.lineWidth=1.2; c.strokeRect(mx-tw/2,my-8,tw,16);
-    c.fillStyle=col; c.fillText(lb,mx,my+0.5);
+    c.font='600 '+(11*k).toFixed(1)+'px Helvetica,Arial';
+    c.textAlign='center'; c.textBaseline='middle'; c.direction='rtl';
+    var tw=c.measureText(lb).width+9*k, th=16*k;
+    c.fillStyle='#fff'; c.fillRect(mx-tw/2,my-th/2,tw,th);
+    c.strokeStyle=col; c.lineWidth=1.2*k; c.strokeRect(mx-tw/2,my-th/2,tw,th);
+    c.fillStyle=col; c.fillText(lb,mx,my+0.5*k);
   });
-  if(LAY.notes) S.notes.forEach(function(n){
-    if(n.nx==null) return;
-    var x=n.nx*f.w, y=n.ny*f.h, Sz=Math.max(18,Math.min(26,f.w/48));
-    var col=CLR[n.lv]||'#8A8A8A', bx=x+Sz*0.85, by=y-Sz*0.85-Sz;
-    c.strokeStyle=col; c.lineWidth=1.6;
-    c.beginPath(); c.moveTo(x,y); c.lineTo(bx,by+Sz); c.stroke();
-    c.fillStyle='#fff'; c.fillRect(bx-1.5,by-1.5,Sz+3,Sz+3);
-    c.fillStyle=col; c.fillRect(bx,by,Sz,Sz);
-    c.fillStyle='#fff'; c.font='700 '+Math.round(Sz*0.52)+'px Helvetica,Arial';
-    c.textAlign='center'; c.textBaseline='middle';
-    c.fillText(n.num, bx+Sz/2, by+Sz/2+0.5);
-    c.fillStyle=col; c.beginPath(); c.arc(x,y,3.2,0,6.284); c.fill();
-    c.strokeStyle='#fff'; c.lineWidth=1; c.stroke();
-    if(SEL===n.id){ c.strokeStyle='#CFFF04'; c.lineWidth=2.5; c.strokeRect(bx-3,by-3,Sz+6,Sz+6); }
-    MK.push({id:n.id,bx:bx,by:by,S:Sz});
-  });
+  if(LAY.notes){
+    S.notes.forEach(function(n){
+      if(n.shape!=='cloud') return;
+      var m=cloud(c,f,k,n); if(m) MK.push(m);
+    });
+    S.notes.forEach(function(n){
+      if(n.shape==='cloud'||n.nx==null) return;
+      var x=n.nx*f.w, y=n.ny*f.h, Sz=20*k;
+      var col=lvc(n.lv), bx=x+Sz*0.85, by=y-Sz*1.85;
+      c.strokeStyle=col; c.lineWidth=1.6*k;
+      c.beginPath(); c.moveTo(x,y); c.lineTo(bx,by+Sz); c.stroke();
+      badge(c,k,n,bx,by,Sz,col);
+      c.fillStyle=col; c.beginPath(); c.arc(x,y,3.2*k,0,6.284); c.fill();
+      c.strokeStyle='#fff'; c.lineWidth=1*k; c.stroke();
+      MK.push({id:n.id,bx:bx,by:by,S:Sz});
+    });
+  }
 }
 var MK=[];
 function syms(){
@@ -1964,7 +3164,7 @@ function zoom(z){ ZOOM=Math.min(6,Math.max(0.3,z)); layout(); }
 function lay(k,btn){ LAY[k]=!LAY[k]; document.getElementById(btn).classList.toggle('on',LAY[k]); layout(); }
 
 /* ---------- panel ---------- */
-var TABS=[['iron','ברזל'],['notes','הערות'],['prog','פרוגרמה'],['open','לא נראה'],['sym','סימבולים']];
+var TABS=[['iron','ברזל'],['notes','הערות'],['prog','פרוגרמה'],['open','לא נראה'],['sym','סימונים']];
 function render(){
   var f=S.notes.filter(function(n){return n.lv==='f';}).length;
   var w=S.notes.filter(function(n){return n.lv==='w';}).length;
@@ -2002,7 +3202,7 @@ function vNotes(){
         '<span class="ct">'+esc(n.title)+'</span><span class="cs">'+esc(n.sub)+'</span></div>'+
         '<div class="cb" contenteditable="true" data-id="'+n.id+'">'+esc(n.body)+'</div>'+
         '<div class="cact"><button class="xb" data-a="lv" data-id="'+n.id+'">שנה דרגה</button>'+
-        (n.nx!=null?'<button class="xb" data-a="go" data-id="'+n.id+'">הצג</button>':'')+
+        ((n.nx!=null||n.shape==='cloud')?'<button class="xb" data-a="go" data-id="'+n.id+'">הצג</button>':'')+
         '<button class="xb" data-a="del" data-id="'+n.id+'">מחק</button></div></div>';
     }).join('');
   });
@@ -2073,6 +3273,23 @@ function vSym(){
     return '<div class="card"><div class="ch"><span class="num" style="background:'+d.c+'">'+
       esc(d.t)+'</span><span class="ct">'+esc(d.n)+'</span></div></div>';
   }).join('') : '<div class="empty">אין סימבולים.</div>';
+
+  var tot=(S.areas||[]).reduce(function(s,a){ return s+(a.m2||0); },0);
+  h+='<div class="gt">מדידות שטח · '+(S.areas||[]).length+(tot?' · סה״כ '+tot.toFixed(2)+' מ״ר':'')+'</div>';
+  h+=(S.areas||[]).length ? S.areas.map(function(a){
+    return '<div class="card" style="border-inline-start-color:'+AREA_CLR+'"><div class="ch">'+
+      '<span class="num" style="background:'+AREA_CLR+'">⬚</span>'+
+      '<span class="ct">'+esc(a.name||'חדר ללא שם')+'</span>'+
+      '<span class="cs">'+esc(a.label||'—')+'</span></div></div>';
+  }).join('') : '<div class="empty">אין מדידות שטח.</div>';
+
+  h+='<div class="gt">קווי מידה · '+(S.dims||[]).length+'</div>';
+  h+=(S.dims||[]).length ? S.dims.map(function(d,i){
+    var col=d.calib?'#0000FF':'#D6009A';
+    return '<div class="card" style="border-inline-start-color:'+col+'"><div class="ch">'+
+      '<span class="num" style="background:'+col+'">↔</span>'+
+      '<span class="ct">קו '+(i+1)+'</span><span class="cs">'+esc(d.label||'—')+'</span></div></div>';
+  }).join('') : '<div class="empty">אין קווי מידה.</div>';
   return h;
 }
 function arm(k){ TOOL='sym:'+k; Q('#box').style.cursor='crosshair'; toast('לחץ על התכנית'); }
@@ -2080,7 +3297,9 @@ function arm(k){ TOOL='sym:'+k; Q('#box').style.cursor='crosshair'; toast('לח�
 /* ---------- print sheet ---------- */
 function buildPrint(){
   var g=[['f','שגוי — לתיקון'],['w','תיקון קל'],['i','מידע / ידני']], h='';
-  h+='<h3>'+esc(S.title)+' · '+esc(S.date)+'</h3>';
+  var mm=S.meta||{};
+  h+='<h3>'+esc(S.title)+(mm.client?' · '+esc(mm.client):'')+' · '+esc(S.date)+'</h3>';
+  h+='<div style="font-size:11px;opacity:.6;margin:-4px 0 10px">'+esc(S.floorTitle||'')+'</div>';
   g.forEach(function(x){
     var L=S.notes.filter(function(n){return n.lv===x[0];});
     if(!L.length) return;
@@ -2091,6 +3310,15 @@ function buildPrint(){
         '<div class="pw">'+esc(n.body)+'</div></div>';
     }).join('');
   });
+  if((S.areas||[]).length){
+    h+='<h3>מדידות שטח</h3>';
+    h+=S.areas.map(function(a){
+      return '<div class="pi"><div class="pn" style="background:#0000FF">⬚</div>'+
+        '<div class="pr">'+esc(a.name||'חדר ללא שם')+'<small>'+
+        (a.perim?'היקף '+a.perim.toFixed(2)+' מ׳':'')+'</small></div>'+
+        '<div class="pw">'+esc(a.label||'—')+'</div></div>';
+    }).join('');
+  }
   var open=(S.openList||[]).filter(function(c){ return (S.manual[c.id]||'na')!=='ok'; });
   if(open.length){
     h+='<h3>פריטים פתוחים לאימות</h3>';
