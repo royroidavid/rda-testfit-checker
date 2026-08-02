@@ -1510,6 +1510,9 @@ async function renderBase(page){
   BASE=c;
 }
 
+/* How big the plan SHOULD be drawn. Only layout() may ask — the answer depends
+   on #planHost.clientWidth, which shrinks the moment a scrollbar appears, so
+   asking twice can give two different answers for the same on-screen plan. */
 function fitBox(){
   const host=$('#planHost');
   const aw=Math.max(60,host.clientWidth-24), ah=Math.max(60,host.clientHeight-24);
@@ -1519,11 +1522,25 @@ function fitBox(){
   return { w:w*ZOOM, h:h*ZOOM };
 }
 
+/* How big the plan actually IS on screen — the one source of truth for every
+   conversion between normalised (0..1) marks and pixels. planPoint() reads the
+   same rect, so clicks and drawing can never disagree. */
+let BOX={w:0,h:0};
+function boxSize(){ return BOX; }
+
 function layout(){
   if(!BASE) return;
-  const {w,h}=fitBox();
   const box=$('#planBox'), cv=$('#planCanvas'), ov=$('#ovl');
-  box.style.width=w+'px'; box.style.height=h+'px';
+  const fit=fitBox();
+  box.style.width=fit.w+'px'; box.style.height=fit.h+'px';
+
+  /* Sizing the box can add or remove a scrollbar on the host, which changes
+     what fitBox() would now return. Measure what we actually got and build
+     everything else off that. */
+  const r=box.getBoundingClientRect();
+  const w=r.width||fit.w, h=r.height||fit.h;
+  BOX={w,h};
+
   const dpr=Math.min(2, window.devicePixelRatio||1);
   [cv,ov].forEach(c=>{ c.width=Math.round(w*dpr); c.height=Math.round(h*dpr); c.style.width=w+'px'; c.style.height=h+'px'; });
   const c=cv.getContext('2d');
@@ -1749,7 +1766,7 @@ function paintAreas(c,w,h,k){
 }
 
 function drawOverlay(){
-  const ov=$('#ovl'), {w,h}=fitBox();
+  const ov=$('#ovl'), {w,h}=boxSize();
   const dpr=Math.min(2, window.devicePixelRatio||1);
   const c=ov.getContext('2d');
   c.setTransform(dpr,0,0,dpr,0,0); c.clearRect(0,0,w,h);
@@ -1908,7 +1925,7 @@ $('#planBox').addEventListener('click', e=>{
   if(Date.now()<SKIPUNTIL){ SKIPUNTIL=0; return; }
   const p=planPoint(e);
   if(!TOOL){
-    const {w,h}=fitBox(); const mx=p.nx*w, my=p.ny*h;
+    const {w,h}=boxSize(); const mx=p.nx*w, my=p.ny*h;
     const hit=MARKERS.find(m=>mx>=m.bx-5&&mx<=m.bx+m.S+5&&my>=m.by-5&&my<=m.by+m.S+5);
     if(hit){ selectNote(hit.id); return; }
     const ah=STATE.areas.find(a=>pointInPoly(p,a.pts));
@@ -1933,7 +1950,7 @@ $('#planBox').addEventListener('click', e=>{
     const first=PENDING.pts[0];
     /* clicking back on the first vertex closes the loop */
     if(first && PENDING.pts.length>=3){
-      const {w,h}=fitBox();
+      const {w,h}=boxSize();
       if(Math.hypot((p.nx-first.x)*w,(p.ny-first.y)*h)<10){ finishArea(); return; }
     }
     PENDING.pts.push({x:p.nx,y:p.ny}); drawOverlay();
@@ -2001,7 +2018,7 @@ $('#planBox').addEventListener('pointerdown', e=>{
   PENDING={kind:'cloud', pts:[{x:p.nx,y:p.ny}]};
   const mv=ev=>{
     const q=planPoint(ev), last=PENDING.pts[PENDING.pts.length-1];
-    const {w,h}=fitBox();
+    const {w,h}=boxSize();
     if(Math.hypot((q.nx-last.x)*w,(q.ny-last.y)*h)<8) return;
     PENDING.pts.push({x:q.nx,y:q.ny}); drawOverlay();
   };
@@ -3550,15 +3567,23 @@ function toast(m){ var t=Q('#toast'); t.textContent=m; t.classList.add('on');
   clearTimeout(t._x); t._x=setTimeout(function(){t.classList.remove('on');},2000); }
 
 var IMG = Q('#planImg');
-function fit(){
+/* target size — only layout() may ask, because #host.clientWidth changes the
+   moment a scrollbar appears and a second call would answer differently */
+function fitTarget(){
   var h=Q('#host'), aw=Math.max(60,h.clientWidth-24), ah=Math.max(60,h.clientHeight-24);
   var ar=S.imgW/S.imgH, w=aw, hh=w/ar;
   if(hh>ah){ hh=ah; w=hh*ar; }
   return { w:w*ZOOM, h:hh*ZOOM };
 }
+/* actual on-screen size — the single source of truth for marks and clicks */
+var BOX = { w:0, h:0 };
+function fit(){ return BOX; }
 function layout(){
-  var f=fit(), box=Q('#box'), ov=Q('#ov');
-  box.style.width=f.w+'px'; box.style.height=f.h+'px';
+  var box=Q('#box'), ov=Q('#ov'), t=fitTarget();
+  box.style.width=t.w+'px'; box.style.height=t.h+'px';
+  var r=box.getBoundingClientRect();
+  var f={ w:r.width||t.w, h:r.height||t.h };
+  BOX=f;
   var dpr=Math.min(2, window.devicePixelRatio||1);
   ov.width=Math.round(f.w*dpr); ov.height=Math.round(f.h*dpr);
   ov.style.width=f.w+'px'; ov.style.height=f.h+'px';
