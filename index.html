@@ -553,7 +553,7 @@ he:{
   expJsnT:'JSON — שמירת מצב', expJsnS:'לטעינה חוזרת בפלטפורמה',
   heroH1:'בדוק <em>Test Fit</em><br>בשניות.',
   dzBig:'גרור תוכנית לכאן', dzSmall:'PDF מיוצא מ-Revit · או לחץ לבחירת קובץ',
-  rvtSoon:'RVT — בקרוב', loadingPlan:'מנתח תוכנית…',
+  rvtSoon:'RVT', loadingPlan:'מנתח תוכנית…',
   /* --- layers, tools, legend --- */
   lyNotes:'הערות', lySyms:'סימבולים', lyDims:'מידות', lyAreas:'שטחים',
   tDim:'קו מידה', tArea:'מדידת שטח', tCalib:'כיול', tPin:'הערה ממוספרת', tCloud:'ענן הערה',
@@ -676,10 +676,13 @@ he:{
     'בנוסף — יש לפתוח את הדף דרך שרת מקומי (http://localhost) ולא בלחיצה כפולה על הקובץ, '+
     'כי דפדפנים חוסמים את ה-worker של pdf.js בכתובות <u>file://</u>.<br>'+
     'העלאת PNG/JPG של התכנית עובדת גם בלי המנוע — במצב סימון ידני.',
-  errRvt:f=>'<b>חיבור RVT — בהכנה.</b>'+
-    'הקובץ <u>'+f+'</u> זוהה, אך פענוח Revit דורש שירות המרה בצד שרת — דפדפן לבדו לא קורא את הפורמט. '+
-    'נחבר את המסלול הזה בשלב הבא.<br>'+
-    'בינתיים: Revit → File → Export → PDF, והעלה את ה-PDF כאן. שכבת הטקסט של תגיות החדרים נשמרת בייצוא, והניתוח יהיה מלא ואוטומטי.',
+  errRvtBad:f=>'<b>לא ניתן לקרוא את הקובץ.</b>הקובץ <u>'+f+'</u> לא זוהה כקובץ Revit תקין (מבנה OLE2). ודא שזה קובץ .rvt שנשמר כ-Save As מקומי, לא קיצור דרך או ענן.',
+  rvtTitle:'קובץ Revit נקרא בהצלחה', rvtSub:'זיהוי פרויקט וקישורים — ישירות מהקובץ, בלי להעלות כלום לשרת',
+  rvtProject:'פרויקט', rvtOrg:'משרד אדריכלים', rvtBuilding:'שם בניין', rvtIssue:'תאריך הנפקה',
+  rvtVersion:'גרסת Revit', rvtWorksharing:'שיתוף עבודה', rvtCentral:'קובץ מרכזי',
+  rvtLinksTitle:'קישורים חיצוניים', rvtLinkOk:'נטען', rvtLinkBad:'לא נמצא', rvtNoLinks:'אין קישורים חיצוניים בקובץ.',
+  rvtNextTitle:'לניתוח מלא של חדרים ושטחים', rvtNextBody:'הורד את המאקרו, הרץ אותו פעם אחת בתוך Revit (ללא התקנת Add-in), והעלה את קובץ ה-JSON שהוא מייצא — כאן, בכפתור למטה.',
+  rvtDlMacro:'הורד מאקרו (.cs)', rvtUploadJson:'העלה JSON מהמאקרו',
   errDwg:(fmt,app,path)=>'<b>'+fmt+' הוא פורמט בינארי סגור — לא ניתן לפענוח בדפדפן.</b>'+
     'ייצא PDF מתוך '+app+' (<u>'+path+'</u>) והעלה אותו כאן. '+
     'שכבת הטקסט של תגיות החדרים נשמרת בייצוא — והניתוח יהיה מלא ואוטומטי.<br>'+
@@ -755,7 +758,7 @@ en:{
   expJsnT:'JSON — save state', expJsnS:'Reload later in the platform',
   heroH1:'Check a <em>Test Fit</em><br>in seconds.',
   dzBig:'Drop a plan here', dzSmall:'PDF exported from Revit · or click to choose a file',
-  rvtSoon:'RVT — coming soon', loadingPlan:'Analysing plan…',
+  rvtSoon:'RVT', loadingPlan:'Analysing plan…',
   /* --- layers, tools, legend --- */
   lyNotes:'Notes', lySyms:'Symbols', lyDims:'Dimensions', lyAreas:'Areas',
   tDim:'Dimension', tArea:'Measure area', tCalib:'Calibrate', tPin:'Numbered note', tCloud:'Cloud note',
@@ -878,10 +881,13 @@ en:{
     'Also, open the page through a local server (http://localhost) rather than double-clicking the file, '+
     'because browsers block the pdf.js worker on <u>file://</u> URLs.<br>'+
     'Uploading a PNG/JPG of the plan works without the engine — in manual markup mode.',
-  errRvt:f=>'<b>RVT support — in progress.</b>'+
-    'The file <u>'+f+'</u> was recognised, but reading Revit needs a server-side conversion service — a browser alone cannot open the format. '+
-    'That route is planned next.<br>'+
-    'For now: Revit → File → Export → PDF, and upload the PDF here. The room-tag text layer survives the export, so the analysis will be full and automatic.',
+  errRvtBad:f=>'<b>Could not read the file.</b>The file <u>'+f+'</u> was not recognised as a valid Revit file (OLE2 container). Make sure it is a .rvt saved locally with Save As, not a shortcut or a cloud placeholder.',
+  rvtTitle:'Revit file read successfully', rvtSub:'Project identity and links — read directly from the file, nothing uploaded anywhere',
+  rvtProject:'Project', rvtOrg:'Architecture firm', rvtBuilding:'Building name', rvtIssue:'Issue date',
+  rvtVersion:'Revit version', rvtWorksharing:'Worksharing', rvtCentral:'Central model file',
+  rvtLinksTitle:'External links', rvtLinkOk:'Loaded', rvtLinkBad:'Not found', rvtNoLinks:'No external links in this file.',
+  rvtNextTitle:'For a full room and area analysis', rvtNextBody:'Download the macro, run it once inside Revit (no add-in install), and upload the JSON file it exports — with the button below.',
+  rvtDlMacro:'Download macro (.cs)', rvtUploadJson:'Upload the macro’s JSON',
   errDwg:(fmt,app,path)=>'<b>'+fmt+' is a closed binary format — a browser cannot read it.</b>'+
     'Export a PDF from '+app+' (<u>'+path+'</u>) and upload it here. '+
     'The room-tag text layer survives the export, so the analysis will be full and automatic.<br>'+
@@ -2367,10 +2373,14 @@ async function runManual(canvas, name){
   layout(); renderPanel();
 }
 
-async function run(parse){
+/* prebuiltBase lets a non-PDF source (e.g. a Revit room export) supply its
+   own canvas and skip renderBase() entirely — every check downstream reads
+   from parse.tags, not from the PDF page, so the rest of the pipeline is
+   identical either way. */
+async function run(parse, prebuiltBase){
   STATE.mode='auto';
   STATE.parse=parse; STATE.fileName=parse.fileName;
-  PDFPAGE=parse.page; VP1=parse.vp1;
+  PDFPAGE=parse.page||null; VP1=parse.vp1||null;
   STATE.rooms=parse.tags.map((tag,i)=>({tag, i:i+1, check:checkRoom(tag)}));
   const fc=floorChecks(parse, STATE.rooms);
   STATE.floor=fc;
@@ -2383,8 +2393,110 @@ async function run(parse){
   $('#uploadView').style.display='none';
   $('#workView').classList.add('on');
 
-  await renderBase(parse.page);
+  if(prebuiltBase) BASE=prebuiltBase; else await renderBase(parse.page);
   layout(); renderPanel();
+}
+
+/* =====================================================================
+   13c. REVIT ROOM IMPORT — the macro's JSON export becomes a real, exact
+   vector plan. Because we draw it ourselves from true room geometry, the
+   world scale is known outright: no manual calibration step, and every
+   dimension/area tool is correct from the first click.
+   ===================================================================== */
+function pickPrimaryLevel(exp){
+  const byLevel={};
+  (exp.rooms||[]).forEach(r=>{ (byLevel[r.level||'']=byLevel[r.level||'']||[]).push(r); });
+  let best=null, bestN=-1;
+  Object.keys(byLevel).forEach(k=>{ if(byLevel[k].length>bestN){ bestN=byLevel[k].length; best=k; } });
+  return { level:best, rooms:best!=null?byLevel[best]:[] };
+}
+/* the outer loop is whichever ring encloses the most area — inner loops
+   (columns, shafts) are smaller and drawn as unfilled holes */
+function outerLoop(room){
+  const loops=(room.boundary||[]).map(loop=>loop.map(p=>({x:p[0],y:p[1]})));
+  if(!loops.length) return {outer:null, holes:[]};
+  let oi=0, best=-1;
+  loops.forEach((l,i)=>{ const a=Math.abs(shoelace(l)); if(a>best){ best=a; oi=i; } });
+  return { outer:loops[oi], holes:loops.filter((_,i)=>i!==oi) };
+}
+function renderRoomsBase(rooms){
+  let minX=Infinity,minY=Infinity,maxX=-Infinity,maxY=-Infinity;
+  const parsed=rooms.map(r=>{ const lp=outerLoop(r);
+    (lp.outer||[]).forEach(p=>{ if(p.x<minX)minX=p.x; if(p.x>maxX)maxX=p.x; if(p.y<minY)minY=p.y; if(p.y>maxY)maxY=p.y; });
+    return { r, outer:lp.outer, holes:lp.holes };
+  }).filter(p=>p.outer && p.outer.length>=3);
+  if(!parsed.length) throw new Error(isHe()?'לא נמצאו קונטורים גיאומטריים בקובץ':'No room geometry found in the file');
+
+  const worldW=Math.max(0.01,maxX-minX), worldH=Math.max(0.01,maxY-minY);
+  const margin=1.5; /* metres of blank border, so labels near the edge fit */
+  const longSide=2000, scale=longSide/Math.max(worldW+margin*2, worldH+margin*2);
+  const w=Math.round((worldW+margin*2)*scale), h=Math.round((worldH+margin*2)*scale);
+
+  const cv=document.createElement('canvas'); cv.width=w; cv.height=h;
+  const c=cv.getContext('2d');
+  c.fillStyle='#fff'; c.fillRect(0,0,w,h);
+  const toPx=p=>({ x:(p.x-minX+margin)*scale, y:h-(p.y-minY+margin)*scale }); /* flip Y: plan reads north-up */
+
+  parsed.forEach(({r,outer,holes})=>{
+    const pts=outer.map(toPx);
+    c.beginPath();
+    pts.forEach((p,i)=> i?c.lineTo(p.x,p.y):c.moveTo(p.x,p.y));
+    c.closePath();
+    c.fillStyle='#F4F4F4'; c.fill();
+    c.strokeStyle='#1B1B1B'; c.lineWidth=1.4; c.stroke();
+    holes.forEach(hl=>{
+      const hp=hl.map(toPx);
+      c.beginPath();
+      hp.forEach((p,i)=> i?c.lineTo(p.x,p.y):c.moveTo(p.x,p.y));
+      c.closePath();
+      c.fillStyle='#fff'; c.fill();
+      c.strokeStyle='#8A8A8A'; c.lineWidth=1; c.stroke();
+    });
+    const ct=polyCentroid(outer.map(p=>({x:p.x,y:p.y})));
+    const cpx=toPx(ct);
+    const label=(r.name||'')+(r.number?' '+r.number:'');
+    c.fillStyle='#1B1B1B'; c.textAlign='center'; c.textBaseline='middle';
+    c.font='600 12px Helvetica,Arial';
+    if(label) c.fillText(label, cpx.x, cpx.y-7);
+    c.font='400 11px Helvetica,Arial';
+    c.fillText(r.areaM2?r.areaM2.toFixed(1)+' '+T('uM2'):'', cpx.x, cpx.y+8);
+    r._centroidPx={x:cpx.x/w, y:cpx.y/h};
+  });
+  return { canvas:cv, w, h, scale, minX, minY, maxX, maxY };
+}
+
+async function applyRoomExport(exp){
+  const picked=pickPrimaryLevel(exp);
+  if(!picked.rooms.length) throw new Error(isHe()?'לא נמצאו חדרים בקובץ':'No rooms found in the file');
+  const built=renderRoomsBase(picked.rooms);
+
+  const tags=picked.rooms.map(r=>({
+    area:r.areaM2!=null?+r.areaM2.toFixed(2):null,
+    ppl:r.capacity!=null?Math.round(r.capacity):null,
+    stations:null, code:null, isDept:false, names:[],
+    name:((r.name||'')+(r.number?' '+r.number:'')).trim(),
+    nx:r._centroidPx?r._centroidPx.x:0.5, ny:r._centroidPx?r._centroidPx.y:0.5,
+    pdfX:0, pdfY:0
+  }));
+  const allText=picked.rooms.flatMap(r=>[r.name,r.department,r.comments].filter(Boolean).map(s=>s.toLowerCase()));
+  const parse={ tags, allText, fileName:(exp.meta&&exp.meta.fileName)||'revit-export', page:null, vp1:null };
+
+  if(exp.meta){
+    STATE.meta = Object.assign({}, STATE.meta, {
+      project: STATE.meta.project || exp.meta.project || '',
+      client:  STATE.meta.client  || exp.meta.client  || '',
+      floor:   STATE.meta.floor   || picked.level || '',
+      author:  STATE.meta.author  || ''
+    });
+    if(exp.meta.issueDate && exp.meta.issueDate!=='Issue Date' && !STATE.meta.date) STATE.meta.date=exp.meta.issueDate;
+  }
+
+  STATE.calib={ mPerPx: 1/built.scale };
+  await run(parse, built.canvas);
+  relabelMeasures(); refresh();
+  toast(isHe()
+    ? `יובאו ${picked.rooms.length} חדרים מרוויט — קנה המידה מדויק, אין צורך בכיול.`
+    : `Imported ${picked.rooms.length} rooms from Revit — the scale is exact, no calibration needed.`);
 }
 
 /* =====================================================================
@@ -2973,24 +3085,308 @@ function routeFile(f){
   if(/\.(png|jpe?g|webp)$/.test(n)) return handleImage(f);
   if(/\.json$/.test(n))           return readJson(f);
   if(/\.(dwg|dxf)$/.test(n))      return needsExport(f,'DWG','AutoCAD','Plot → DWG To PDF');
-  if(/\.(rvt|rfa)$/.test(n))      return rvtPending(f);
+  if(/\.(rvt|rfa)$/.test(n))      return handleRvt(f);
   showError(T('errUnsupported', esc(f.name)));
 }
 
-/* RVT is a closed binary format — a browser alone cannot open it. The plan is
-   a server-side converter; until that exists, say so and give the PDF route. */
-function rvtPending(f){ showError(T('errRvt', esc(f.name))); }
+/* =====================================================================
+   14c. RVT READER — a .rvt is an OLE2 Compound File. The model elements
+   live in one huge proprietary stream we cannot decode, but the metadata
+   streams beside it are plain XML/UTF-16 and tell us a lot: which Revit
+   wrote it, the Project Information parameters, and every external link
+   with its load state. We read only those few KB — never the whole file.
+   ===================================================================== */
+const OLE_SIG=[0xD0,0xCF,0x11,0xE0,0xA1,0xB1,0x1A,0xE1];
+const ENDOFCHAIN=0xFFFFFFFE, FREESECT=0xFFFFFFFF;
+
+async function openCfbf(file){
+  const rd=async(off,len)=>new Uint8Array(await file.slice(off,off+len).arrayBuffer());
+  const hdr=await rd(0,512);
+  for(let i=0;i<8;i++) if(hdr[i]!==OLE_SIG[i]) throw new Error('not-ole');
+  const H=new DataView(hdr.buffer);
+  const ver=H.getUint16(0x1A,true);
+  const sec=1<<H.getUint16(0x1E,true);
+  const mini=1<<H.getUint16(0x20,true);
+  const nFat=H.getUint32(0x2C,true);
+  const dir0=H.getUint32(0x30,true);
+  const cutoff=H.getUint32(0x38,true);
+  const miniFat0=H.getUint32(0x3C,true);
+  const difat0=H.getUint32(0x44,true);
+  const off=s=>(s+1)*sec;
+  const sector=async s=>rd(off(s),sec);
+
+  /* DIFAT: 109 entries inline, the rest chained through their own sectors */
+  const difat=[];
+  for(let i=0;i<109;i++) difat.push(H.getUint32(0x4C+i*4,true));
+  let nx=difat0, guard=0, per=sec/4-1;
+  while(nx!==ENDOFCHAIN && nx!==FREESECT && guard++<4096){
+    const d=new DataView((await sector(nx)).buffer);
+    for(let i=0;i<per;i++) difat.push(d.getUint32(i*4,true));
+    nx=d.getUint32(per*4,true);
+  }
+  /* the FAT of a 500MB file is ~500KB — small enough to hold, and the only
+     way to follow any chain */
+  const fat=[];
+  for(const s of difat.slice(0,nFat)){
+    if(s===FREESECT||s===ENDOFCHAIN) continue;
+    const d=new DataView((await sector(s)).buffer);
+    for(let i=0;i<sec/4;i++) fat.push(d.getUint32(i*4,true));
+  }
+  const chain=start=>{
+    const out=[]; let c=start,g=0;
+    while(c!==ENDOFCHAIN && c!==FREESECT && c<fat.length && g++<2_000_000){ out.push(c); c=fat[c]; }
+    return out;
+  };
+  const cat=async sects=>{
+    const parts=[]; for(const s of sects) parts.push(await sector(s));
+    const total=parts.reduce((n,p)=>n+p.length,0), out=new Uint8Array(total);
+    let o=0; for(const p of parts){ out.set(p,o); o+=p.length; }
+    return out;
+  };
+
+  const dirBytes=await cat(chain(dir0));
+  const entries=[];
+  for(let i=0;i+128<=dirBytes.length;i+=128){
+    const d=new DataView(dirBytes.buffer,dirBytes.byteOffset+i,128);
+    const type=d.getUint8(0x42);
+    if(!type) continue;
+    const nlen=d.getUint16(0x40,true);
+    let name='';
+    for(let k=0;k+1<Math.max(0,nlen-2);k+=2) name+=String.fromCharCode(d.getUint16(k,true));
+    entries.push({ name, type,
+      start:d.getUint32(0x74,true),
+      size: ver>=4 ? Number(d.getBigUint64(0x78,true)) : d.getUint32(0x78,true) });
+  }
+  const root=entries.find(e=>e.type===5);
+
+  let miniFat=null, miniSectors=null;
+  const readStream=async e=>{
+    if(!e) return new Uint8Array(0);
+    if(e.size<cutoff && e.type===2){
+      if(!miniFat){
+        miniFat=[];
+        for(const s of chain(miniFat0)){
+          const d=new DataView((await sector(s)).buffer);
+          for(let i=0;i<sec/4;i++) miniFat.push(d.getUint32(i*4,true));
+        }
+        miniSectors=chain(root.start);
+      }
+      const out=new Uint8Array(e.size);
+      let c=e.start, o=0, g=0;
+      while(c!==ENDOFCHAIN && c!==FREESECT && o<e.size && g++<200000){
+        const byteOff=c*mini, si=Math.floor(byteOff/sec);
+        if(si>=miniSectors.length) break;
+        const chunk=await rd(off(miniSectors[si])+byteOff%sec, mini);
+        out.set(chunk.subarray(0,Math.min(mini,e.size-o)),o);
+        o+=mini;
+        c=c<miniFat.length?miniFat[c]:ENDOFCHAIN;
+      }
+      return out;
+    }
+    const buf=await cat(chain(e.start));
+    return buf.subarray(0,e.size);
+  };
+  return { entries, readStream, find:n=>entries.find(e=>e.name===n) };
+}
+
+const utf16=b=>{ let s=''; const d=new DataView(b.buffer,b.byteOffset,b.byteLength);
+  for(let i=0;i+1<b.byteLength;i+=2) s+=String.fromCharCode(d.getUint16(i,true)); return s; };
+/* Count only true ASCII-printable/whitespace. A wrong UTF-16 decode of an
+   ASCII-based binary stream still lands on SOME codepoint for every byte
+   pair — often a CJK one — which is real Unicode but not real text; scoring
+   the full printable-Unicode range would let that garbage win by default. */
+const printableRatio=s=>{
+  if(!s.length) return 0;
+  let n=0; for(const ch of s){ const c=ch.charCodeAt(0); if((c>=0x20&&c<=0x7E)||c===0x0A||c===0x0D||c===0x09) n++; }
+  return n/s.length;
+};
+/* Revit mixes encodings between streams — decode both ways and keep whichever
+   reads as more real text. */
+function bestText(bytes){
+  const u8=new TextDecoder('utf-8',{fatal:false}).decode(bytes);
+  const u16=utf16(bytes);
+  return printableRatio(u16)>printableRatio(u8) ? u16 : u8;
+}
+
+/* BasicFileInfo is UTF-16LE label:value pairs, but ONE odd-length field earlier
+   in the stream shifts every 2-byte pairing after it — so decoding the whole
+   buffer as one string garbles everything past that point (verified: byte
+   offset of a known label landed on an odd index). The fix is to never decode
+   the whole buffer: find each label's raw UTF-16 bytes directly and decode
+   only from that exact offset, which is always correctly aligned locally. */
+function extractField(bytes, label){
+  const needle=[]; for(const ch of label) needle.push(ch.charCodeAt(0),0);
+  let idx=-1;
+  outer: for(let i=0;i<=bytes.length-needle.length;i++){
+    for(let j=0;j<needle.length;j++) if(bytes[i+j]!==needle[j]) continue outer;
+    idx=i; break;
+  }
+  if(idx<0) return null;
+  let p=idx+needle.length;
+  while(p+1<bytes.length && bytes[p+1]===0 && (bytes[p]===0x3A||bytes[p]===0x20)) p+=2;
+  let out='', guard=0;
+  while(p+1<bytes.length && guard++<500){
+    const lo=bytes[p], hi=bytes[p+1];
+    if(hi===0 && (lo===0x0D||lo===0x0A)) break;
+    if(hi!==0 && lo===0x0D) break;               /* one stray raw CR seen between sections */
+    if(hi===0){ out+=String.fromCharCode(lo); p+=2; } else break;
+  }
+  return out;
+}
+const BFI_LABELS=['Worksharing','Username','Central Model Path','Format','Build',
+  'Last Save Path','Open Workset Default','Locale when saved',
+  'Central Model Identity','Author','ClientAppName'];
+
+/* the ProjectInformation stream is a tiny zip holding one XML */
+async function unzipFirst(bytes){
+  let i=-1;
+  for(let k=0;k+3<bytes.length;k++)
+    if(bytes[k]===0x50&&bytes[k+1]===0x4B&&bytes[k+2]===0x03&&bytes[k+3]===0x04){ i=k; break; }
+  if(i<0) return null;
+  const d=new DataView(bytes.buffer,bytes.byteOffset,bytes.byteLength);
+  const method=d.getUint16(i+8,true);
+  const comp=d.getUint32(i+18,true);
+  const nlen=d.getUint16(i+26,true), elen=d.getUint16(i+28,true);
+  const start=i+30+nlen+elen;
+  const body=bytes.subarray(start, comp?start+comp:undefined);
+  if(method===0) return new TextDecoder('utf-8').decode(body);
+  try{
+    const ds=new DecompressionStream('deflate-raw');
+    const out=await new Response(new Blob([body]).stream().pipeThrough(ds)).arrayBuffer();
+    return new TextDecoder('utf-8').decode(out);
+  }catch(e){ return null; }
+}
+
+async function readRvt(file){
+  const ole=await openCfbf(file);
+  const info={ file:file.name, params:{}, links:[], raw:{} };
+
+  const bfi=ole.find('BasicFileInfo');
+  if(bfi){
+    const bytes=await ole.readStream(bfi);
+    BFI_LABELS.forEach(l=>{ const v=extractField(bytes,l); if(v) info.params[l]=v; });
+    info.version = info.params['Format'] || '';
+    info.build   = info.params['Build'] || '';
+    info.worksharing = info.params['Worksharing'] || '';
+    info.central = info.params['Central Model Path'] || '';
+    info.lastSave = info.params['Last Save Path'] || '';
+    info.locale  = info.params['Locale when saved'] || '';
+  }
+
+  const pi=ole.find('ProjectInformation');
+  if(pi){
+    const xml=await unzipFirst(await ole.readStream(pi));
+    if(xml){
+      info.raw.projectXml=xml;
+      const doc=new DOMParser().parseFromString(xml,'application/xml');
+      const title=doc.querySelector('title');
+      if(title) info.title=title.textContent.trim();
+      const pv=doc.getElementsByTagName('A:product-version')[0];
+      if(pv) info.productVersion=pv.textContent.trim();
+      /* Project Information parameters are one element each, named after the
+         parameter, with a displayName attribute */
+      doc.querySelectorAll('[displayName]').forEach(el=>{
+        const k=el.getAttribute('displayName'), v=(el.textContent||'').trim();
+        if(k) info.params[k]=v;
+      });
+    }
+  }
+
+  const td=ole.find('TransmissionData');
+  if(td){
+    const txt=bestText(await ole.readStream(td));
+    const i=txt.indexOf('<?xml');
+    if(i>=0){
+      const doc=new DOMParser().parseFromString(txt.slice(i),'application/xml');
+      doc.querySelectorAll('ExternalFileReference').forEach(r=>{
+        const g=t=>{ const n=r.getElementsByTagName(t)[0]; return n?n.textContent.trim():''; };
+        info.links.push({ type:g('ExternalFileReferenceType'), path:g('LastSavedPath'),
+          state:g('LastSavedLoadState'), desired:g('DesiredLoadState'), id:g('ElementId') });
+      });
+    }
+  }
+  return info;
+}
 
 /* DWG is likewise a proprietary binary format.
    Say so plainly and give the 10-second workaround instead of failing silently. */
 function needsExport(f, fmt, app, path){ showError(T('errDwg', fmt, app, esc(path))); }
 
+/* =====================================================================
+   14d. RVT UPLOAD FLOW — read what the browser safely can (project identity,
+   external-link health) the instant the file drops, then hand off to the
+   macro for the geometry a raw binary reader cannot responsibly extract.
+   ===================================================================== */
+async function handleRvt(file){
+  showLoading(true);
+  let info=null, err=null;
+  try{ info=await readRvt(file); }
+  catch(e){ err=e; }
+  showLoading(false);
+  if(!info){ showError(T('errRvtBad', esc(file.name))); return; }
+
+  const row=(label,val)=> val?`<div><div class="k">${esc(label)}</div><div class="v">${esc(val)}</div></div>`:'';
+  const links=info.links||[];
+  const linkRows=links.map(l=>{
+    const ok=l.state==='Loaded';
+    return `<tr class="${ok?'o':'f'}"><td class="fn">${esc(l.type)}</td><td>${esc(l.path)}</td>`+
+      `<td><span class="rchip" style="background:${ok?'#16A34A':'#E1504B'}">${ok?T('rvtLinkOk'):T('rvtLinkBad')}</span></td></tr>`;
+  }).join('');
+
+  const host=document.createElement('div');
+  host.className='modal';
+  host.innerHTML=`
+    <div class="modal-box" style="max-width:640px" onclick="event.stopPropagation()">
+      <div class="modal-head">
+        <div>${T('rvtTitle')}<small>${T('rvtSub')}</small></div>
+        <button class="hb" data-x>${T('close')}</button>
+      </div>
+      <div class="frm" style="grid-template-columns:1fr 1fr">
+        ${row(T('rvtProject'), info.title)}
+        ${row(T('rvtOrg'), info.params['Organization Name'])}
+        ${row(T('rvtBuilding'), info.params['Building Name'])}
+        ${row(T('rvtIssue'), info.params['Project Issue Date']!=='Issue Date'?info.params['Project Issue Date']:'')}
+        ${row(T('rvtVersion'), info.productVersion||info.version)}
+        ${row(T('rvtWorksharing'), info.worksharing)}
+      </div>
+      <div class="modal-body" style="padding:0 16px 16px">
+        <div class="grp-title">${T('rvtLinksTitle')}</div>
+        ${links.length?`<table class="pg"><tbody>${linkRows}</tbody></table>`:`<div class="empty">${T('rvtNoLinks')}</div>`}
+        <div class="iron w" style="margin-top:14px">
+          <div class="ih"><span class="it">${T('rvtNextTitle')}</span></div>
+          <div class="ib">${T('rvtNextBody')}</div>
+        </div>
+      </div>
+      <div class="modal-foot">
+        <a class="mini pri" href="RDA_TestFit_Export_Macro.cs" download>${T('rvtDlMacro')}</a>
+        <button class="mini" data-upload>${T('rvtUploadJson')}</button>
+      </div>
+    </div>`;
+  const close=()=>host.remove();
+  host.onclick=close;
+  host.querySelector('[data-x]').onclick=close;
+  host.querySelector('[data-upload]').onclick=()=>{ close(); $('#jsonInput').click(); };
+  document.body.appendChild(host);
+}
+
 function readJson(f){
   const r=new FileReader();
-  r.onload=()=>{
+  r.onload=async()=>{
     try{
       const j=JSON.parse(r.result);
-      applyProgram(j);
+      /* two independent schemas can share one file: `rooms` is an as-built
+         survey (from the Revit macro) that becomes the plan itself, `program`
+         is a target/QA list checked against whatever plan is already loaded */
+      if(Array.isArray(j.rooms) && j.rooms.length){
+        showLoading(true);
+        try{ await applyRoomExport(j); }
+        catch(err){ showError(T('errParse', esc(err.message))); }
+        showLoading(false);
+      }
+      if(j.program || j.qa || j.meta){
+        if(!(Array.isArray(j.rooms)&&j.rooms.length)) applyProgram(j);
+        else if(j.program) applyProgram(j);
+      }
       if(j.review && BASE) restoreReview(j.review);
     }catch(err){ showError(T('errBadJson', esc(err.message))); }
   };
