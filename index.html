@@ -43,6 +43,16 @@
   .hb.on{background:var(--accent); color:var(--black); border-color:var(--accent);}
   .accent-bar{height:3px; background:var(--accent); flex:0 0 auto;}
 
+  /* language switch — pinned to the visual left corner in both directions.
+     In RTL the row runs right-to-left so the last flex item is leftmost, in LTR
+     it is the first. applyStatic() sets `order` directly for that reason. */
+  .hb.lang{
+    font-weight:500; min-width:42px; letter-spacing:.14em;
+    border-color:rgba(255,255,255,.5);
+  }
+  .hb.lang:hover{background:var(--accent); color:var(--black); border-color:var(--accent);}
+  #legend b{font-weight:400;}
+
   /* export dropdown */
   .hmenu{position:relative;}
   .hdrop{
@@ -415,22 +425,23 @@
 <body>
 
 <header>
+  <button class="hb lang" id="btnLang" onclick="toggleLang()">EN</button>
   <div class="brand">RD&amp;A</div>
   <div class="tool">Test Fit Checker</div>
   <div class="fname" id="fname"></div>
   <div class="hbtns" id="hbtns" style="display:none">
-    <button class="hb" id="btnPanel" onclick="togglePanel()">פאנל</button>
-    <button class="hb" onclick="projectModal()">פרטי פרויקט</button>
+    <button class="hb" id="btnPanel" onclick="togglePanel()" data-t="panel">פאנל</button>
+    <button class="hb" onclick="projectModal()" data-t="projectDetails">פרטי פרויקט</button>
     <div class="hmenu" id="hmenu">
-      <button class="hb" onclick="toggleExportMenu(event)">Export ▾</button>
+      <button class="hb" onclick="toggleExportMenu(event)" data-t="exportBtn">ייצוא ▾</button>
       <div class="hdrop">
-        <button onclick="exportPdf()">PDF — דוח מודפס<small>כותרת פרויקט · תכנית · טבלאות · מספור עמודים</small></button>
-        <button onclick="exportXlsx()">Excel — טבלאות<small>.xlsx · הערות · פרוגרמה · חדרים · מדידות</small></button>
-        <button onclick="exportHtml()">HTML — דוח אינטראקטיבי<small>עצמאי, ניתן לעריכה אצל הלקוח</small></button>
-        <button onclick="saveJson()">JSON — שמירת מצב<small>לטעינה חוזרת בפלטפורמה</small></button>
+        <button onclick="exportPdf()"><span data-t="expPdfT">PDF</span><small data-t="expPdfS"></small></button>
+        <button onclick="exportXlsx()"><span data-t="expXlsT">Excel</span><small data-t="expXlsS"></small></button>
+        <button onclick="exportHtml()"><span data-t="expHtmT">HTML</span><small data-t="expHtmS"></small></button>
+        <button onclick="saveJson()"><span data-t="expJsnT">JSON</span><small data-t="expJsnS"></small></button>
       </div>
     </div>
-    <button class="hb" onclick="location.reload()">תוכנית חדשה</button>
+    <button class="hb" onclick="location.reload()" data-t="newPlan">תוכנית חדשה</button>
   </div>
 </header>
 <div class="accent-bar"></div>
@@ -439,21 +450,20 @@
 <div id="uploadView">
   <div class="inner">
     <div class="kicker">Roy David Architects</div>
-    <h1 class="h1">בדוק <em>Test Fit</em><br>בשניות.</h1>
-    <p class="sub">העלה תוכנית — קבל בדיקה מלאה מול הפרוגרמה, כללי הברזל והסטנדרט המשרדי.</p>
+    <h1 class="h1" id="heroH1" data-th="heroH1"></h1>
 
     <div class="dropzone" id="dropzone" onclick="document.getElementById('fileInput').click()">
-      <div class="dz-big">גרור תוכנית לכאן</div>
-      <div class="dz-small">PDF מיוצא מ-Revit · או לחץ לבחירת קובץ</div>
+      <div class="dz-big" data-t="dzBig">גרור תוכנית לכאן</div>
+      <div class="dz-small" data-t="dzSmall"></div>
     </div>
     <input type="file" id="fileInput" accept=".pdf,.rvt,.rfa,.png,.jpg,.jpeg">
     <input type="file" id="jsonInput" accept=".json,application/json">
 
     <div class="fmt">
-      <span class="pri">PDF</span><span>RVT — בקרוב</span>
+      <span class="pri">PDF</span><span data-t="rvtSoon"></span>
     </div>
 
-    <div class="loading" id="loading">מנתח תוכנית…</div>
+    <div class="loading" id="loading" data-t="loadingPlan"></div>
     <div id="loadError"></div>
     <div class="prog-banner" id="progBanner"></div>
   </div>
@@ -468,19 +478,19 @@
       <span class="zlabel" id="zlabel">100%</span>
       <button class="tb" onclick="setZoom(ZOOM*1.25)">+</button>
       <span class="tbsep"></span>
-      <button class="tb on" id="lyNotes" onclick="toggleLayer('notes')">הערות</button>
-      <button class="tb on" id="lySyms"  onclick="toggleLayer('syms')">סימבולים</button>
-      <button class="tb on" id="lyDims"  onclick="toggleLayer('dims')">מידות</button>
-      <button class="tb on" id="lyAreas" onclick="toggleLayer('areas')">שטחים</button>
+      <button class="tb on" id="lyNotes" onclick="toggleLayer('notes')" data-t="lyNotes"></button>
+      <button class="tb on" id="lySyms"  onclick="toggleLayer('syms')"  data-t="lySyms"></button>
+      <button class="tb on" id="lyDims"  onclick="toggleLayer('dims')"  data-t="lyDims"></button>
+      <button class="tb on" id="lyAreas" onclick="toggleLayer('areas')" data-t="lyAreas"></button>
       <span class="tbsep"></span>
-      <button class="tb" id="tDim"   onclick="armTool('dim')">קו מידה</button>
-      <button class="tb" id="tArea"  onclick="armTool('area')">מדידת שטח</button>
-      <button class="tb" id="tCalib" onclick="armTool('calib')">כיול</button>
+      <button class="tb" id="tDim"   onclick="armTool('dim')"   data-t="tDim"></button>
+      <button class="tb" id="tArea"  onclick="armTool('area')"  data-t="tArea"></button>
+      <button class="tb" id="tCalib" onclick="armTool('calib')" data-t="tCalib"></button>
       <span class="tbsep"></span>
-      <button class="tb" id="tPin"   onclick="armTool('pin')">הערה ממוספרת</button>
-      <button class="tb" id="tCloud" onclick="armTool('cloud')">ענן הערה</button>
+      <button class="tb" id="tPin"   onclick="armTool('pin')"   data-t="tPin"></button>
+      <button class="tb" id="tCloud" onclick="armTool('cloud')" data-t="tCloud"></button>
       <span class="tbsep"></span>
-      <button class="tb" onclick="clearMarkup()">נקה סימונים</button>
+      <button class="tb" onclick="clearMarkup()" data-t="clearMarkupBtn"></button>
       <span class="zlabel" id="toolHint" style="min-width:auto; opacity:.6"></span>
     </div>
     <div id="planHost">
@@ -491,14 +501,14 @@
       </div>
     </div>
     <div id="legend">
-      <span class="lg"><i style="background:#E1504B"></i>שגוי</span>
-      <span class="lg"><i style="background:#E38B00"></i>תיקון קל</span>
-      <span class="lg"><i style="background:#0000FF"></i>מידע / לבדיקה</span>
-      <span class="lg"><i style="background:#7C3AED"></i>חשמל</span>
-      <span class="lg"><i style="background:#0EA5E9"></i>תקשורת</span>
-      <span class="lg"><i style="background:#16A34A"></i>תנועה</span>
-      <span class="lg"><i style="background:#D6009A"></i>קווי מידה</span>
-      <span class="lg"><i style="background:#0000FF"></i>מדידת שטח</span>
+      <span class="lg"><i style="background:#E1504B"></i><b data-t="lgFail"></b></span>
+      <span class="lg"><i style="background:#E38B00"></i><b data-t="lgWarn"></b></span>
+      <span class="lg"><i style="background:#0000FF"></i><b data-t="lgInfo"></b></span>
+      <span class="lg"><i style="background:#7C3AED"></i><b data-t="lgEl"></b></span>
+      <span class="lg"><i style="background:#0EA5E9"></i><b data-t="lgIt"></b></span>
+      <span class="lg"><i style="background:#16A34A"></i><b data-t="lgMove"></b></span>
+      <span class="lg"><i style="background:#D6009A"></i><b data-t="lgDim"></b></span>
+      <span class="lg"><i style="background:#0000FF"></i><b data-t="lgArea"></b></span>
       <span class="lg" id="calibNote" style="opacity:.5"></span>
     </div>
   </div>
@@ -521,6 +531,437 @@ const PDFJS_OK = (typeof pdfjsLib !== 'undefined');
 if(PDFJS_OK) pdfjsLib.GlobalWorkerOptions.workerSrc = 'lib/pdf.worker.min.js';
 
 /* =====================================================================
+   0. LANGUAGE — every user-facing string lives here, in both languages.
+   Values may be plain strings or functions of the message's arguments.
+   Anything the user reads, on screen or in an export, goes through T().
+   ===================================================================== */
+let LANG = (function(){
+  try{ const s=localStorage.getItem('rda-lang'); if(s==='he'||s==='en') return s; }catch(e){}
+  return 'he';
+})();
+
+const STR = {
+he:{
+  /* --- units --- */
+  uCm:'ס״מ', uM:'מ׳', uM2:'מ״ר', uPpl:'מק׳', uSeats:'עמדות',
+  /* --- header + landing --- */
+  langBtn:'EN', langTitle:'Switch to English',
+  panel:'פאנל', projectDetails:'פרטי פרויקט', newPlan:'תוכנית חדשה', exportBtn:'ייצוא ▾',
+  expPdfT:'PDF — דוח מודפס', expPdfS:'כותרת פרויקט · תכנית · טבלאות · מספור עמודים',
+  expXlsT:'Excel — טבלאות', expXlsS:'.xlsx · הערות · פרוגרמה · חדרים · מדידות',
+  expHtmT:'HTML — דוח אינטראקטיבי', expHtmS:'עצמאי, ניתן לעריכה אצל הלקוח',
+  expJsnT:'JSON — שמירת מצב', expJsnS:'לטעינה חוזרת בפלטפורמה',
+  heroH1:'בדוק <em>Test Fit</em><br>בשניות.',
+  dzBig:'גרור תוכנית לכאן', dzSmall:'PDF מיוצא מ-Revit · או לחץ לבחירת קובץ',
+  rvtSoon:'RVT — בקרוב', loadingPlan:'מנתח תוכנית…',
+  /* --- layers, tools, legend --- */
+  lyNotes:'הערות', lySyms:'סימבולים', lyDims:'מידות', lyAreas:'שטחים',
+  tDim:'קו מידה', tArea:'מדידת שטח', tCalib:'כיול', tPin:'הערה ממוספרת', tCloud:'ענן הערה',
+  clearMarkupBtn:'נקה סימונים',
+  lgFail:'שגוי', lgWarn:'תיקון קל', lgInfo:'מידע / לבדיקה', lgEl:'חשמל', lgIt:'תקשורת',
+  lgMove:'תנועה', lgDim:'קווי מידה', lgArea:'מדידת שטח', calibratedNote:'קנה מידה מכויל',
+  /* --- tool hints + prompts + toasts --- */
+  hintDim:'לחץ נקודת התחלה ואז נקודת סיום',
+  hintArea:'לחץ נקודה-נקודה על קונטור החדר · Enter או לחיצה על הנקודה הראשונה לסגירה',
+  hintCalib:'שרטט קו על מידה ידועה בתוכנית',
+  hintPin:'לחץ על התכנית למיקום הערה ממוספרת',
+  hintCloud:'גרור סביב האזור להקפה בענן — ואז הקלד את ההערה',
+  hintSym:s=>'לחץ על התכנית למיקום '+s, hintPlace:'לחץ על התכנית למיקום ההערה',
+  askCalib:'אורך הקו בסנטימטרים:', askDim:'אורך בסנטימטרים (או בטל וכייל תחילה):',
+  askRoom:'שם החדר (אופציונלי):', askRoomName:'שם החדר:', askCloud:'ההערה שתופיע בענן:',
+  tSymAdded:'סימבול נוסף — ניתן לגרור', tNoteAdded:'הערה נוספה', tNotePlaced:'ההערה מוקמה',
+  tCloudAdded:'ענן הערה נוסף', tCloudShort:'הקפה קצרה מדי — גרור סביב האזור',
+  tCalibDone:'קנה מידה כויל — כל המידות והשטחים חושבו מחדש',
+  tNotCalib:'לא כויל קנה מידה — השטח יחושב אחרי כיול',
+  tAreaDone:a=>'שטח נמדד: '+a.toFixed(2)+' מ״ר', tAreaSaved:'קונטור נשמר — כייל קנה מידה לקבלת מ״ר',
+  tRestored:'סימונים שוחזרו', tProgLoaded:'פרוגרמה נטענה', tMetaSaved:'פרטי הפרויקט נשמרו',
+  tNoPlan:'אין תוכנית טעונה', tBuilding:'בונה דוח…', tCopied:'הועתק ללוח',
+  tSelectCopy:'נבחר — Ctrl+C להעתקה', tDownload:n=>'הורדה: '+n,
+  tExportMade:'Export נוצר — ניתן לערוך ולשמור מחדש', tXlsxErr:'שגיאה ביצירת Excel',
+  tPages:n=>n+' עמודים — בחר "שמור כ-PDF" בתיבת ההדפסה',
+  tManualMode:'לא זוהתה שכבת טקסט — מצב סימון ידני', tImgLoaded:'תמונה נטענה — מצב סימון ידני',
+  confirmClear:'למחוק את כל הסימבולים, קווי המידה, מדידות השטח, העננים וההערות הידניות?',
+  /* --- tabs, tiles --- */
+  tabIron:'ברזל', tabNotes:'הערות', tabProg:'פרוגרמה', tabOpen:'לא נראה', tabMarks:'סימונים',
+  tlFail:'שגוי', tlWarn:'תיקון קל', tlIron:'כללי ברזל', tlTags:'תגיות',
+  tlStations:'עמדות', tlSeats:'מקומות', tlArea:'מ״ר', tlSyms:'סימבולים',
+  /* --- panel: iron --- */
+  ironTitle:'כללי ברזל — נקודת פתיחה לכל בדיקה',
+  ironMissing:'חסר', ironOk:'✓', ironOkWord:'תקין',
+  openToolDim:'פתח כלי קו מידה', openSymLib:'פתח מחסן סימבולים', markDone:'סמן כטופל',
+  saveCopyBtn:'שמור עותק מעודכן', copySaved:'עותק מעודכן נשמר',
+  addSymHint:'הוסף סימבול — לחץ ואז לחץ על התכנית', onPlanWord:'על התכנית',
+  clickPlan:'לחץ על התכנית', dimWord:'קו', printOpenTitle:'פריטים פתוחים לאימות',
+  scaleTitle:'קנה מידה', scaleOn:'מכויל', scaleOff:'לא מכויל', scaleLabel:'כיול מידות',
+  scaleOnMsg:'קווי מידה חדשים יקבלו אורך אוטומטי בסנטימטרים.',
+  scaleOffMsg:'כייל פעם אחת על מידה ידועה — לאחר מכן כל קו מידה יחושב אוטומטית.',
+  calibNow:'כייל עכשיו',
+  /* --- panel: notes --- */
+  grpFail:'שגוי — לתיקון', grpWarn:'תיקון קל', grpInfo:'מידע / ידני', grpOk:'תקין',
+  noNotes:'אין הערות — התוכנית עברה את כל הבדיקות.',
+  placeOnPlan:'מקם על התכנית', showOnPlan:'הצג בתכנית', changeLevel:'שנה דרגה', del:'מחק',
+  cloudSub:'ענן על התכנית', noteTitle:'הערה', noteManual:'ידני', noteEditMe:'לחץ לעריכה',
+  manualModeChip:'מצב ידני', manualModeTitle:'אין שכבת טקסט',
+  manualModeBody:'הקובץ נטען כתמונה — אין תגיות חדרים לפענוח, ולכן לא רצה בדיקה אוטומטית. '+
+    'כל הכלים פעילים: סימבולים, קווי מידה עם כיול, והערות ממוקמות. לניתוח אוטומטי מלא — העלה PDF עם שכבת טקסט.',
+  addNote:'הוסף הערה', symLib:'מחסן סימבולים',
+  /* --- panel: program --- */
+  progProject:'פרוגרמת הפרויקט', progOffice:'סטנדרט המשרד',
+  progJsonTitle:'פרוגרמת הפרויקט (JSON)', progNoJson:'סטנדרט המשרד — לא נטענה פרוגרמה',
+  progHint:'לכל תוכנית פרוגרמה משלה. טען JSON לבדיקה מול היעדים של הפרויקט.',
+  loadJson:'טען JSON', showTpl:'הצג תבנית',
+  thFn:'פונקציה', thGoal:'יעד', thFound:'בתכנית', thDelta:'Δ', thStatus:'סטטוס',
+  notFound:'לא נמצא', unitsShort:n=>n+' יח׳',
+  /* --- panel: open items --- */
+  openTitle:'מה שהתכנית לא מגלה — פריטים לאימות',
+  stOk:'תקין', stFail:'לא תקין', stNa:'פתוח', qaScope:'QA פרויקט',
+  /* --- panel: markings --- */
+  symTitle:'מחסן סימבולים — גרור לתכנית או לחץ ואז לחץ על התכנית',
+  symOnPlan:'סימבולים על התכנית', noSyms:'טרם הוצבו סימבולים.',
+  dimsTitle:'קווי מידה', noDims:'טרם שורטטו קווי מידה.', calibLine:' · קו הכיול',
+  areasTitle:'מדידות שטח', totalArea:'סה״כ', noAreas:'טרם נמדדו שטחים. בחר "מדידת שטח" וסמן את קונטור החדר.',
+  notCalibWarn:'קנה המידה לא כויל — קונטורים נשמרים אך לא מומרים למ״ר.',
+  roomNoName:'חדר ללא שם', rename:'שנה שם', perim:'היקף', points:n=>n+' נקודות',
+  notCalibShort:'כייל לקבלת מ״ר',
+  /* --- project modal --- */
+  pmTitle:'פרטי הפרויקט', pmSub:'מופיעים בכותרת כל ייצוא — PDF, Excel ו-HTML',
+  pmProject:'שם הפרויקט', pmClient:'לקוח', pmFloor:'קומה', pmDate:'תאריך', pmAuthor:'נבדק ע״י',
+  pmAuthorPh:'שם הבודק', pmSave:'שמור', pmNote:'הקומה נוחשה מתוך שם הקובץ — ניתן לתקן',
+  close:'סגור', defaultProject:'Test Fit',
+  /* --- report / export --- */
+  rptPlanTitle:f=>f?(/^\d+$/.test(f)?'תכנית Test Fit — קומה '+f:'תכנית Test Fit — '+f):'תכנית Test Fit',
+  rptMarkedPlan:'תכנית מסומנת', rptNotes:'הערות הבדיקה', rptNotesClean:'נקי',
+  rptNoNotes:'אין הערות — התוכנית עברה את כל הבדיקות שבוצעו.',
+  rptOf:(i,n)=>i+' מתוך '+n, rptNotesCount:n=>n+' הערות',
+  rptVsGoal:'השוואה מול היעד', rptMeasures:'מדידות מהתכנית', rptMeasuresSub:'שטחים וקווי מידה',
+  rptIron:'כללי ברזל', rptIronSub:'נקודת פתיחה לכל בדיקה',
+  rptOpen:'מה שהתכנית לא מגלה', rptOpenSub:'פריטים לאימות',
+  rptPage:(i,n)=>'עמוד '+i+' / '+n,
+  rptDisc:'הופק ע״י RDA Test Fit Checker מתוך תגיות התוכנית ובדיקה ידנית. '+
+          'אינו מחליף בדיקת נגישות, בטיחות, מילוט או אישור יועצים.',
+  rptFixes:'נושאים לתיקון', rptMinor:'תיקונים קלים', rptClean:'לא נמצאו חריגות',
+  rptReport:'דוח בדיקת Test Fit',
+  covClient:'לקוח', covFloor:'קומה', covDate:'תאריך', covAuthor:'נבדק ע״י',
+  covFile:'קובץ מקור', covMode:'מצב ניתוח', covScale:'קנה מידה', covProg:'פרוגרמה',
+  modeAuto:'אוטומטי — שכבת טקסט', modeManual:'ידני — ללא שכבת טקסט',
+  lgCloud:'שגוי / ענן הערה', lgInfoArea:'מידע · מדידת שטח', lgOkMove:'תקין · תנועה',
+  thNum:'#', thLevel:'דרגה', thSubject:'נושא', thSource:'מקור', thNote:'הערה', thOnPlan:'על התכנית',
+  onPlanCloud:'ענן', onPlanPin:n=>'סמן '+n,
+  thRule:'כלל', thDetail:'פירוט', thItem:'סעיף',
+  thRoomArea:'חדר / אזור', thMeasured:'שטח מדוד', thPerim:'היקף', thPts:'נקודות קונטור',
+  thDimLine:'קו מידה', thLength:'אורך', dimN:n=>'קו '+n,
+  dimManual:'הוזן ידנית', dimCalibBase:'הוזן ידנית — בסיס הכיול', dimFromScale:'חושב מקנה המידה',
+  totalMeasured:'סה״כ שטח מדוד', noMeasures:'לא בוצעו מדידות.',
+  lvName:{f:'שגוי',w:'תיקון קל',i:'מידע / ידני',o:'תקין'},
+  /* --- xlsx --- */
+  xsSummary:'סיכום', xsNotes:'הערות', xsProgram:'פרוגרמה', xsRooms:'חדרים',
+  xsMeasures:'מדידות', xsOpen:'פריטים לאימות',
+  xsField:'פרט', xsValue:'ערך', xsMetric:'מדד',
+  xsFails:'הערות שגוי', xsWarns:'הערות תיקון קל', xsIronDone:'כללי ברזל שהושלמו',
+  xsTags:'תגיות חדרים', xsStations:'עמדות', xsSeats:'מקומות ישיבה',
+  xsAreaTags:'מ״ר מתגיות התכנית', xsAreaMeasured:'מ״ר שנמדדו ידנית',
+  xsSyms:'סימבולים', xsDims:'קווי מידה', xsAreas:'מדידות שטח',
+  xsBasis:'בסיס הבדיקה', xsSrcFile:'קובץ מקור',
+  xsDisc:'הופק ע״י RDA Test Fit Checker. אינו מחליף בדיקת נגישות, בטיחות, מילוט או אישור יועצים.',
+  xsTagName:'שם בתגית', xsType:'סוג', xsAreaCol:'שטח מ״ר', xsCap:'קיבולת', xsFindings:'ממצאים',
+  xsNoRooms:'לא זוהו תגיות חדרים — הקובץ נטען במצב סימון ידני.',
+  xsNoAreas:'לא נמדדו שטחים.', xsNoDims:'לא שורטטו קווי מידה.',
+  xsMeasuredM2:'שטח מדוד מ״ר', xsPerimM:'היקף מ׳',
+  /* --- errors --- */
+  errUnsupported:f=>'<b>סוג קובץ לא נתמך</b>'+f+' — נתמכים: PDF, PNG, JPG, JSON.',
+  errBadJson:m=>'<b>JSON לא תקין</b>'+m, errParse:m=>'<b>שגיאה בניתוח</b>'+m, errGeneric:m=>'<b>שגיאה</b>'+m,
+  errXlsx:m=>'<b>שגיאה ביצירת קובץ Excel</b>'+m,
+  errPdfjs:'<b>מנוע קריאת ה-PDF לא נטען.</b>'+
+    'הקובץ <u>lib/pdf.min.js</u> חייב לשבת בתיקייה ליד הדף הזה. '+
+    'בנוסף — יש לפתוח את הדף דרך שרת מקומי (http://localhost) ולא בלחיצה כפולה על הקובץ, '+
+    'כי דפדפנים חוסמים את ה-worker של pdf.js בכתובות <u>file://</u>.<br>'+
+    'העלאת PNG/JPG של התכנית עובדת גם בלי המנוע — במצב סימון ידני.',
+  errRvt:f=>'<b>חיבור RVT — בהכנה.</b>'+
+    'הקובץ <u>'+f+'</u> זוהה, אך פענוח Revit דורש שירות המרה בצד שרת — דפדפן לבדו לא קורא את הפורמט. '+
+    'נחבר את המסלול הזה בשלב הבא.<br>'+
+    'בינתיים: Revit → File → Export → PDF, והעלה את ה-PDF כאן. שכבת הטקסט של תגיות החדרים נשמרת בייצוא, והניתוח יהיה מלא ואוטומטי.',
+  errDwg:(fmt,app,path)=>'<b>'+fmt+' הוא פורמט בינארי סגור — לא ניתן לפענוח בדפדפן.</b>'+
+    'ייצא PDF מתוך '+app+' (<u>'+path+'</u>) והעלה אותו כאן. '+
+    'שכבת הטקסט של תגיות החדרים נשמרת בייצוא — והניתוח יהיה מלא ואוטומטי.<br>'+
+    'לחלופין, העלה תמונה (PNG/JPG) של התכנית ועבוד במצב סימון ידני עם כל הכלים.',
+  progBanner:(p,np,nq)=>'<b>פרוגרמה נטענה.</b> '+p+' — '+np+' סעיפי פרוגרמה, '+nq+' סעיפי QA. הבדיקה תרוץ מול היעדים האלה.',
+  tplTitle:'תבנית פרוגרמה + QA', tplSub:'JSON — נקודת הפתיחה לכל תוכנית',
+  tplKeys:'ערכי key חוקיים:', tplDl:'הורד קובץ', tplCopy:'העתק ללוח',
+  tplHint:'מלא את הערכים → שמור כ-.json → טען בפלטפורמה',
+  /* --- room-check messages --- */
+  mUnknownNamed:n=>'סוג לא מזוהה — ״'+n+'״', mUnknownBlank:'תגית ללא שם חדר',
+  mStations:(n,name)=>n+' עמדות'+(name?' — '+name:''), mDeptNoName:'טווח עמדות ללא שם מחלקה',
+  mBelowMin:(a,m)=>a+' מ״ר — מתחת ל-'+m, mInProgram:'קיים בפרוגרמה',
+  mDensTight:(d,m)=>'צפיפות '+d+' מ״ר/עובד — צפוף מדי (מינ׳ '+m+')',
+  mDensLow:d=>'צפיפות '+d+' מ״ר/עובד — קצה תחתון',
+  mDensHigh:d=>'צפיפות '+d+' מ״ר/עובד — מעל הטווח היעיל',
+  mDensOk:d=>'צפיפות '+d+' מ״ר/עובד',
+  mStationsNoArea:n=>n+' עמדות — אין תגית שטח',
+  mPerSeatTight:(d,m)=>d+' מ״ר למקום — צפוף (מינ׳ '+m+')',
+  mPerSeatHigh:d=>d+' מ״ר למקום — מעל הטווח', mPerSeatOk:d=>d+' מ״ר למקום',
+  mNoAreaTag:m=>'אין שטח בתגית — מינימום '+m+' מ״ר', mInRange:'בטווח',
+  mSeatShort:(a,p,need)=>a+' מ״ר ל-'+p+' מקומות — נדרש ~'+need,
+  mSeatEdge:(a,need)=>a+' מ״ר — גבולי מול ~'+need,
+  mSeatOk:(a,p,d)=>a+' מ״ר / '+p+' מק׳ ('+d+' למקום)',
+  mSeatBig:d=>d+' מ״ר למקום — גדול ביחס לקיבולת',
+  mTooSmallMeeting:a=>a+' מ״ר — קטן ממינימום חדר ישיבות', mNoCapTag:'אין תגית קיבולת',
+  mCapCheck:(p,a)=>p+' מקומות — ודא ≥'+a+' מ״ר',
+  mStallSmall:(a,m)=>'תא '+a+' מ״ר — מתחת ל-'+m, mStallOk:'מידות תא בטווח',
+  mOnFloorNoArea:m=>'קיים בקומה — אין שטח בתגית (מינ׳ '+m+')',
+  mBelowRec:(a,r)=>a+' מ״ר — מתחת למומלץ '+r, mAreaOk:'שטח תקין',
+  mBelowMinLbl:(a,m,l)=>a+' מ״ר — מתחת ל-'+m+' ('+l+')',
+  mBelowTypical:(a,lo,hi)=>a+' מ״ר — מתחת לטווח הטיפוסי '+lo+'–'+hi,
+  mNoAreaData:'תגית ללא נתוני שטח',
+  /* --- floor checks --- */
+  fOnFloor:he=>he+' בקומה', fExists:'קיים בתוכנית.', fMissingFloor:'לא נמצא בתגיות — חובה בכל קומה.',
+  fKitchen:'מטבחון', fIt:'חדר IT / תקשורת', fNursery:'חדר הנקה',
+  fMeetings:'חדרי ישיבות', fMeetingsOk:n=>n+' חדרים בקומה.', fMeetingsNone:'לא נמצא אף חדר ישיבות.',
+  fWc:'שירותים', fWcOk:'תאי שירותים מתויגים.', fWcWarn:'לא נמצאו תגיות WC — ודא קיום בגרעין.',
+  fRatio:'יחס ישיבות / עמדות',
+  fRatioLow:(r,m)=>r+'% — מתחת ל-'+m+'%. שקול חדר נוסף.',
+  fRatioOk:(s,w,r)=>s+' מקומות מול '+w+' עמדות — '+r+'%.',
+  fPb:'תאי טלפון', fPbNone:(w,r)=>'אין תאי טלפון ל-'+w+' עמדות (סטנדרט ~1:'+r+').',
+  fPbFew:(p,w,r)=>p+' תאים ל-'+w+' עמדות (1:'+r+') — מעט.',
+  fPbOk:(p,w)=>p+' תאים ל-'+w+' עמדות.',
+  fUnnamed:'תגיות חסרות', fUnnamedMsg:n=>n+' תגיות ללא שם חדר.',
+  fAreaCover:'כיסוי בדיקת שטחים',
+  fAreaCoverMsg:(n,t,p)=>n+' מתוך '+t+' חדרים ללא תגית שטח ('+p+'%) — בדיקת שטח מול הסטנדרט לא בוצעה עבורם.',
+  fCapCover:'כיסוי בדיקת קיבולת',
+  fCapCoverMsg:(n,t)=>n+' מתוך '+t+' חדרי ישיבות / Open Space ללא תגית קיבולת.',
+  fDataQ:'שלמות דאטה', fDataQMsg:p=>p+'% מהתגיות עם שם חדר.',
+  floorCheckSub:'בדיקה קומתית',
+  /* --- iron rules --- */
+  iRoomDims:'מידות כל חדר במטרים',
+  iRoomDimsOk:n=>'זוהו '+n+' מידות במטרים בתוכנית.',
+  iRoomDimsBad:(n,t)=>'זוהו '+n+' מידות בלבד מול '+t+' תגיות. סמן מידות חסרות בכלי "קו מידה".',
+  iOverall:'קווי מידה — אורך ורוחב',
+  iOverallOk:'זוהו קווי מידה כלליים בתוכנית.',
+  iOverallBad:'לא זוהו קווי מידה כלליים. שרטט אורך ורוחב בכלי "קו מידה".',
+  iEntry:'סימון כניסה ויציאה לקומה',
+  iEntryOk:'כניסה ויציאה מסומנות.', iEntryBad:'לא זוהה סימון כניסה/יציאה. גרור IN ו-EX מהמחסן.',
+  iPanels:'ארונות חשמל ותקשורת',
+  iPanelsOk:'ארונות חשמל ותקשורת מסומנים.', iPanelsBad:'לא זוהה סימון ארונות. גרור EL ו-IT מהמחסן.',
+  srcAuto:'זוהה אוטומטית', srcManual:'הושלם ידנית', srcMissing:'חסר'
+},
+en:{
+  /* --- units --- */
+  uCm:'cm', uM:'m', uM2:'m²', uPpl:'ppl', uSeats:'stations',
+  /* --- header + landing --- */
+  langBtn:'עב', langTitle:'מעבר לעברית',
+  panel:'Panel', projectDetails:'Project details', newPlan:'New plan', exportBtn:'Export ▾',
+  expPdfT:'PDF — printed report', expPdfS:'Project title · plan · tables · page numbers',
+  expXlsT:'Excel — tables', expXlsS:'.xlsx · notes · program · rooms · measurements',
+  expHtmT:'HTML — interactive report', expHtmS:'Self-contained, editable by the client',
+  expJsnT:'JSON — save state', expJsnS:'Reload later in the platform',
+  heroH1:'Check a <em>Test Fit</em><br>in seconds.',
+  dzBig:'Drop a plan here', dzSmall:'PDF exported from Revit · or click to choose a file',
+  rvtSoon:'RVT — coming soon', loadingPlan:'Analysing plan…',
+  /* --- layers, tools, legend --- */
+  lyNotes:'Notes', lySyms:'Symbols', lyDims:'Dimensions', lyAreas:'Areas',
+  tDim:'Dimension', tArea:'Measure area', tCalib:'Calibrate', tPin:'Numbered note', tCloud:'Cloud note',
+  clearMarkupBtn:'Clear markup',
+  lgFail:'Fail', lgWarn:'Minor fix', lgInfo:'Info / to verify', lgEl:'Electrical', lgIt:'Data',
+  lgMove:'Circulation', lgDim:'Dimensions', lgArea:'Area measurement', calibratedNote:'Scale calibrated',
+  /* --- tool hints + prompts + toasts --- */
+  hintDim:'Click a start point, then an end point',
+  hintArea:'Click point by point around the room outline · Enter, or click the first point, to close',
+  hintCalib:'Draw a line over a known dimension on the plan',
+  hintPin:'Click the plan to place a numbered note',
+  hintCloud:'Drag around the area to circle it — then type the note',
+  hintSym:s=>'Click the plan to place '+s, hintPlace:'Click the plan to place the note',
+  askCalib:'Length of the line in centimetres:', askDim:'Length in centimetres (or cancel and calibrate first):',
+  askRoom:'Room name (optional):', askRoomName:'Room name:', askCloud:'Note text for the cloud:',
+  tSymAdded:'Symbol added — drag to reposition', tNoteAdded:'Note added', tNotePlaced:'Note placed',
+  tCloudAdded:'Cloud note added', tCloudShort:'Loop too short — drag around the area',
+  tCalibDone:'Scale calibrated — all dimensions and areas recalculated',
+  tNotCalib:'Scale not calibrated — the area will be computed once you calibrate',
+  tAreaDone:a=>'Area measured: '+a.toFixed(2)+' m²', tAreaSaved:'Outline saved — calibrate the scale to get m²',
+  tRestored:'Markup restored', tProgLoaded:'Program loaded', tMetaSaved:'Project details saved',
+  tNoPlan:'No plan loaded', tBuilding:'Building report…', tCopied:'Copied to clipboard',
+  tSelectCopy:'Selected — press Ctrl+C to copy', tDownload:n=>'Downloaded: '+n,
+  tExportMade:'Export created — editable and re-savable', tXlsxErr:'Could not create the Excel file',
+  tPages:n=>n+' pages — choose "Save as PDF" in the print dialog',
+  tManualMode:'No text layer found — manual markup mode', tImgLoaded:'Image loaded — manual markup mode',
+  confirmClear:'Delete all symbols, dimension lines, area measurements, clouds and manual notes?',
+  /* --- tabs, tiles --- */
+  tabIron:'Core', tabNotes:'Notes', tabProg:'Program', tabOpen:'Unseen', tabMarks:'Markup',
+  tlFail:'Fail', tlWarn:'Minor fix', tlIron:'Core rules', tlTags:'Tags',
+  tlStations:'Stations', tlSeats:'Seats', tlArea:'m²', tlSyms:'Symbols',
+  /* --- panel: iron --- */
+  ironTitle:'Core rules — the starting point of every review',
+  ironMissing:'Missing', ironOk:'✓', ironOkWord:'Pass',
+  openToolDim:'Open the dimension tool', openSymLib:'Open the symbol library', markDone:'Mark as handled',
+  saveCopyBtn:'Save updated copy', copySaved:'Updated copy saved',
+  addSymHint:'Add a symbol — click it, then click the plan', onPlanWord:'On the plan',
+  clickPlan:'Click the plan', dimWord:'Line', printOpenTitle:'Open items to verify',
+  scaleTitle:'Scale', scaleOn:'Calibrated', scaleOff:'Not calibrated', scaleLabel:'Dimension calibration',
+  scaleOnMsg:'New dimension lines are measured automatically in centimetres.',
+  scaleOffMsg:'Calibrate once against a known dimension — every later line is then computed automatically.',
+  calibNow:'Calibrate now',
+  /* --- panel: notes --- */
+  grpFail:'Fail — to fix', grpWarn:'Minor fix', grpInfo:'Info / manual', grpOk:'Pass',
+  noNotes:'No notes — the plan passed every check.',
+  placeOnPlan:'Place on plan', showOnPlan:'Show on plan', changeLevel:'Change level', del:'Delete',
+  cloudSub:'Cloud on plan', noteTitle:'Note', noteManual:'Manual', noteEditMe:'Click to edit',
+  manualModeChip:'Manual mode', manualModeTitle:'No text layer',
+  manualModeBody:'The file loaded as an image — there are no room tags to parse, so no automatic check ran. '+
+    'Every tool is available: symbols, calibrated dimension lines and placed notes. For a full automatic analysis, upload a PDF with a text layer.',
+  addNote:'Add a note', symLib:'Symbol library',
+  /* --- panel: program --- */
+  progProject:'Project program', progOffice:'Office standard',
+  progJsonTitle:'Project program (JSON)', progNoJson:'Office standard — no program loaded',
+  progHint:'Every plan has its own program. Load a JSON to check against this project’s targets.',
+  loadJson:'Load JSON', showTpl:'Show template',
+  thFn:'Function', thGoal:'Target', thFound:'On plan', thDelta:'Δ', thStatus:'Status',
+  notFound:'Not found', unitsShort:n=>n+' pcs',
+  /* --- panel: open items --- */
+  openTitle:'What the plan cannot show — items to verify',
+  stOk:'Pass', stFail:'Fail', stNa:'Open', qaScope:'Project QA',
+  /* --- panel: markings --- */
+  symTitle:'Symbol library — drag onto the plan, or click then click the plan',
+  symOnPlan:'Symbols on the plan', noSyms:'No symbols placed yet.',
+  dimsTitle:'Dimension lines', noDims:'No dimension lines drawn yet.', calibLine:' · calibration line',
+  areasTitle:'Area measurements', totalArea:'total', noAreas:'No areas measured yet. Pick "Measure area" and trace the room outline.',
+  notCalibWarn:'The scale is not calibrated — outlines are saved but not converted to m².',
+  roomNoName:'Unnamed room', rename:'Rename', perim:'Perimeter', points:n=>n+' points',
+  notCalibShort:'calibrate for m²',
+  /* --- project modal --- */
+  pmTitle:'Project details', pmSub:'Shown in the header of every export — PDF, Excel and HTML',
+  pmProject:'Project name', pmClient:'Client', pmFloor:'Floor', pmDate:'Date', pmAuthor:'Reviewed by',
+  pmAuthorPh:'Reviewer name', pmSave:'Save', pmNote:'The floor was guessed from the file name — edit if needed',
+  close:'Close', defaultProject:'Test Fit',
+  /* --- report / export --- */
+  rptPlanTitle:f=>f?(/^\d+$/.test(f)?'Test Fit plan — floor '+f:'Test Fit plan — '+f):'Test Fit plan',
+  rptMarkedPlan:'Marked-up plan', rptNotes:'Review notes', rptNotesClean:'Clean',
+  rptNoNotes:'No notes — the plan passed every check performed.',
+  rptOf:(i,n)=>i+' of '+n, rptNotesCount:n=>n+' notes',
+  rptVsGoal:'Against the target', rptMeasures:'Measurements from the plan', rptMeasuresSub:'Areas and dimension lines',
+  rptIron:'Core rules', rptIronSub:'The starting point of every review',
+  rptOpen:'What the plan cannot show', rptOpenSub:'Items to verify',
+  rptPage:(i,n)=>'Page '+i+' / '+n,
+  rptDisc:'Produced by the RDA Test Fit Checker from the plan’s room tags and a manual review. '+
+          'It does not replace an accessibility, safety or egress review, or consultant approval.',
+  rptFixes:'issues to fix', rptMinor:'minor fixes', rptClean:'No deviations found',
+  rptReport:'Test Fit review report',
+  covClient:'Client', covFloor:'Floor', covDate:'Date', covAuthor:'Reviewed by',
+  covFile:'Source file', covMode:'Analysis mode', covScale:'Scale', covProg:'Program',
+  modeAuto:'Automatic — text layer', modeManual:'Manual — no text layer',
+  lgCloud:'Fail / cloud note', lgInfoArea:'Info · area measurement', lgOkMove:'Pass · circulation',
+  thNum:'#', thLevel:'Level', thSubject:'Subject', thSource:'Source', thNote:'Note', thOnPlan:'On plan',
+  onPlanCloud:'Cloud', onPlanPin:n=>'Marker '+n,
+  thRule:'Rule', thDetail:'Detail', thItem:'Item',
+  thRoomArea:'Room / zone', thMeasured:'Measured area', thPerim:'Perimeter', thPts:'Outline points',
+  thDimLine:'Dimension line', thLength:'Length', dimN:n=>'Line '+n,
+  dimManual:'Entered manually', dimCalibBase:'Entered manually — calibration basis', dimFromScale:'Computed from the scale',
+  totalMeasured:'Total measured area', noMeasures:'No measurements taken.',
+  lvName:{f:'Fail',w:'Minor fix',i:'Info / manual',o:'Pass'},
+  /* --- xlsx --- */
+  xsSummary:'Summary', xsNotes:'Notes', xsProgram:'Program', xsRooms:'Rooms',
+  xsMeasures:'Measurements', xsOpen:'To verify',
+  xsField:'Field', xsValue:'Value', xsMetric:'Metric',
+  xsFails:'Fail notes', xsWarns:'Minor-fix notes', xsIronDone:'Core rules met',
+  xsTags:'Room tags', xsStations:'Stations', xsSeats:'Meeting seats',
+  xsAreaTags:'m² from plan tags', xsAreaMeasured:'m² measured manually',
+  xsSyms:'Symbols', xsDims:'Dimension lines', xsAreas:'Area measurements',
+  xsBasis:'Review basis', xsSrcFile:'Source file',
+  xsDisc:'Produced by the RDA Test Fit Checker. It does not replace an accessibility, safety or egress review, or consultant approval.',
+  xsTagName:'Tag name', xsType:'Type', xsAreaCol:'Area m²', xsCap:'Capacity', xsFindings:'Findings',
+  xsNoRooms:'No room tags detected — the file loaded in manual markup mode.',
+  xsNoAreas:'No areas measured.', xsNoDims:'No dimension lines drawn.',
+  xsMeasuredM2:'Measured area m²', xsPerimM:'Perimeter m',
+  /* --- errors --- */
+  errUnsupported:f=>'<b>Unsupported file type</b>'+f+' — supported: PDF, PNG, JPG, JSON.',
+  errBadJson:m=>'<b>Invalid JSON</b>'+m, errParse:m=>'<b>Parsing error</b>'+m, errGeneric:m=>'<b>Error</b>'+m,
+  errXlsx:m=>'<b>Could not create the Excel file</b>'+m,
+  errPdfjs:'<b>The PDF engine did not load.</b>'+
+    'The file <u>lib/pdf.min.js</u> must sit in a folder next to this page. '+
+    'Also, open the page through a local server (http://localhost) rather than double-clicking the file, '+
+    'because browsers block the pdf.js worker on <u>file://</u> URLs.<br>'+
+    'Uploading a PNG/JPG of the plan works without the engine — in manual markup mode.',
+  errRvt:f=>'<b>RVT support — in progress.</b>'+
+    'The file <u>'+f+'</u> was recognised, but reading Revit needs a server-side conversion service — a browser alone cannot open the format. '+
+    'That route is planned next.<br>'+
+    'For now: Revit → File → Export → PDF, and upload the PDF here. The room-tag text layer survives the export, so the analysis will be full and automatic.',
+  errDwg:(fmt,app,path)=>'<b>'+fmt+' is a closed binary format — a browser cannot read it.</b>'+
+    'Export a PDF from '+app+' (<u>'+path+'</u>) and upload it here. '+
+    'The room-tag text layer survives the export, so the analysis will be full and automatic.<br>'+
+    'Alternatively, upload an image (PNG/JPG) of the plan and work in manual markup mode with every tool.',
+  progBanner:(p,np,nq)=>'<b>Program loaded.</b> '+p+' — '+np+' program items, '+nq+' QA items. The review will run against these targets.',
+  tplTitle:'Program + QA template', tplSub:'JSON — the starting point for every plan',
+  tplKeys:'Valid key values:', tplDl:'Download file', tplCopy:'Copy to clipboard',
+  tplHint:'Fill in the values → save as .json → load it in the platform',
+  /* --- room-check messages --- */
+  mUnknownNamed:n=>'Unrecognised type — “'+n+'”', mUnknownBlank:'Tag with no room name',
+  mStations:(n,name)=>n+' stations'+(name?' — '+name:''), mDeptNoName:'Station range with no department name',
+  mBelowMin:(a,m)=>a+' m² — below '+m, mInProgram:'Present in the program',
+  mDensTight:(d,m)=>'Density '+d+' m²/person — too tight (min '+m+')',
+  mDensLow:d=>'Density '+d+' m²/person — bottom of the range',
+  mDensHigh:d=>'Density '+d+' m²/person — above the efficient range',
+  mDensOk:d=>'Density '+d+' m²/person',
+  mStationsNoArea:n=>n+' stations — no area tag',
+  mPerSeatTight:(d,m)=>d+' m² per seat — tight (min '+m+')',
+  mPerSeatHigh:d=>d+' m² per seat — above the range', mPerSeatOk:d=>d+' m² per seat',
+  mNoAreaTag:m=>'No area on the tag — minimum '+m+' m²', mInRange:'Within range',
+  mSeatShort:(a,p,need)=>a+' m² for '+p+' seats — ~'+need+' required',
+  mSeatEdge:(a,need)=>a+' m² — borderline against ~'+need,
+  mSeatOk:(a,p,d)=>a+' m² / '+p+' seats ('+d+' per seat)',
+  mSeatBig:d=>d+' m² per seat — large for the stated capacity',
+  mTooSmallMeeting:a=>a+' m² — below the minimum for a meeting room', mNoCapTag:'No capacity tag',
+  mCapCheck:(p,a)=>p+' seats — verify ≥'+a+' m²',
+  mStallSmall:(a,m)=>'Stall '+a+' m² — below '+m, mStallOk:'Stall dimensions within range',
+  mOnFloorNoArea:m=>'Present on the floor — no area on the tag (min '+m+')',
+  mBelowRec:(a,r)=>a+' m² — below the recommended '+r, mAreaOk:'Area within range',
+  mBelowMinLbl:(a,m,l)=>a+' m² — below '+m+' ('+l+')',
+  mBelowTypical:(a,lo,hi)=>a+' m² — below the typical range '+lo+'–'+hi,
+  mNoAreaData:'Tag with no area data',
+  /* --- floor checks --- */
+  fOnFloor:he=>he+' on the floor', fExists:'Present on the plan.', fMissingFloor:'Not found in the tags — required on every floor.',
+  fKitchen:'Kitchenette', fIt:'IT / comms room', fNursery:'Nursing room',
+  fMeetings:'Meeting rooms', fMeetingsOk:n=>n+' rooms on the floor.', fMeetingsNone:'No meeting room found.',
+  fWc:'Toilets', fWcOk:'Toilet stalls are tagged.', fWcWarn:'No WC tags found — verify they exist in the core.',
+  fRatio:'Meeting-seat to station ratio',
+  fRatioLow:(r,m)=>r+'% — below '+m+'%. Consider another room.',
+  fRatioOk:(s,w,r)=>s+' seats against '+w+' stations — '+r+'%.',
+  fPb:'Phone booths', fPbNone:(w,r)=>'No phone booths for '+w+' stations (standard ~1:'+r+').',
+  fPbFew:(p,w,r)=>p+' booths for '+w+' stations (1:'+r+') — too few.',
+  fPbOk:(p,w)=>p+' booths for '+w+' stations.',
+  fUnnamed:'Incomplete tags', fUnnamedMsg:n=>n+' tags with no room name.',
+  fAreaCover:'Area-check coverage',
+  fAreaCoverMsg:(n,t,p)=>n+' of '+t+' rooms have no area tag ('+p+'%) — the area check against the standard was not run for them.',
+  fCapCover:'Capacity-check coverage',
+  fCapCoverMsg:(n,t)=>n+' of '+t+' meeting rooms / open space have no capacity tag.',
+  fDataQ:'Data completeness', fDataQMsg:p=>p+'% of tags carry a room name.',
+  floorCheckSub:'Floor-level check',
+  /* --- iron rules --- */
+  iRoomDims:'Every room dimensioned',
+  iRoomDimsOk:n=>n+' dimensions detected on the plan.',
+  iRoomDimsBad:(n,t)=>'Only '+n+' dimensions detected against '+t+' tags. Mark the missing ones with the dimension tool.',
+  iOverall:'Overall dimension lines — length and width',
+  iOverallOk:'Overall dimension lines detected on the plan.',
+  iOverallBad:'No overall dimension lines detected. Draw the length and width with the dimension tool.',
+  iEntry:'Floor entry and exit marked',
+  iEntryOk:'Entry and exit are marked.', iEntryBad:'No entry/exit marking detected. Drag IN and EX from the library.',
+  iPanels:'Electrical and data cabinets',
+  iPanelsOk:'Electrical and data cabinets are marked.', iPanelsBad:'No cabinet marking detected. Drag EL and IT from the library.',
+  srcAuto:'Detected automatically', srcManual:'Completed manually', srcMissing:'Missing'
+}};
+
+function T(k){
+  const tbl=STR[LANG]||STR.he;
+  let v=(k in tbl)?tbl[k]:STR.he[k];
+  if(v===undefined) return k;
+  if(typeof v==='function') return v.apply(null, Array.prototype.slice.call(arguments,1));
+  return v;
+}
+const isHe = () => LANG==='he';
+
+/* Dimension lines read in centimetres — that is how the office draws.
+   Areas stay in m², which is how the program is written. */
+function fmtCm(m){ return Math.round(m*100)+' '+T('uCm'); }
+function fmtM(m){ return m.toFixed(2)+' '+T('uM'); }
+function fmtM2(a){ return a.toFixed(2)+' '+T('uM2'); }
+
+/* =====================================================================
    1. KNOWLEDGE BASE — office standards (fallback when no program JSON)
    ===================================================================== */
 const RULES = {
@@ -531,96 +972,131 @@ const RULES = {
   vp:         { label:'VP', minArea:10.5 },
   director:   { label:'Group Director', minArea:8.5, typMin:9.4, typMax:10.2 },
   hrbp:       { label:'HRBP', minArea:9.5 },
-  staffroom:  { label:'חדר צוות', minArea:7.0 },
+  staffroom:  { label:{he:'חדר צוות', en:'Team Room'}, minArea:7.0 },
   hr:         { label:'HR', minArea:16 },
   facilities: { label:'Facilities', minArea:12 },
-  it:         { label:'IT / תקשורת', minArea:7, requiredPerFloor:true },
-  nursery:    { label:'חדר הנקה', minArea:5, recommended:6.2, requiredPerFloor:true },
-  kitchenette:{ label:'מטבחון / קפיטריה', minArea:20, requiredPerFloor:true },
-  wc:         { label:'שירותים', stallMin:1.5 },
+  it:         { label:{he:'IT / תקשורת', en:'IT / Comms'}, minArea:7, requiredPerFloor:true },
+  nursery:    { label:{he:'חדר הנקה', en:'Nursing Room'}, minArea:5, recommended:6.2, requiredPerFloor:true },
+  kitchenette:{ label:{he:'מטבחון / קפיטריה', en:'Kitchenette / Cafeteria'}, minArea:20, requiredPerFloor:true },
+  wc:         { label:{he:'שירותים', en:'Toilets'}, stallMin:1.5 },
   service:    { label:'Service', minArea:15 },
-  future:     { label:'עתודה', minArea:7 },
+  future:     { label:{he:'עתודה', en:'Future'}, minArea:7 },
   openspace:  { label:'Open Space', densityMin:1.3, densityWarnLow:1.45, densityWarnHigh:2.6 },
   phonebooth: { label:'Phone Booth', perStationsRatio:35 },
   lounge:     { label:'Lounge' },
   social:     { label:'Meet Up / Game Room' },
-  workstations:{ label:'עמדות לפי מחלקה' },
-  reception:  { label:'קבלה / המתנה' },
-  floor:      { label:'כללי קומה', meetingRatioMin:15 }
+  workstations:{ label:{he:'עמדות לפי מחלקה', en:'Stations by department'} },
+  reception:  { label:{he:'קבלה / המתנה', en:'Reception / Waiting'} },
+  floor:      { label:{he:'כללי קומה', en:'Floor rules'}, meetingRatioMin:15 }
 };
 
+/* Bilingual data value: {he,en} picks by language, a plain string passes through. */
+const L = v => (v && typeof v==='object' && !Array.isArray(v) && ('he' in v || 'en' in v))
+  ? (v[LANG]!==undefined ? v[LANG] : v.he) : v;
+
 const PROGRAM_REF = [
-  { types:['openspace','workstations'], fn:'Open Space', norm:'1.45–2.6 מ״ר לעובד · אשכולות של 6 עמדות', required:true },
-  { types:['meeting'], fn:'Meeting Room', norm:'4 מק׳ ≈ 10 · 8 ≈ 11 · 10 ≈ 16 · 12 ≈ 20 · 16 ≈ 26 מ״ר', required:true },
-  { types:['boardroom'], fn:'Board Room', norm:'≥ 40 מ״ר · ~1.8 מ״ר למקום' },
-  { types:['altmeeting','social'], fn:'ישיבות לא-פורמלי / Meet Up', norm:'≥ 15 מ״ר' },
-  { types:['phonebooth'], fn:'Phone Booth', norm:'תא לכל ~35 עמדות' },
-  { types:['executive'], fn:'Executive / C-Level', norm:'≥ 13 מ״ר' },
-  { types:['vp'], fn:'VP', norm:'≥ 10.5 מ״ר' },
-  { types:['director'], fn:'Group Director', norm:'9.5–10.2 מ״ר' },
-  { types:['hrbp'], fn:'HRBP', norm:'≥ 9.5 מ״ר' },
-  { types:['staffroom'], fn:'חדר צוות / מחלקה קטנה', norm:'7–9 מ״ר · 2–3 עמדות' },
-  { types:['hr'], fn:'HR', norm:'≥ 16 מ״ר' },
-  { types:['it'], fn:'IT / תקשורת', norm:'≥ 7 מ״ר · חובה בכל קומה', required:true },
-  { types:['nursery'], fn:'חדר הנקה', norm:'≥ 5 מ״ר (מומלץ 6+) · חובה בכל קומה', required:true },
-  { types:['kitchenette'], fn:'מטבחון / קפיטריה', norm:'≥ 20 מ״ר לקומה', required:true },
-  { types:['wc'], fn:'שירותים', norm:'תא ≥ 1.5 מ״ר · תא נגיש בכל קומה' },
-  { types:['lounge'], fn:'Lounge', norm:'2–3 לקומה, בקצוות ולצד המטבחון' },
-  { types:['reception'], fn:'קבלה / המתנה', norm:'בקומת הכניסה הראשית' }
+  { types:['openspace','workstations'], fn:'Open Space', required:true,
+    norm:{he:'1.45–2.6 מ״ר לעובד · אשכולות של 6 עמדות', en:'1.45–2.6 m² per person · clusters of 6 stations'} },
+  { types:['meeting'], fn:'Meeting Room', required:true,
+    norm:{he:'4 מק׳ ≈ 10 · 8 ≈ 11 · 10 ≈ 16 · 12 ≈ 20 · 16 ≈ 26 מ״ר', en:'4 seats ≈ 10 · 8 ≈ 11 · 10 ≈ 16 · 12 ≈ 20 · 16 ≈ 26 m²'} },
+  { types:['boardroom'], fn:'Board Room',
+    norm:{he:'≥ 40 מ״ר · ~1.8 מ״ר למקום', en:'≥ 40 m² · ~1.8 m² per seat'} },
+  { types:['altmeeting','social'], fn:{he:'ישיבות לא-פורמלי / Meet Up', en:'Informal meeting / Meet Up'},
+    norm:{he:'≥ 15 מ״ר', en:'≥ 15 m²'} },
+  { types:['phonebooth'], fn:'Phone Booth',
+    norm:{he:'תא לכל ~35 עמדות', en:'one booth per ~35 stations'} },
+  { types:['executive'], fn:'Executive / C-Level', norm:{he:'≥ 13 מ״ר', en:'≥ 13 m²'} },
+  { types:['vp'], fn:'VP', norm:{he:'≥ 10.5 מ״ר', en:'≥ 10.5 m²'} },
+  { types:['director'], fn:'Group Director', norm:{he:'9.5–10.2 מ״ר', en:'9.5–10.2 m²'} },
+  { types:['hrbp'], fn:'HRBP', norm:{he:'≥ 9.5 מ״ר', en:'≥ 9.5 m²'} },
+  { types:['staffroom'], fn:{he:'חדר צוות / מחלקה קטנה', en:'Team room / small department'},
+    norm:{he:'7–9 מ״ר · 2–3 עמדות', en:'7–9 m² · 2–3 stations'} },
+  { types:['hr'], fn:'HR', norm:{he:'≥ 16 מ״ר', en:'≥ 16 m²'} },
+  { types:['it'], fn:{he:'IT / תקשורת', en:'IT / comms'}, required:true,
+    norm:{he:'≥ 7 מ״ר · חובה בכל קומה', en:'≥ 7 m² · required on every floor'} },
+  { types:['nursery'], fn:{he:'חדר הנקה', en:'Nursing room'}, required:true,
+    norm:{he:'≥ 5 מ״ר (מומלץ 6+) · חובה בכל קומה', en:'≥ 5 m² (6+ recommended) · required on every floor'} },
+  { types:['kitchenette'], fn:{he:'מטבחון / קפיטריה', en:'Kitchenette / cafeteria'}, required:true,
+    norm:{he:'≥ 20 מ״ר לקומה', en:'≥ 20 m² per floor'} },
+  { types:['wc'], fn:{he:'שירותים', en:'Toilets'},
+    norm:{he:'תא ≥ 1.5 מ״ר · תא נגיש בכל קומה', en:'stall ≥ 1.5 m² · an accessible stall on every floor'} },
+  { types:['lounge'], fn:'Lounge',
+    norm:{he:'2–3 לקומה, בקצוות ולצד המטבחון', en:'2–3 per floor, at the ends and beside the kitchenette'} },
+  { types:['reception'], fn:{he:'קבלה / המתנה', en:'Reception / waiting'},
+    norm:{he:'בקומת הכניסה הראשית', en:'on the main entrance floor'} }
 ];
 
 /* ---- symbol warehouse ---- */
 const SYMBOLS = [
-  { g:'תשתיות', items:[
-    { id:'el',   t:'EL',  n:'ארון חשמל',        c:'var(--s-el)' },
-    { id:'elm',  t:'EL+', n:'לוח חשמל ראשי',    c:'var(--s-el)' },
-    { id:'it',   t:'IT',  n:'ארון תקשורת',      c:'var(--s-it)' },
-    { id:'srv',  t:'SRV', n:'חדר שרתים / UPS',  c:'var(--s-it)' },
-    { id:'mep',  t:'AC',  n:'מיזוג / מפוח',     c:'var(--s-mep)' },
-    { id:'wtr',  t:'W',   n:'מים / ניקוז',      c:'var(--s-mep)' }
+  { g:{he:'תשתיות', en:'Infrastructure'}, items:[
+    { id:'el',   t:'EL',  n:{he:'ארון חשמל',       en:'Electrical cabinet'}, c:'var(--s-el)' },
+    { id:'elm',  t:'EL+', n:{he:'לוח חשמל ראשי',   en:'Main electrical board'}, c:'var(--s-el)' },
+    { id:'it',   t:'IT',  n:{he:'ארון תקשורת',     en:'Data cabinet'},       c:'var(--s-it)' },
+    { id:'srv',  t:'SRV', n:{he:'חדר שרתים / UPS', en:'Server room / UPS'},  c:'var(--s-it)' },
+    { id:'mep',  t:'AC',  n:{he:'מיזוג / מפוח',    en:'HVAC / fan unit'},    c:'var(--s-mep)' },
+    { id:'wtr',  t:'W',   n:{he:'מים / ניקוז',     en:'Water / drainage'},   c:'var(--s-mep)' }
   ]},
-  { g:'תנועה ובטיחות', items:[
-    { id:'entry',t:'IN',  n:'כניסה לקומה',      c:'var(--s-move)' },
-    { id:'exit', t:'EX',  n:'יציאת חירום',      c:'var(--s-fire)' },
-    { id:'stair',t:'ST',  n:'מדרגות',           c:'var(--s-move)' },
-    { id:'lift', t:'LF',  n:'מעלית',            c:'var(--s-move)' },
-    { id:'fire', t:'FE',  n:'ארון כיבוי אש',    c:'var(--s-fire)' },
-    { id:'shaft',t:'SH',  n:'פיר',              c:'var(--s-mep)' }
+  { g:{he:'תנועה ובטיחות', en:'Circulation & safety'}, items:[
+    { id:'entry',t:'IN',  n:{he:'כניסה לקומה',     en:'Floor entrance'},     c:'var(--s-move)' },
+    { id:'exit', t:'EX',  n:{he:'יציאת חירום',     en:'Emergency exit'},     c:'var(--s-fire)' },
+    { id:'stair',t:'ST',  n:{he:'מדרגות',          en:'Stairs'},             c:'var(--s-move)' },
+    { id:'lift', t:'LF',  n:{he:'מעלית',           en:'Lift'},               c:'var(--s-move)' },
+    { id:'fire', t:'FE',  n:{he:'ארון כיבוי אש',   en:'Fire cabinet'},       c:'var(--s-fire)' },
+    { id:'shaft',t:'SH',  n:{he:'פיר',             en:'Shaft'},              c:'var(--s-mep)' }
   ]},
-  { g:'פרוגרמה', items:[
-    { id:'kit',  t:'K',   n:'מטבחון',           c:'var(--s-prog)' },
-    { id:'wc',   t:'WC',  n:'שירותים',          c:'var(--s-prog)' },
-    { id:'awc',  t:'WC♿',n:'שירותים נגישים',   c:'var(--s-prog)' },
-    { id:'nrs',  t:'NR',  n:'חדר הנקה',         c:'var(--s-prog)' },
-    { id:'pb',   t:'PB',  n:'תא טלפון',         c:'var(--s-prog)' },
-    { id:'north',t:'N↑',  n:'חץ צפון',          c:'var(--black)' }
+  { g:{he:'פרוגרמה', en:'Program'}, items:[
+    { id:'kit',  t:'K',   n:{he:'מטבחון',          en:'Kitchenette'},        c:'var(--s-prog)' },
+    { id:'wc',   t:'WC',  n:{he:'שירותים',         en:'Toilets'},            c:'var(--s-prog)' },
+    { id:'awc',  t:'WC♿',n:{he:'שירותים נגישים',  en:'Accessible toilet'},  c:'var(--s-prog)' },
+    { id:'nrs',  t:'NR',  n:{he:'חדר הנקה',        en:'Nursing room'},       c:'var(--s-prog)' },
+    { id:'pb',   t:'PB',  n:{he:'תא טלפון',        en:'Phone booth'},        c:'var(--s-prog)' },
+    { id:'north',t:'N↑',  n:{he:'חץ צפון',         en:'North arrow'},        c:'var(--black)' }
   ]}
 ];
 const SYMMAP = {}; SYMBOLS.forEach(g => g.items.forEach(s => SYMMAP[s.id] = s));
 
 /* ---- manual checks (plan cannot reveal) ---- */
 const MANUAL_CHECKS = [
-  { id:'corridor',  n:'רוחב מסדרון ראשי',            note:'נהוג במשרד 126–197 ס״מ. מינימום נגישות — אימות יועץ.' },
-  { id:'aisle',     n:'מעברים בין עמדות',            note:'מעבר חופשי בין גבי כיסאות ושולחנות.' },
-  { id:'doors',     n:'רוחב פתח דלת חופשי',          note:'נהוג 90–110 ס״מ. מינימום נטו — אימות יועץ.' },
-  { id:'partitions',n:'גובה מחיצות ופרטי קיר',       note:'סטנדרט משרדי: רצפה-תקרה H=305 · חיזוקי TV H=150.' },
-  { id:'accwc',     n:'תא שירותים נגיש בקומה',       note:'דרישה רגולטורית — אימות יועץ נגישות.' },
-  { id:'egress',    n:'שני מוצאי מילוט ומרחקים',     note:'בדיקת יועץ בטיחות.' },
-  { id:'heights',   n:'גבהים ותקרות מונמכות',        note:'לא ניתן לבדיקה מתוכנית 2D.' },
-  { id:'hvac',      n:'מיזוג לחדרים פנימיים',        note:'חדרים ללא חזית — תיאום יועץ מיזוג.' },
-  { id:'sym_doors', n:'דלתות — כיווני פתיחה',        note:'קשת פתיחה תואמת מילוט ונגישות.' },
-  { id:'sym_core',  n:'סמלי גרעין — מדרגות/מעליות',  note:'תואמים מדידה, בלי חפיפה למחיצות חדשות.' }
+  { id:'corridor',  n:{he:'רוחב מסדרון ראשי', en:'Main corridor width'},
+    note:{he:'נהוג במשרד 126–197 ס״מ. מינימום נגישות — אימות יועץ.', en:'Common office range 126–197 cm. Accessibility minimum — consultant to verify.'} },
+  { id:'aisle',     n:{he:'מעברים בין עמדות', en:'Aisles between workstations'},
+    note:{he:'מעבר חופשי בין גבי כיסאות ושולחנות.', en:'Clear passage between chair backs and desks.'} },
+  { id:'doors',     n:{he:'רוחב פתח דלת חופשי', en:'Clear door opening width'},
+    note:{he:'נהוג 90–110 ס״מ. מינימום נטו — אימות יועץ.', en:'Common range 90–110 cm. Net minimum — consultant to verify.'} },
+  { id:'partitions',n:{he:'גובה מחיצות ופרטי קיר', en:'Partition heights and wall details'},
+    note:{he:'סטנדרט משרדי: רצפה-תקרה H=305 · חיזוקי TV H=150.', en:'Office standard: floor-to-ceiling H=305 · TV backing H=150.'} },
+  { id:'accwc',     n:{he:'תא שירותים נגיש בקומה', en:'Accessible toilet stall on the floor'},
+    note:{he:'דרישה רגולטורית — אימות יועץ נגישות.', en:'Regulatory requirement — accessibility consultant to verify.'} },
+  { id:'egress',    n:{he:'שני מוצאי מילוט ומרחקים', en:'Two means of egress and travel distances'},
+    note:{he:'בדיקת יועץ בטיחות.', en:'Safety consultant to review.'} },
+  { id:'heights',   n:{he:'גבהים ותקרות מונמכות', en:'Heights and dropped ceilings'},
+    note:{he:'לא ניתן לבדיקה מתוכנית 2D.', en:'Cannot be checked from a 2D plan.'} },
+  { id:'hvac',      n:{he:'מיזוג לחדרים פנימיים', en:'HVAC for internal rooms'},
+    note:{he:'חדרים ללא חזית — תיאום יועץ מיזוג.', en:'Rooms with no façade — coordinate with the HVAC consultant.'} },
+  { id:'sym_doors', n:{he:'דלתות — כיווני פתיחה', en:'Doors — swing directions'},
+    note:{he:'קשת פתיחה תואמת מילוט ונגישות.', en:'Swing arc consistent with egress and accessibility.'} },
+  { id:'sym_core',  n:{he:'סמלי גרעין — מדרגות/מעליות', en:'Core symbols — stairs / lifts'},
+    note:{he:'תואמים מדידה, בלי חפיפה למחיצות חדשות.', en:'Match the survey, with no overlap onto new partitions.'} }
 ];
 
 /* ---- per-type open items (silent analysis → short notes, no citations) ---- */
 const TYPE_OPEN_ITEMS = {
-  nursery:    ['אבזור: כיור, מקרר, נעילה מבפנים', 'אוורור — חדר ללא חזית'],
-  it:         ['מיזוג ייעודי 24/7', 'גישה מבוקרת', 'עומס חשמלי ייעודי'],
-  kitchenette:['מים וניקוז', 'אוורור / מנדף', 'עומס חשמלי מוגבר'],
-  wc:         ['תא נגיש בקומה', 'אוורור מאולץ'],
-  boardroom:  ['AV ואקוסטיקה', 'תפוסה מול מוצאי מילוט'],
-  storage:    ['הפרדת אש', 'עומס רצפה'],
-  srv:        ['כיבוי ייעודי', 'מיזוג רציף']
+  nursery:    [{he:'אבזור: כיור, מקרר, נעילה מבפנים', en:'Fit-out: sink, fridge, lock from inside'},
+               {he:'אוורור — חדר ללא חזית', en:'Ventilation — room with no façade'}],
+  it:         [{he:'מיזוג ייעודי 24/7', en:'Dedicated 24/7 cooling'},
+               {he:'גישה מבוקרת', en:'Controlled access'},
+               {he:'עומס חשמלי ייעודי', en:'Dedicated electrical load'}],
+  kitchenette:[{he:'מים וניקוז', en:'Water and drainage'},
+               {he:'אוורור / מנדף', en:'Ventilation / extraction'},
+               {he:'עומס חשמלי מוגבר', en:'Increased electrical load'}],
+  wc:         [{he:'תא נגיש בקומה', en:'Accessible stall on the floor'},
+               {he:'אוורור מאולץ', en:'Forced ventilation'}],
+  boardroom:  [{he:'AV ואקוסטיקה', en:'AV and acoustics'},
+               {he:'תפוסה מול מוצאי מילוט', en:'Occupancy against means of egress'}],
+  storage:    [{he:'הפרדת אש', en:'Fire separation'},
+               {he:'עומס רצפה', en:'Floor loading'}],
+  srv:        [{he:'כיבוי ייעודי', en:'Dedicated suppression'},
+               {he:'מיזוג רציף', en:'Continuous cooling'}]
 };
 
 /* =====================================================================
@@ -765,14 +1241,21 @@ function classify(name, tag){
   if(/^room\b/.test(n)) return 'future';
   return 'unknown';
 }
-const TYPE_HE={
-  boardroom:'חדר דירקטוריון', meeting:'חדר ישיבות', altmeeting:'ישיבות אלטרנטיבי',
-  executive:'הנהלה', vp:'VP', director:'מנהל קבוצה', hrbp:'HRBP', staffroom:'חדר צוות',
-  hr:'HR', facilities:'תפעול', it:'IT / NOC', nursery:'הנקה', kitchenette:'מטבחון',
-  wc:'שירותים', shower:'מקלחת', service:'שירות', future:'עתודה', openspace:'Open Space',
-  workstations:'עמדות — מחלקה', phonebooth:'תא טלפון', lounge:'לאונג׳', social:'מפגש / משחק',
-  printcopy:'הדפסה', storage:'אחסון', specialty:'ייעודי', reception:'קבלה / המתנה', unknown:'לא מזוהה'
+const TYPE_NAME={
+  boardroom:{he:'חדר דירקטוריון', en:'Board room'}, meeting:{he:'חדר ישיבות', en:'Meeting room'},
+  altmeeting:{he:'ישיבות אלטרנטיבי', en:'Alternative meeting'}, executive:{he:'הנהלה', en:'Executive'},
+  vp:'VP', director:{he:'מנהל קבוצה', en:'Group director'}, hrbp:'HRBP',
+  staffroom:{he:'חדר צוות', en:'Team room'}, hr:'HR', facilities:{he:'תפעול', en:'Facilities'},
+  it:'IT / NOC', nursery:{he:'הנקה', en:'Nursing'}, kitchenette:{he:'מטבחון', en:'Kitchenette'},
+  wc:{he:'שירותים', en:'Toilets'}, shower:{he:'מקלחת', en:'Shower'}, service:{he:'שירות', en:'Service'},
+  future:{he:'עתודה', en:'Future'}, openspace:'Open Space',
+  workstations:{he:'עמדות — מחלקה', en:'Stations — department'}, phonebooth:{he:'תא טלפון', en:'Phone booth'},
+  lounge:{he:'לאונג׳', en:'Lounge'}, social:{he:'מפגש / משחק', en:'Meet up / game'},
+  printcopy:{he:'הדפסה', en:'Print & copy'}, storage:{he:'אחסון', en:'Storage'},
+  specialty:{he:'ייעודי', en:'Specialty'}, reception:{he:'קבלה / המתנה', en:'Reception / waiting'},
+  unknown:{he:'לא מזוהה', en:'Unrecognised'}
 };
+const typeName = t => L(TYPE_NAME[t]) || t;
 
 function interpSeat(tbl,s){
   if(s<=tbl[0][0]) return tbl[0][1]*(s/tbl[0][0]);
@@ -791,76 +1274,76 @@ function checkRoom(tag){
   const info=m=>out.msgs.push({l:'info',m});
   const ok=m=>out.msgs.push({l:'ok',m});
 
-  if(type==='unknown'){ warn(tag.name?`סוג לא מזוהה — ״${tag.name}״`:'תגית ללא שם חדר'); return out; }
+  if(type==='unknown'){ warn(tag.name?T('mUnknownNamed',tag.name):T('mUnknownBlank')); return out; }
   if(type==='workstations'){
-    ok(`${tag.stations} עמדות${tag.name?' — '+tag.name:''}`);
-    if(!tag.name) warn('טווח עמדות ללא שם מחלקה');
+    ok(T('mStations', tag.stations, tag.name));
+    if(!tag.name) warn(T('mDeptNoName'));
     return out;
   }
   if(['phonebooth','lounge','social','printcopy','storage','shower','specialty','reception'].includes(type)){
-    if(tag.area!=null && R.minArea!=null && tag.area<R.minArea) warn(`${tag.area} מ״ר — מתחת ל-${R.minArea}`);
-    else ok('קיים בפרוגרמה');
+    if(tag.area!=null && R.minArea!=null && tag.area<R.minArea) warn(T('mBelowMin',tag.area,R.minArea));
+    else ok(T('mInProgram'));
     return out;
   }
   if(type==='openspace'){
     if(tag.area&&tag.ppl){
       const d=tag.area/tag.ppl;
-      if(d<R.densityMin) fail(`צפיפות ${d.toFixed(2)} מ״ר/עובד — צפוף מדי (מינ׳ ${R.densityMin})`);
-      else if(d<R.densityWarnLow) warn(`צפיפות ${d.toFixed(2)} מ״ר/עובד — קצה תחתון`);
-      else if(d>R.densityWarnHigh) warn(`צפיפות ${d.toFixed(2)} מ״ר/עובד — מעל הטווח היעיל`);
-      else ok(`צפיפות ${d.toFixed(2)} מ״ר/עובד`);
-    } else if(tag.ppl) info(`${tag.ppl} עמדות — אין תגית שטח`);
+      if(d<R.densityMin) fail(T('mDensTight',d.toFixed(2),R.densityMin));
+      else if(d<R.densityWarnLow) warn(T('mDensLow',d.toFixed(2)));
+      else if(d>R.densityWarnHigh) warn(T('mDensHigh',d.toFixed(2)));
+      else ok(T('mDensOk',d.toFixed(2)));
+    } else if(tag.ppl) info(T('mStationsNoArea',tag.ppl));
     return out;
   }
   if(type==='boardroom'){
-    if(tag.area&&tag.area<R.minArea) fail(`${tag.area} מ״ר — מתחת ל-${R.minArea}`);
+    if(tag.area&&tag.area<R.minArea) fail(T('mBelowMin',tag.area,R.minArea));
     if(tag.area&&tag.ppl){
       const d=tag.area/tag.ppl;
-      if(d<R.perSeatMin) fail(`${d.toFixed(2)} מ״ר למקום — צפוף (מינ׳ ${R.perSeatMin})`);
-      else if(d>R.perSeatMax) warn(`${d.toFixed(2)} מ״ר למקום — מעל הטווח`);
-      else ok(`${d.toFixed(2)} מ״ר למקום`);
+      if(d<R.perSeatMin) fail(T('mPerSeatTight',d.toFixed(2),R.perSeatMin));
+      else if(d>R.perSeatMax) warn(T('mPerSeatHigh',d.toFixed(2)));
+      else ok(T('mPerSeatOk',d.toFixed(2)));
     }
     return out;
   }
   if(type==='meeting'||type==='altmeeting'){
     if(type==='altmeeting'){
-      if(tag.area==null) info(`אין שטח בתגית — מינימום ${R.minArea} מ״ר`);
-      else if(tag.area<R.minArea) fail(`${tag.area} מ״ר — מתחת ל-${R.minArea}`);
-      else ok('בטווח');
+      if(tag.area==null) info(T('mNoAreaTag',R.minArea));
+      else if(tag.area<R.minArea) fail(T('mBelowMin',tag.area,R.minArea));
+      else ok(T('mInRange'));
       return out;
     }
     if(tag.ppl&&tag.area){
       const minA=interpSeat(RULES.meeting.seatTable,tag.ppl), d=tag.area/tag.ppl;
-      if(tag.area<minA*0.93) fail(`${tag.area} מ״ר ל-${tag.ppl} מקומות — נדרש ~${minA.toFixed(1)}`);
-      else if(tag.area<minA) warn(`${tag.area} מ״ר — גבולי מול ~${minA.toFixed(1)}`);
-      else ok(`${tag.area} מ״ר / ${tag.ppl} מק׳ (${d.toFixed(2)} למקום)`);
-      if(d>RULES.meeting.perSeatMax) warn(`${d.toFixed(2)} מ״ר למקום — גדול ביחס לקיבולת`);
+      if(tag.area<minA*0.93) fail(T('mSeatShort',tag.area,tag.ppl,minA.toFixed(1)));
+      else if(tag.area<minA) warn(T('mSeatEdge',tag.area,minA.toFixed(1)));
+      else ok(T('mSeatOk',tag.area,tag.ppl,d.toFixed(2)));
+      if(d>RULES.meeting.perSeatMax) warn(T('mSeatBig',d.toFixed(2)));
     } else if(tag.area){
-      if(tag.area<R.minNoSeats) fail(`${tag.area} מ״ר — קטן ממינימום חדר ישיבות`);
-      else info('אין תגית קיבולת');
+      if(tag.area<R.minNoSeats) fail(T('mTooSmallMeeting',tag.area));
+      else info(T('mNoCapTag'));
     } else if(tag.ppl){
-      info(`${tag.ppl} מקומות — ודא ≥${interpSeat(RULES.meeting.seatTable,tag.ppl).toFixed(1)} מ״ר`);
+      info(T('mCapCheck',tag.ppl,interpSeat(RULES.meeting.seatTable,tag.ppl).toFixed(1)));
     }
     return out;
   }
   if(type==='wc'){
-    if(tag.area&&tag.area<R.stallMin) fail(`תא ${tag.area} מ״ר — מתחת ל-${R.stallMin}`);
-    else ok('מידות תא בטווח');
+    if(tag.area&&tag.area<R.stallMin) fail(T('mStallSmall',tag.area,R.stallMin));
+    else ok(T('mStallOk'));
     return out;
   }
   if(type==='nursery'){
-    if(tag.area==null) info(`קיים בקומה — אין שטח בתגית (מינ׳ ${R.minArea})`);
-    else if(tag.area<R.minArea) fail(`${tag.area} מ״ר — מתחת ל-${R.minArea}`);
-    else if(tag.area<R.recommended) warn(`${tag.area} מ״ר — מתחת למומלץ ${R.recommended}`);
-    else ok('שטח תקין');
+    if(tag.area==null) info(T('mOnFloorNoArea',R.minArea));
+    else if(tag.area<R.minArea) fail(T('mBelowMin',tag.area,R.minArea));
+    else if(tag.area<R.recommended) warn(T('mBelowRec',tag.area,R.recommended));
+    else ok(T('mAreaOk'));
     return out;
   }
   if(R.minArea!=null && tag.area!=null){
-    if(tag.area<R.minArea) fail(`${tag.area} מ״ר — מתחת ל-${R.minArea} (${R.label})`);
-    else if(R.typMin&&tag.area<R.typMin) warn(`${tag.area} מ״ר — מתחת לטווח הטיפוסי ${R.typMin}–${R.typMax}`);
-    else ok('בטווח');
+    if(tag.area<R.minArea) fail(T('mBelowMinLbl',tag.area,R.minArea,L(R.label)));
+    else if(R.typMin&&tag.area<R.typMin) warn(T('mBelowTypical',tag.area,R.typMin,R.typMax));
+    else ok(T('mInRange'));
   }
-  if(!out.msgs.length) info('תגית ללא נתוני שטח');
+  if(!out.msgs.length) info(T('mNoAreaData'));
   return out;
 }
 
@@ -868,45 +1351,46 @@ function checkRoom(tag){
    5. IRON RULES — gate 0
    ===================================================================== */
 function ironChecks(parse, rooms){
-  const T=parse.allText, has=re=>T.some(t=>re.test(t));
-  const dimTok=T.filter(t=>/^\d{1,2}[.,]\d{2}$/.test(t)).length;
-  const cmTok=T.filter(t=>/^\d{3,5}$/.test(t)).length;
+  /* NB: not `T` — that is the translator, and shadowing it kills every check */
+  const TXT=parse.allText, has=re=>TXT.some(t=>re.test(t));
+  const dimTok=TXT.filter(t=>/^\d{1,2}[.,]\d{2}$/.test(t)).length;
+  const cmTok=TXT.filter(t=>/^\d{3,5}$/.test(t)).length;
   const symIds=STATE.symbols.map(s=>s.k);
   const hasSym=(...k)=>k.some(x=>symIds.includes(x));
   const hasDim=STATE.dims.length>0;
   const R=[];
 
-  R.push({ id:'roomdims', n:'מידות כל חדר במטרים',
+  R.push({ id:'roomdims', n:T('iRoomDims'),
     auto: dimTok >= Math.max(4, Math.round(rooms.length*0.5)),
     manual: STATE.dims.length>=Math.max(2,Math.round(rooms.length*0.25)),
-    okMsg:`זוהו ${dimTok} מידות במטרים בתוכנית.`,
-    badMsg:`זוהו ${dimTok} מידות בלבד מול ${rooms.length} תגיות. סמן מידות חסרות בכלי "קו מידה".`,
+    okMsg:T('iRoomDimsOk',dimTok),
+    badMsg:T('iRoomDimsBad',dimTok,rooms.length),
     tool:'dim' });
 
-  R.push({ id:'overall', n:'קווי מידה — אורך ורוחב',
+  R.push({ id:'overall', n:T('iOverall'),
     auto: cmTok>=4,
     manual: hasDim,
-    okMsg:'זוהו קווי מידה כלליים בתוכנית.',
-    badMsg:'לא זוהו קווי מידה כלליים. שרטט אורך ורוחב בכלי "קו מידה".',
+    okMsg:T('iOverallOk'),
+    badMsg:T('iOverallBad'),
     tool:'dim' });
 
-  R.push({ id:'entry', n:'סימון כניסה ויציאה לקומה',
+  R.push({ id:'entry', n:T('iEntry'),
     auto: has(/entrance|main entry|\bentry\b|lobby|כניסה/) && has(/exit|יציאה|egress/),
     manual: hasSym('entry')&&hasSym('exit'),
-    okMsg:'כניסה ויציאה מסומנות.',
-    badMsg:'לא זוהה סימון כניסה/יציאה. גרור IN ו-EX מהמחסן.',
+    okMsg:T('iEntryOk'),
+    badMsg:T('iEntryBad'),
     sym:'entry' });
 
-  R.push({ id:'panels', n:'ארונות חשמל ותקשורת',
+  R.push({ id:'panels', n:T('iPanels'),
     auto: has(/electric|חשמל|\bel\b/) && has(/\bit\b|telecom|comm|תקשורת|mdf|idf/),
     manual: hasSym('el','elm') && hasSym('it','srv'),
-    okMsg:'ארונות חשמל ותקשורת מסומנים.',
-    badMsg:'לא זוהה סימון ארונות. גרור EL ו-IT מהמחסן.',
+    okMsg:T('iPanelsOk'),
+    badMsg:T('iPanelsBad'),
     sym:'el' });
 
   R.forEach(r=>{
     r.level = r.auto ? 'o' : (r.manual||STATE.iron[r.id]) ? 'o' : 'f';
-    r.src   = r.auto ? 'זוהה אוטומטית' : (r.manual||STATE.iron[r.id]) ? 'הושלם ידנית' : 'חסר';
+    r.src   = r.auto ? T('srcAuto') : (r.manual||STATE.iron[r.id]) ? T('srcManual') : T('srcMissing');
     r.msg   = r.level==='o' ? r.okMsg : r.badMsg;
   });
   return R;
@@ -917,50 +1401,50 @@ function ironChecks(parse, rooms){
    ===================================================================== */
 function floorChecks(parse, rooms){
   const out=[], present=t=>rooms.some(r=>r.check.type===t);
-  for(const [t,he] of [['kitchenette','מטבחון'],['it','חדר IT / תקשורת'],['nursery','חדר הנקה']]){
+  for(const [t,key] of [['kitchenette','fKitchen'],['it','fIt'],['nursery','fNursery']]){
+    const nm=T('fOnFloor',T(key));
     out.push(present(t)
-      ? {level:'ok', n:`${he} בקומה`, m:'קיים בתוכנית.'}
-      : {level:'fail', n:`${he} בקומה`, m:'לא נמצא בתגיות — חובה בכל קומה.'});
+      ? {level:'ok', n:nm, m:T('fExists')}
+      : {level:'fail', n:nm, m:T('fMissingFloor')});
   }
   const meetings=rooms.filter(r=>['meeting','boardroom','altmeeting'].includes(r.check.type));
   out.push(meetings.length
-    ? {level:'ok', n:'חדרי ישיבות', m:`${meetings.length} חדרים בקומה.`}
-    : {level:'fail', n:'חדרי ישיבות', m:'לא נמצא אף חדר ישיבות.'});
+    ? {level:'ok', n:T('fMeetings'), m:T('fMeetingsOk',meetings.length)}
+    : {level:'fail', n:T('fMeetings'), m:T('fMeetingsNone')});
   out.push(present('wc')
-    ? {level:'ok', n:'שירותים', m:'תאי שירותים מתויגים.'}
-    : {level:'warn', n:'שירותים', m:'לא נמצאו תגיות WC — ודא קיום בגרעין.'});
+    ? {level:'ok', n:T('fWc'), m:T('fWcOk')}
+    : {level:'warn', n:T('fWc'), m:T('fWcWarn')});
 
   const ws=rooms.filter(r=>['openspace','workstations'].includes(r.check.type)&&r.tag.ppl).reduce((s,r)=>s+r.tag.ppl,0);
   const seats=meetings.reduce((s,r)=>s+(r.tag.ppl||0),0);
   if(ws>0&&seats>0){
     const ratio=100*seats/ws, min=RULES.floor.meetingRatioMin;
     out.push(ratio<min
-      ? {level:'warn', n:'יחס ישיבות / עמדות', m:`${ratio.toFixed(0)}% — מתחת ל-${min}%. שקול חדר נוסף.`}
-      : {level:'ok', n:'יחס ישיבות / עמדות', m:`${seats} מקומות מול ${ws} עמדות — ${ratio.toFixed(0)}%.`});
+      ? {level:'warn', n:T('fRatio'), m:T('fRatioLow',ratio.toFixed(0),min)}
+      : {level:'ok', n:T('fRatio'), m:T('fRatioOk',seats,ws,ratio.toFixed(0))});
   }
   const pbs=rooms.filter(r=>r.check.type==='phonebooth').length;
   if(ws>=30){
-    if(!pbs) out.push({level:'warn', n:'תאי טלפון', m:`אין תאי טלפון ל-${ws} עמדות (סטנדרט ~1:${RULES.phonebooth.perStationsRatio}).`});
-    else if(ws/pbs>RULES.phonebooth.perStationsRatio*1.5) out.push({level:'warn', n:'תאי טלפון', m:`${pbs} תאים ל-${ws} עמדות (1:${Math.round(ws/pbs)}) — מעט.`});
-    else out.push({level:'ok', n:'תאי טלפון', m:`${pbs} תאים ל-${ws} עמדות.`});
+    if(!pbs) out.push({level:'warn', n:T('fPb'), m:T('fPbNone',ws,RULES.phonebooth.perStationsRatio)});
+    else if(ws/pbs>RULES.phonebooth.perStationsRatio*1.5) out.push({level:'warn', n:T('fPb'), m:T('fPbFew',pbs,ws,Math.round(ws/pbs))});
+    else out.push({level:'ok', n:T('fPb'), m:T('fPbOk',pbs,ws)});
   }
   const unnamed=rooms.filter(r=>!r.tag.name).length;
-  if(unnamed) out.push({level:'warn', n:'תגיות חסרות', m:`${unnamed} תגיות ללא שם חדר.`});
+  if(unnamed) out.push({level:'warn', n:T('fUnnamed'), m:T('fUnnamedMsg',unnamed)});
 
   /* data coverage — what the tool could NOT check */
   const areaRelevant=rooms.filter(r=>RULES[r.check.type]&&(RULES[r.check.type].minArea!=null||r.check.type==='meeting'||r.check.type==='openspace'));
   const noArea=areaRelevant.filter(r=>r.tag.area==null).length;
   if(noArea){
     const pct=Math.round(100*noArea/Math.max(1,areaRelevant.length));
-    out.push({ level: pct>=60?'fail':'warn', n:'כיסוי בדיקת שטחים',
-      m:`${noArea} מתוך ${areaRelevant.length} חדרים ללא תגית שטח (${pct}%) — בדיקת שטח מול הסטנדרט לא בוצעה עבורם.` });
+    out.push({ level: pct>=60?'fail':'warn', n:T('fAreaCover'),
+      m:T('fAreaCoverMsg',noArea,areaRelevant.length,pct) });
   }
   const capRelevant=rooms.filter(r=>['meeting','boardroom','openspace'].includes(r.check.type));
   const noCap=capRelevant.filter(r=>r.tag.ppl==null).length;
-  if(noCap) out.push({ level:'warn', n:'כיסוי בדיקת קיבולת',
-    m:`${noCap} מתוך ${capRelevant.length} חדרי ישיבות / Open Space ללא תגית קיבולת.` });
+  if(noCap) out.push({ level:'warn', n:T('fCapCover'), m:T('fCapCoverMsg',noCap,capRelevant.length) });
   const dq=rooms.length?Math.round(100*rooms.filter(r=>r.tag.name).length/rooms.length):0;
-  out.push({level:dq>=95?'ok':dq>=80?'warn':'fail', n:'שלמות דאטה', m:`${dq}% מהתגיות עם שם חדר.`});
+  out.push({level:dq>=95?'ok':dq>=80?'warn':'fail', n:T('fDataQ'), m:T('fDataQMsg',dq)});
   return out;
 }
 
@@ -972,14 +1456,15 @@ function openItems(rooms){
   rooms.forEach(r=>{
     const items=TYPE_OPEN_ITEMS[r.check.type];
     if(!items) return;
-    items.forEach(txt=>{
-      const k=r.check.type+'|'+txt;
+    items.forEach((txt,ix)=>{
+      /* key off the index, not the text — the text changes with the language */
+      const k=r.check.type+'|'+ix;
       if(seen[k]) return; seen[k]=1;
-      out.push({ id:k, type:r.check.type, scope:TYPE_HE[r.check.type], n:txt });
+      out.push({ id:k, type:r.check.type, scope:typeName(r.check.type), n:L(txt) });
     });
   });
   (STATE.program&&STATE.program.qa||[]).forEach((q,i)=>{
-    out.push({ id:'qa'+i, type:'qa', scope:'QA פרויקט', n:q.name||q });
+    out.push({ id:'qa'+i, type:'qa', scope:T('qaScope'), n:q.name||q });
   });
   return out;
 }
@@ -996,13 +1481,13 @@ function buildNotes(rooms, fc){
     if(r.check.level==='ok') return;
     const body=r.check.msgs.filter(m=>m.l===r.check.level).map(m=>m.m).join(' · ');
     out.push({ id:'r'+r.i, lv:LV[r.check.level], src:'room',
-      title:r.tag.name||'תגית ללא שם', sub:TYPE_HE[r.check.type],
+      title:r.tag.name||T('mUnknownBlank'), sub:typeName(r.check.type),
       body: edits['r'+r.i]||body, edited:!!edits['r'+r.i],
       nx:r.tag.nx, ny:r.tag.ny, area:r.tag.area, ppl:r.tag.ppl });
   });
   fc.forEach((c,i)=>{
     if(c.level==='ok') return;
-    out.push({ id:'f'+i, lv:LV[c.level], src:'floor', title:c.n, sub:'בדיקה קומתית',
+    out.push({ id:'f'+i, lv:LV[c.level], src:'floor', title:c.n, sub:T('floorCheckSub'),
       body: edits['f'+i]||c.m, edited:!!edits['f'+i], nx:null, ny:null });
   });
   keep.forEach(n=>out.push(n));
@@ -1098,12 +1583,12 @@ function wrapLines(c, text, maxW, maxLines){
    ===================================================================== */
 function paintMarkup(c, w, h, opt){
   const o = opt||{};
-  const L = o.layers||LAYERS, sel = o.sel;
+  const LY = o.layers||LAYERS, sel = o.sel;   /* not `L` — that is the value picker */
   const k = Math.max(0.7, w/900);
   const marks = [];
-  if(L.areas) paintAreas(c,w,h,k);
-  if(L.dims)  paintDims(c,w,h,k);
-  if(L.notes){
+  if(LY.areas) paintAreas(c,w,h,k);
+  if(LY.dims)  paintDims(c,w,h,k);
+  if(LY.notes){
     /* clouds first — the numbered pins must stay readable on top of them */
     STATE.notes.forEach(n=>{ if(n.shape==='cloud'){ const m=paintCloud(c,w,h,k,n,sel); if(m) marks.push(m); } });
     STATE.notes.forEach(n=>{ if(n.shape!=='cloud'){ const m=paintPin(c,w,h,k,n,sel); if(m) marks.push(m); } });
@@ -1183,20 +1668,24 @@ function paintCloud(c,w,h,k,n,sel){
 
   if(n.body){
     c.save();
+    const rtl=isHe();
     c.font='500 '+(11*k).toFixed(1)+'px Helvetica,Arial';
-    c.direction='rtl'; c.textAlign='right'; c.textBaseline='top';
+    c.direction=rtl?'rtl':'ltr'; c.textAlign=rtl?'right':'left'; c.textBaseline='top';
     const maxW=Math.max(150*k, (bb.x1-bb.x0)*w);
     const lines=wrapLines(c, n.body, maxW, 3);
     const lh=14*k, pad=5*k;
     const tw=Math.max.apply(null, lines.map(l=>c.measureText(l).width))+pad*2;
     const th=lines.length*lh+pad*2;
-    let tx=Math.min(w-2*k, bb.x1*w), ty=bb.y1*h+5*k;
+    let ty=bb.y1*h+5*k;
     if(ty+th>h) ty=Math.max(2*k, bb.y0*h-th-5*k);
-    if(tx-tw<0) tx=tw+2*k;
-    c.fillStyle='rgba(255,255,255,.94)'; c.fillRect(tx-tw,ty,tw,th);
-    c.strokeStyle=col; c.lineWidth=Math.max(1,1.2*k); c.strokeRect(tx-tw,ty,tw,th);
+    /* the caption hangs off the reading-side edge of the cloud */
+    let x0 = rtl ? Math.min(w-2*k, bb.x1*w)-tw : Math.max(2*k, bb.x0*w);
+    if(x0<0) x0=2*k;
+    if(x0+tw>w) x0=Math.max(2*k, w-tw-2*k);
+    c.fillStyle='rgba(255,255,255,.94)'; c.fillRect(x0,ty,tw,th);
+    c.strokeStyle=col; c.lineWidth=Math.max(1,1.2*k); c.strokeRect(x0,ty,tw,th);
     c.fillStyle=col;
-    lines.forEach((l,i)=> c.fillText(l, tx-pad, ty+pad+i*lh));
+    lines.forEach((l,i)=> c.fillText(l, rtl?x0+tw-pad:x0+pad, ty+pad+i*lh));
     c.restore();
   }
   return {id:n.id,bx,by,S};
@@ -1217,7 +1706,7 @@ function paintDims(c,w,h,k){
     });
     const lbl=d.label||'—', mx=(x1+x2)/2, my=(y1+y2)/2;
     c.font='600 '+(11*k).toFixed(1)+'px Helvetica,Arial';
-    c.textAlign='center'; c.textBaseline='middle'; c.direction='rtl';
+    c.textAlign='center'; c.textBaseline='middle'; c.direction=isHe()?'rtl':'ltr';
     const tw=c.measureText(lbl).width+9*k, th=16*k;
     c.fillStyle='#fff'; c.fillRect(mx-tw/2,my-th/2,tw,th);
     c.strokeStyle=col; c.lineWidth=1.2*k; c.strokeRect(mx-tw/2,my-th/2,tw,th);
@@ -1243,7 +1732,7 @@ function paintAreas(c,w,h,k){
     const lines=[a.label||'—'];
     if(a.name) lines.unshift(a.name);
     c.font='600 '+(11.5*k).toFixed(1)+'px Helvetica,Arial';
-    c.textAlign='center'; c.textBaseline='middle'; c.direction='rtl';
+    c.textAlign='center'; c.textBaseline='middle'; c.direction=isHe()?'rtl':'ltr';
     const tw=Math.max.apply(null, lines.map(l=>c.measureText(l).width))+11*k;
     const lh=14*k, th=lines.length*lh+6*k;
     const cx=ct.x*w, cy=ct.y*h;
@@ -1292,8 +1781,9 @@ function drawPending(c,w,h){
       const closed=p.concat(PENDING.mx!=null?[{x:PENDING.mx,y:PENDING.my}]:[]);
       const m2=polyArea(closed);
       if(m2>0){
-        c.font='600 11px Helvetica,Arial'; c.textAlign='center'; c.textBaseline='middle'; c.direction='rtl';
-        const ct=polyCentroid(closed), t=m2.toFixed(2)+' מ״ר';
+        c.font='600 11px Helvetica,Arial'; c.textAlign='center'; c.textBaseline='middle';
+        c.direction=isHe()?'rtl':'ltr';
+        const ct=polyCentroid(closed), t=fmtM2(m2);
         const tw=c.measureText(t).width+10;
         c.fillStyle='rgba(255,255,255,.9)'; c.fillRect(ct.x*w-tw/2, ct.y*h-9, tw, 18);
         c.fillStyle=AREA_CLR; c.fillText(t, ct.x*w, ct.y*h);
@@ -1325,22 +1815,26 @@ function polyPerimeter(pts){
   }
   return s*STATE.calib.mPerPx;
 }
+/* Dimension lines carry their length in metres internally and are always
+   *shown* in centimetres — a manual entry stores the metres it was typed as. */
 function relabelMeasures(){
   STATE.dims.forEach(d=>{
-    if(!d.manualLabel && STATE.calib) d.label=(dimPx(d)*STATE.calib.mPerPx).toFixed(2)+' מ׳';
+    if(d.manualM!=null) d.label=fmtCm(d.manualM);
+    else if(STATE.calib) d.label=fmtCm(dimPx(d)*STATE.calib.mPerPx);
+    else d.label='?';
   });
   STATE.areas.forEach(a=>{
     const m2=polyArea(a.pts);
     a.m2=m2||null;
     a.perim=polyPerimeter(a.pts)||null;
-    a.label=m2?m2.toFixed(2)+' מ״ר':'כייל לקבלת מ״ר';
+    a.label=m2?fmtM2(m2):T('notCalibShort');
   });
 }
 
 function placeSymbols(){
-  const L=$('#symLayer');
-  L.style.display=LAYERS.syms?'block':'none';
-  L.innerHTML='';
+  const host=$('#symLayer');   /* not `L` — that is the bilingual value picker */
+  host.style.display=LAYERS.syms?'block':'none';
+  host.innerHTML='';
   STATE.symbols.forEach(s=>{
     const d=SYMMAP[s.k]; if(!d) return;
     const el=document.createElement('div');
@@ -1348,7 +1842,7 @@ function placeSymbols(){
     el.style.left=(s.nx*100)+'%'; el.style.top=(s.ny*100)+'%'; el.style.color=d.c;
     el.innerHTML=`<div class="sbx" style="background:${d.c}">${esc(d.t)}</div>`+
                  (s.label?`<div class="stx" style="color:${d.c}">${esc(s.label)}</div>`:'')+
-                 `<div class="del" title="מחק">×</div>`;
+                 `<div class="del" title="${esc(T('del'))}">×</div>`;
     el.querySelector('.del').onclick=e=>{
       e.stopPropagation();
       STATE.symbols=STATE.symbols.filter(x=>x.id!==s.id);
@@ -1367,7 +1861,7 @@ function placeSymbols(){
       const up=()=>{ el.removeEventListener('pointermove',mv); el.removeEventListener('pointerup',up); renderPanel(); };
       el.addEventListener('pointermove',mv); el.addEventListener('pointerup',up);
     };
-    L.appendChild(el);
+    host.appendChild(el);
   });
 }
 
@@ -1380,13 +1874,7 @@ function planPoint(e){
 }
 
 const TOOLBTN={dim:'tDim', area:'tArea', calib:'tCalib', pin:'tPin', cloud:'tCloud'};
-const TOOLHINT={
-  dim:'לחץ נקודת התחלה ואז נקודת סיום',
-  area:'לחץ נקודה-נקודה על קונטור החדר · Enter או לחיצה על הנקודה הראשונה לסגירה',
-  calib:'שרטט קו על מידה ידועה בתוכנית',
-  pin:'לחץ על התכנית למיקום הערה ממוספרת',
-  cloud:'גרור סביב האזור להקפה בענן — ואז הקלד את ההערה'
-};
+const TOOLHINTKEY={dim:'hintDim', area:'hintArea', calib:'hintCalib', pin:'hintPin', cloud:'hintCloud'};
 function clearArmed(){ Object.keys(TOOLBTN).forEach(k=>{ const b=$('#'+TOOLBTN[k]); if(b) b.classList.remove('armed'); }); }
 
 function armTool(t){
@@ -1396,9 +1884,9 @@ function armTool(t){
   document.querySelectorAll('.symcard').forEach(c=>c.classList.remove('armed'));
   if(TOOL){
     if(TOOLBTN[TOOL]) $('#'+TOOLBTN[TOOL]).classList.add('armed');
-    $('#toolHint').textContent=TOOLHINT[TOOL]||'לחץ על התכנית למיקום הסימבול';
+    $('#toolHint').textContent=TOOLHINTKEY[TOOL]?T(TOOLHINTKEY[TOOL]):T('hintSym','');
     $('#planBox').style.cursor='crosshair';
-    if(TOOL==='area'&&!STATE.calib) toast('לא כויל קנה מידה — השטח יחושב אחרי כיול');
+    if(TOOL==='area'&&!STATE.calib) toast(T('tNotCalib'));
   } else { $('#toolHint').textContent=''; $('#planBox').style.cursor='default'; }
   drawOverlay();
 }
@@ -1406,7 +1894,7 @@ function armSymbol(k){
   TOOL='sym:'+k; PENDING=null;
   clearArmed();
   document.querySelectorAll('.symcard').forEach(c=>c.classList.toggle('armed', c.dataset.k===k));
-  $('#toolHint').textContent='לחץ על התכנית למיקום '+(SYMMAP[k]?SYMMAP[k].n:'');
+  $('#toolHint').textContent=T('hintSym', SYMMAP[k]?L(SYMMAP[k].n):'');
   $('#planBox').style.cursor='crosshair';
 }
 
@@ -1431,13 +1919,13 @@ $('#planBox').addEventListener('click', e=>{
   if(TOOL.startsWith('sym:')){
     const k=TOOL.slice(4);
     STATE.symbols.push({id:'s'+(STATE.seq++), k, nx:p.nx, ny:p.ny, label:''});
-    armTool(null); refresh(); toast('סימבול נוסף — ניתן לגרור');
+    armTool(null); refresh(); toast(T('tSymAdded'));
     return;
   }
   if(TOOL==='pin'){
-    STATE.notes.push({ id:'c'+(STATE.seq++), lv:'i', src:'custom', title:'הערה', sub:'ידני',
-      body:'לחץ לעריכה', edited:true, nx:p.nx, ny:p.ny });
-    armTool(null); refresh(); toast('הערה נוספה');
+    STATE.notes.push({ id:'c'+(STATE.seq++), lv:'i', src:'custom', title:T('noteTitle'), sub:T('noteManual'),
+      body:T('noteEditMe'), edited:true, nx:p.nx, ny:p.ny });
+    armTool(null); refresh(); toast(T('tNoteAdded'));
     return;
   }
   if(TOOL==='area'){
@@ -1456,24 +1944,24 @@ $('#planBox').addEventListener('click', e=>{
     const d={ id:'d'+(STATE.seq++), x1:PENDING.x1, y1:PENDING.y1, x2:p.nx, y2:p.ny, calib:TOOL==='calib' };
     const px=dimPx(d);
     if(TOOL==='calib'){
-      const v=prompt('אורך הקו במטרים:','');
-      const m=parseFloat(String(v).replace(',','.'));
-      if(!m||m<=0){ PENDING=null; armTool(null); drawOverlay(); return; }
+      const v=prompt(T('askCalib'),'');
+      const cm=parseFloat(String(v).replace(',','.'));
+      if(!cm||cm<=0){ PENDING=null; armTool(null); drawOverlay(); return; }
+      const m=cm/100;
       STATE.calib={ mPerPx:m/px };
-      d.label=m.toFixed(2)+' מ׳';
+      d.manualM=m;
       STATE.dims.push(d); PENDING=null; armTool(null);
       relabelMeasures(); refresh();
-      toast('קנה מידה כויל — כל המידות והשטחים חושבו מחדש');
+      toast(T('tCalibDone'));
       return;
     }
-    if(STATE.calib){
-      d.label=(px*STATE.calib.mPerPx).toFixed(2)+' מ׳';
-    } else {
-      const v=prompt('אורך במטרים (או בטל וכייל תחילה):','');
-      const m=parseFloat(String(v).replace(',','.'));
-      if(m>0){ d.label=m.toFixed(2)+' מ׳'; d.manualLabel=true; } else d.label='?';
+    if(!STATE.calib){
+      const v=prompt(T('askDim'),'');
+      const cm=parseFloat(String(v).replace(',','.'));
+      if(cm>0) d.manualM=cm/100;
     }
-    STATE.dims.push(d); PENDING=null; armTool(null); refresh();
+    STATE.dims.push(d); PENDING=null; armTool(null);
+    relabelMeasures(); refresh();
   }
 });
 $('#planBox').addEventListener('dblclick', e=>{
@@ -1486,12 +1974,12 @@ $('#planBox').addEventListener('mousemove', e=>{
 function finishArea(){
   if(!PENDING||PENDING.pts.length<3){ PENDING=null; armTool(null); drawOverlay(); return; }
   const pts=PENDING.pts.slice();
-  const name=(prompt('שם החדר (אופציונלי):','')||'').trim();
+  const name=(prompt(T('askRoom'),'')||'').trim();
   const a={ id:'a'+(STATE.seq++), pts, name };
   STATE.areas.push(a);
   PENDING=null; armTool(null);
   relabelMeasures(); refresh();
-  toast(a.m2 ? 'שטח נמדד: '+a.m2.toFixed(2)+' מ״ר' : 'קונטור נשמר — כייל קנה מידה לקבלת מ״ר');
+  toast(a.m2 ? T('tAreaDone',a.m2) : T('tAreaSaved'));
 }
 function pointInPoly(p, pts){
   if(!pts||pts.length<3) return false;
@@ -1531,15 +2019,15 @@ $('#planBox').addEventListener('pointerdown', e=>{
 function finishCloud(){
   const pts=(PENDING&&PENDING.pts)||[];
   PENDING=null;
-  if(pts.length<3){ armTool(null); drawOverlay(); toast('הקפה קצרה מדי — גרור סביב האזור'); return; }
-  const body=(prompt('ההערה שתופיע בענן:','')||'').trim();
+  if(pts.length<3){ armTool(null); drawOverlay(); toast(T('tCloudShort')); return; }
+  const body=(prompt(T('askCloud'),'')||'').trim();
   if(!body){ armTool(null); drawOverlay(); return; }
   STATE.notes.push({
     id:'cl'+(STATE.seq++), lv:'f', src:'cloud', shape:'cloud',
-    title:body.length>34?body.slice(0,34)+'…':body, sub:'ענן על התכנית',
+    title:body.length>34?body.slice(0,34)+'…':body, sub:T('cloudSub'),
     body, edited:true, pts, nx:null, ny:null
   });
-  armTool(null); refresh(); toast('ענן הערה נוסף');
+  armTool(null); refresh(); toast(T('tCloudAdded'));
 }
 $('#planBox').addEventListener('dragover', e=>e.preventDefault());
 $('#planBox').addEventListener('drop', e=>{
@@ -1571,7 +2059,7 @@ function setZoom(z){ ZOOM=Math.min(6,Math.max(0.3,z)); layout(); }
 function toggleLayer(k){ LAYERS[k]=!LAYERS[k]; $('#ly'+k[0].toUpperCase()+k.slice(1)).classList.toggle('on',LAYERS[k]); layout(); }
 function togglePanel(){ document.body.classList.toggle('collapsed'); $('#btnPanel').classList.toggle('on'); setTimeout(layout,30); }
 function clearMarkup(){
-  if(!confirm('למחוק את כל הסימבולים, קווי המידה, מדידות השטח, העננים וההערות הידניות?')) return;
+  if(!confirm(T('confirmClear'))) return;
   STATE.symbols=[]; STATE.dims=[]; STATE.areas=[]; STATE.calib=null;
   STATE.notes=STATE.notes.filter(n=>n.src!=='custom'&&n.src!=='cloud');
   refresh();
@@ -1591,7 +2079,7 @@ let RT; window.addEventListener('resize',()=>{ clearTimeout(RT); RT=setTimeout(l
    11. PANEL
    ===================================================================== */
 let TAB='iron';
-const TABS=[{k:'iron',n:'ברזל'},{k:'notes',n:'הערות'},{k:'prog',n:'פרוגרמה'},{k:'open',n:'לא נראה'},{k:'sym',n:'סימונים'}];
+const TABKEYS=[['iron','tabIron'],['notes','tabNotes'],['prog','tabProg'],['open','tabOpen'],['sym','tabMarks']];
 function setTab(k){ TAB=k; renderPanel(); }
 
 function renderPanel(){
@@ -1603,20 +2091,20 @@ function renderPanel(){
   const area=STATE.rooms.reduce((s,r)=>s+(r.tag.area||0),0);
 
   $('#tiles').innerHTML=`
-    <div class="tile"><div class="n" style="color:${f?'var(--fail)':'inherit'}">${f}</div><div class="l">שגוי</div></div>
-    <div class="tile"><div class="n" style="color:${w?'var(--warn)':'inherit'}">${w}</div><div class="l">תיקון קל</div></div>
-    <div class="tile"><div class="n" style="color:${ironOk===4?'var(--ok)':'var(--fail)'}">${ironOk}/4</div><div class="l">כללי ברזל</div></div>
-    <div class="tile"><div class="n">${STATE.rooms.length}</div><div class="l">תגיות</div></div>
-    <div class="tile"><div class="n">${ws||'—'}</div><div class="l">עמדות</div></div>
-    <div class="tile"><div class="n">${seats||'—'}</div><div class="l">מקומות</div></div>
-    <div class="tile"><div class="n">${area?area.toFixed(0):'—'}</div><div class="l">מ״ר</div></div>
-    <div class="tile"><div class="n">${STATE.symbols.length}</div><div class="l">סימבולים</div></div>`;
+    <div class="tile"><div class="n" style="color:${f?'var(--fail)':'inherit'}">${f}</div><div class="l">${T('tlFail')}</div></div>
+    <div class="tile"><div class="n" style="color:${w?'var(--warn)':'inherit'}">${w}</div><div class="l">${T('tlWarn')}</div></div>
+    <div class="tile"><div class="n" style="color:${ironOk===4?'var(--ok)':'var(--fail)'}">${ironOk}/4</div><div class="l">${T('tlIron')}</div></div>
+    <div class="tile"><div class="n">${STATE.rooms.length}</div><div class="l">${T('tlTags')}</div></div>
+    <div class="tile"><div class="n">${ws||'—'}</div><div class="l">${T('tlStations')}</div></div>
+    <div class="tile"><div class="n">${seats||'—'}</div><div class="l">${T('tlSeats')}</div></div>
+    <div class="tile"><div class="n">${area?area.toFixed(0):'—'}</div><div class="l">${T('tlArea')}</div></div>
+    <div class="tile"><div class="n">${STATE.symbols.length}</div><div class="l">${T('tlSyms')}</div></div>`;
 
-  $('#tabs').innerHTML=TABS.map(t=>{
+  $('#tabs').innerHTML=TABKEYS.map(([k,key])=>{
     let b='';
-    if(t.k==='notes'&&(f||w)) b=`<span class="bdg ${f?'f':'w'}">${f+w}</span>`;
-    if(t.k==='iron'&&ironOk<4) b=`<span class="bdg f">${4-ironOk}</span>`;
-    return `<button class="tab ${TAB===t.k?'on':''}" onclick="setTab('${t.k}')">${t.n}${b}</button>`;
+    if(k==='notes'&&(f||w)) b=`<span class="bdg ${f?'f':'w'}">${f+w}</span>`;
+    if(k==='iron'&&ironOk<4) b=`<span class="bdg f">${4-ironOk}</span>`;
+    return `<button class="tab ${TAB===k?'on':''}" onclick="setTab('${k}')">${T(key)}${b}</button>`;
   }).join('');
 
   const B=$('#tabBody');
@@ -1628,46 +2116,44 @@ function renderPanel(){
 }
 
 function viewIron(){
-  return `<div class="grp-title">כללי ברזל — נקודת פתיחה לכל בדיקה</div>`+
+  return `<div class="grp-title">${T('ironTitle')}</div>`+
     STATE.ironR.map(r=>`
       <div class="iron ${r.level}">
         <div class="ih">
-          <span class="chip ${r.level==='o'?'o':'f'}">${r.level==='o'?'✓':'חסר'}</span>
+          <span class="chip ${r.level==='o'?'o':'f'}">${r.level==='o'?T('ironOk'):T('ironMissing')}</span>
           <span class="it">${esc(r.n)}</span>
           <span class="cs" style="font-size:9px;opacity:.5">${esc(r.src)}</span>
         </div>
         <div class="ib">${esc(r.msg)}</div>
         ${r.level!=='o'?`<div class="cact">
-          ${r.tool?`<button class="xb" onclick="armTool('${r.tool}');">פתח כלי ${r.tool==='dim'?'קו מידה':''}</button>`:''}
-          ${r.sym?`<button class="xb" onclick="setTab('sym')">פתח מחסן סימבולים</button>`:''}
-          <button class="xb" onclick="STATE.iron['${r.id}']=true;refresh()">סמן כטופל</button>
+          ${r.tool?`<button class="xb" onclick="armTool('${r.tool}');">${T('openToolDim')}</button>`:''}
+          ${r.sym?`<button class="xb" onclick="setTab('sym')">${T('openSymLib')}</button>`:''}
+          <button class="xb" onclick="STATE.iron['${r.id}']=true;refresh()">${T('markDone')}</button>
         </div>`:''}
       </div>`).join('')+
-    `<div class="grp-title">קנה מידה</div>
+    `<div class="grp-title">${T('scaleTitle')}</div>
      <div class="iron ${STATE.calib?'o':'w'}">
-       <div class="ih"><span class="chip ${STATE.calib?'o':'w'}">${STATE.calib?'מכויל':'לא מכויל'}</span>
-       <span class="it">כיול מידות</span></div>
-       <div class="ib">${STATE.calib?'קווי מידה חדשים יקבלו אורך אוטומטי במטרים.':'כייל פעם אחת על מידה ידועה — לאחר מכן כל קו מידה יחושב אוטומטית.'}</div>
-       <div class="cact"><button class="xb" onclick="armTool('calib')">כייל עכשיו</button></div>
+       <div class="ih"><span class="chip ${STATE.calib?'o':'w'}">${STATE.calib?T('scaleOn'):T('scaleOff')}</span>
+       <span class="it">${T('scaleLabel')}</span></div>
+       <div class="ib">${STATE.calib?T('scaleOnMsg'):T('scaleOffMsg')}</div>
+       <div class="cact"><button class="xb" onclick="armTool('calib')">${T('calibNow')}</button></div>
      </div>`;
 }
 
 function viewNotes(){
   const manualHint = STATE.mode==='manual'
     ? `<div class="iron w" style="margin-bottom:10px">
-         <div class="ih"><span class="chip w">מצב ידני</span><span class="it">אין שכבת טקסט</span></div>
-         <div class="ib">הקובץ נטען כתמונה — אין תגיות חדרים לפענוח, ולכן לא רצה בדיקה אוטומטית.
-         כל הכלים פעילים: סימבולים, קווי מידה עם כיול, והערות ממוקמות.
-         לניתוח אוטומטי מלא — העלה PDF עם שכבת טקסט.</div>
-         <div class="cact"><button class="xb" onclick="armTool('pin')">הוסף הערה</button>
-         <button class="xb" onclick="setTab('sym')">מחסן סימבולים</button></div>
+         <div class="ih"><span class="chip w">${T('manualModeChip')}</span><span class="it">${T('manualModeTitle')}</span></div>
+         <div class="ib">${T('manualModeBody')}</div>
+         <div class="cact"><button class="xb" onclick="armTool('pin')">${T('addNote')}</button>
+         <button class="xb" onclick="setTab('sym')">${T('symLib')}</button></div>
        </div>` : '';
   if(!STATE.notes.length)
-    return manualHint || '<div class="empty">אין הערות — התוכנית עברה את כל הבדיקות.</div>';
+    return manualHint || `<div class="empty">${T('noNotes')}</div>`;
   return manualHint + notesList();
 }
 function notesList(){
-  const grp=[['f','שגוי — לתיקון'],['w','תיקון קל'],['i','מידע / ידני'],['o','תקין']];
+  const grp=[['f',T('grpFail')],['w',T('grpWarn')],['i',T('grpInfo')],['o',T('grpOk')]];
   let h='';
   grp.forEach(([lv,ttl])=>{
     const list=STATE.notes.filter(n=>n.lv===lv);
@@ -1682,13 +2168,11 @@ function notesList(){
         </div>
         <div class="cb" contenteditable="true" data-id="${n.id}">${esc(n.body)}</div>
         <div class="cact">
-          ${n.shape==='cloud'
-            ? `<button class="xb" data-act="goto" data-id="${n.id}">הצג בתכנית</button>`
-            : (n.nx==null
-                ? `<button class="xb" data-act="place" data-id="${n.id}">מקם על התכנית</button>`
-                : `<button class="xb" data-act="goto" data-id="${n.id}">הצג בתכנית</button>`)}
-          <button class="xb" data-act="lv" data-id="${n.id}">שנה דרגה</button>
-          ${(n.src==='custom'||n.src==='cloud')?`<button class="xb" data-act="del" data-id="${n.id}">מחק</button>`:''}
+          ${(n.shape==='cloud'||n.nx!=null)
+            ? `<button class="xb" data-act="goto" data-id="${n.id}">${T('showOnPlan')}</button>`
+            : `<button class="xb" data-act="place" data-id="${n.id}">${T('placeOnPlan')}</button>`}
+          <button class="xb" data-act="lv" data-id="${n.id}">${T('changeLevel')}</button>
+          ${(n.src==='custom'||n.src==='cloud')?`<button class="xb" data-act="del" data-id="${n.id}">${T('del')}</button>`:''}
         </div>
       </div>`).join('');
   });
@@ -1707,7 +2191,7 @@ function bindNotes(){
       const n=STATE.notes.find(x=>x.id===b.dataset.id); if(!n) return;
       const a=b.dataset.act;
       if(a==='goto'){ SEL=n.id; drawOverlay(); }
-      if(a==='place'){ SEL=n.id; TOOL='place:'+n.id; $('#toolHint').textContent='לחץ על התכנית למיקום ההערה'; $('#planBox').style.cursor='crosshair'; }
+      if(a==='place'){ SEL=n.id; TOOL='place:'+n.id; $('#toolHint').textContent=T('hintPlace'); $('#planBox').style.cursor='crosshair'; }
       if(a==='lv'){ const o=['f','w','i','o']; n.lv=o[(o.indexOf(n.lv)+1)%4]; buildOrder(); refresh(); }
       if(a==='del'){ STATE.notes=STATE.notes.filter(x=>x.id!==n.id); refresh(); }
     };
@@ -1725,13 +2209,13 @@ function buildOrder(){
 function viewProgram(){
   const P=STATE.program;
   const isJson=!!(P&&P.program&&P.program.length);
-  let h=`<div class="grp-title">${isJson?'פרוגרמת הפרויקט (JSON)':'סטנדרט המשרד — לא נטענה פרוגרמה'}</div>`;
-  if(!isJson) h+=`<div class="iron w" style="margin-bottom:10px"><div class="ib">לכל תוכנית פרוגרמה משלה. טען JSON לבדיקה מול היעדים של הפרויקט.</div>
-    <div class="cact"><button class="xb" onclick="document.getElementById('jsonInput').click()">טען JSON</button>
-    <button class="xb" onclick="showTemplate()">הצג תבנית</button></div></div>`;
+  let h=`<div class="grp-title">${isJson?T('progJsonTitle'):T('progNoJson')}</div>`;
+  if(!isJson) h+=`<div class="iron w" style="margin-bottom:10px"><div class="ib">${T('progHint')}</div>
+    <div class="cact"><button class="xb" onclick="document.getElementById('jsonInput').click()">${T('loadJson')}</button>
+    <button class="xb" onclick="showTemplate()">${T('showTpl')}</button></div></div>`;
   if(P&&P.meta) h+=`<div class="ib" style="font-size:11px;opacity:.65;margin-bottom:10px">${esc([P.meta.project,P.meta.floor,P.meta.client].filter(Boolean).join(' · '))}</div>`;
 
-  h+=`<table class="pg"><thead><tr><th>פונקציה</th><th>יעד</th><th>בתכנית</th><th style="width:52px">Δ</th></tr></thead><tbody>`;
+  h+=`<table class="pg"><thead><tr><th>${T('thFn')}</th><th>${T('thGoal')}</th><th>${T('thFound')}</th><th style="width:52px">Δ</th></tr></thead><tbody>`;
   progRows().forEach(r=>{
     h+=`<tr class="${r.cls}"><td class="fn">${esc(r.fn)}</td><td>${esc(r.goal)}</td><td>${esc(r.found)}</td><td>${esc(r.delta)}</td></tr>`;
   });
@@ -1740,77 +2224,82 @@ function viewProgram(){
 
 function viewOpen(){
   const items=STATE.openItems;
-  let h=`<div class="grp-title">מה שהתכנית לא מגלה — פריטים לאימות</div>`;
-  h+=MANUAL_CHECKS.concat(items.map(i=>({id:i.id,n:i.n,note:i.scope}))).map(c=>{
+  let h=`<div class="grp-title">${T('openTitle')}</div>`;
+  h+=openList().map(c=>{
     const cur=STATE.manual[c.id]||'na';
     return `<div class="iron ${cur==='ok'?'o':cur==='fail'?'f':'w'}">
       <div class="ih"><span class="it">${esc(c.n)}</span>
         <span class="tri">
-          <button class="${cur==='ok'?'a-ok':''}" onclick="setManual('${c.id}','ok')">תקין</button>
-          <button class="${cur==='fail'?'a-fail':''}" onclick="setManual('${c.id}','fail')">לא תקין</button>
-          <button class="${cur==='na'?'a-na':''}" onclick="setManual('${c.id}','na')">פתוח</button>
+          <button class="${cur==='ok'?'a-ok':''}" onclick="setManual('${c.id}','ok')">${T('stOk')}</button>
+          <button class="${cur==='fail'?'a-fail':''}" onclick="setManual('${c.id}','fail')">${T('stFail')}</button>
+          <button class="${cur==='na'?'a-na':''}" onclick="setManual('${c.id}','na')">${T('stNa')}</button>
         </span></div>
       <div class="ib">${esc(c.note||'')}</div>
     </div>`;
   }).join('');
   return h;
 }
+/* one list for the panel, the PDF sheet and the Excel tab */
+function openList(){
+  return MANUAL_CHECKS.map(c=>({id:c.id, n:L(c.n), note:L(c.note)}))
+    .concat((STATE.openItems||[]).map(i=>({id:i.id, n:i.n, note:i.scope})));
+}
 function setManual(id,v){ STATE.manual[id]=v; renderPanel(); }
 
 function viewSymbols(){
-  let h=`<div class="grp-title">מחסן סימבולים — גרור לתכנית או לחץ ואז לחץ על התכנית</div>`;
+  let h=`<div class="grp-title">${T('symTitle')}</div>`;
   SYMBOLS.forEach((g,i)=>{
-    h+=`<details class="symgrp" ${i===0?'open':''}><summary>${esc(g.g)}</summary><div class="symwrap">`;
+    h+=`<details class="symgrp" ${i===0?'open':''}><summary>${esc(L(g.g))}</summary><div class="symwrap">`;
     g.items.forEach(s=>{
       h+=`<div class="symcard" draggable="true" data-k="${s.id}">
             <span class="sb" style="background:${s.c}">${esc(s.t)}</span>
-            <span class="sl">${esc(s.n)}</span>
+            <span class="sl">${esc(L(s.n))}</span>
           </div>`;
     });
     h+='</div></details>';
   });
-  h+=`<div class="grp-title">סימבולים על התכנית · ${STATE.symbols.length}</div>`;
+  h+=`<div class="grp-title">${T('symOnPlan')} · ${STATE.symbols.length}</div>`;
   h+= STATE.symbols.length ? STATE.symbols.map(s=>{
     const d=SYMMAP[s.k];
     return `<div class="card ${SEL===s.id?'sel':''}" onclick="SEL='${s.id}';renderPanel();drawOverlay();placeSymbols()">
       <div class="ch"><span class="num" style="background:${d.c}">${esc(d.t)}</span>
-      <span class="ct">${esc(d.n)}</span>
-      <button class="xb" onclick="event.stopPropagation();STATE.symbols=STATE.symbols.filter(x=>x.id!=='${s.id}');refresh()">מחק</button></div>
+      <span class="ct">${esc(L(d.n))}</span>
+      <button class="xb" onclick="event.stopPropagation();STATE.symbols=STATE.symbols.filter(x=>x.id!=='${s.id}');refresh()">${T('del')}</button></div>
     </div>`;
-  }).join('') : '<div class="empty">טרם הוצבו סימבולים.</div>';
+  }).join('') : `<div class="empty">${T('noSyms')}</div>`;
 
-  h+=`<div class="grp-title">קווי מידה · ${STATE.dims.length}</div>`;
+  h+=`<div class="grp-title">${T('dimsTitle')} · ${STATE.dims.length}</div>`;
   h+= STATE.dims.length ? STATE.dims.map(d=>`
     <div class="card" style="border-inline-start-color:${d.calib?'#0000FF':DIM_CLR}"><div class="ch">
       <span class="num" style="background:${d.calib?'#0000FF':DIM_CLR}">↔</span>
-      <span class="ct">${esc(d.label||'—')}${d.calib?' · קו הכיול':''}</span>
-      <button class="xb" onclick="STATE.dims=STATE.dims.filter(x=>x.id!=='${d.id}');refresh()">מחק</button>
-    </div></div>`).join('') : '<div class="empty">טרם שורטטו קווי מידה.</div>';
+      <span class="ct">${esc(d.label||'—')}${d.calib?esc(T('calibLine')):''}</span>
+      <button class="xb" onclick="STATE.dims=STATE.dims.filter(x=>x.id!=='${d.id}');refresh()">${T('del')}</button>
+    </div></div>`).join('') : `<div class="empty">${T('noDims')}</div>`;
 
   const tot=STATE.areas.reduce((s,a)=>s+(a.m2||0),0);
-  h+=`<div class="grp-title">מדידות שטח · ${STATE.areas.length}${tot?' · סה״כ '+tot.toFixed(2)+' מ״ר':''}</div>`;
+  h+=`<div class="grp-title">${T('areasTitle')} · ${STATE.areas.length}${tot?' · '+T('totalArea')+' '+fmtM2(tot):''}</div>`;
   if(!STATE.calib) h+=`<div class="iron w" style="margin-bottom:8px">
-    <div class="ib">קנה המידה לא כויל — קונטורים נשמרים אך לא מומרים למ״ר.</div>
-    <div class="cact"><button class="xb" onclick="armTool('calib')">כייל עכשיו</button></div></div>`;
+    <div class="ib">${T('notCalibWarn')}</div>
+    <div class="cact"><button class="xb" onclick="armTool('calib')">${T('calibNow')}</button></div></div>`;
   h+= STATE.areas.length ? STATE.areas.map(a=>`
     <div class="card ${SEL===a.id?'sel':''}" style="border-inline-start-color:${AREA_CLR}"
          onclick="SEL='${a.id}';renderPanel();drawOverlay()">
       <div class="ch">
         <span class="num" style="background:${AREA_CLR}">⬚</span>
-        <span class="ct">${esc(a.name||'חדר ללא שם')}</span>
+        <span class="ct">${esc(a.name||T('roomNoName'))}</span>
         <span class="cs">${esc(a.label||'—')}</span>
       </div>
-      <div class="cb">${a.perim?'היקף '+a.perim.toFixed(2)+' מ׳ · ':''}${(a.pts||[]).length} נקודות</div>
+      <div class="cb">${a.perim?esc(T('perim')+' '+fmtM(a.perim))+' · ':''}${esc(T('points',(a.pts||[]).length))}</div>
       <div class="cact">
-        <button class="xb" onclick="event.stopPropagation();renameArea('${a.id}')">שנה שם</button>
-        <button class="xb" onclick="event.stopPropagation();STATE.areas=STATE.areas.filter(x=>x.id!=='${a.id}');refresh()">מחק</button>
+        <button class="xb" onclick="event.stopPropagation();renameArea('${a.id}')">${T('rename')}</button>
+        <button class="xb" onclick="event.stopPropagation();STATE.areas=STATE.areas.filter(x=>x.id!=='${a.id}');refresh()">${T('del')}</button>
       </div>
-    </div>`).join('') : '<div class="empty">טרם נמדדו שטחים. בחר "מדידת שטח" וסמן את קונטור החדר.</div>';
+    </div>`).join('') : `<div class="empty">${T('noAreas')}</div>`;
   return h;
 }
 function renameArea(id){
   const a=STATE.areas.find(x=>x.id===id); if(!a) return;
-  const v=prompt('שם החדר:', a.name||'');
+  const v=prompt(T('askRoomName'), a.name||'');
   if(v===null) return;
   a.name=v.trim(); refresh();
 }
@@ -1827,7 +2316,7 @@ $('#planBox').addEventListener('click', e=>{
     e.stopPropagation();
     const n=STATE.notes.find(x=>x.id===TOOL.slice(6));
     if(n){ const p=planPoint(e); n.nx=p.nx; n.ny=p.ny; }
-    armTool(null); refresh(); toast('ההערה מוקמה');
+    armTool(null); refresh(); toast(T('tNotePlaced'));
   }
 }, true);
 
@@ -1840,7 +2329,7 @@ function refresh(){
   STATE.ironR=ironChecks(STATE.parse, STATE.rooms);
   STATE.openItems=openItems(STATE.rooms);
   renderPanel(); drawOverlay(); placeSymbols();
-  $('#calibNote').textContent = STATE.calib ? 'קנה מידה מכויל' : '';
+  $('#calibNote').textContent = STATE.calib ? T('calibratedNote') : '';
 }
 
 /* image / flat-PDF workspace — no text layer, every marking is manual */
@@ -1888,7 +2377,8 @@ const VALID_KEYS=['openspace','workstations','meeting','boardroom','altmeeting',
   'executive','vp','director','hrbp','staffroom','hr','facilities','it','nursery','kitchenette','wc',
   'shower','lounge','reception','printcopy','storage','service','future','specialty'];
 
-const TEMPLATE={
+/* the downloadable starting point — built in whichever language is active */
+const TPL_HE={
   _readme:'תבנית פרוגרמה + QA ל-RDA Test Fit Checker. השדות שמתחילים ב-_ הם תיעוד בלבד והמערכת מתעלמת מהם.',
   _fields:{
     'meta':'פרטי הפרויקט — מוצגים בכותרת הבדיקה ובקובץ ה-Export.',
@@ -1901,40 +2391,71 @@ const TEMPLATE={
     'qa[].name':'סעיף QA של הפרויקט. מופיע בטאב "לא נראה" עם צ׳קליסט תקין / לא תקין / פתוח.',
     'rules':'דריסת ספי הסטנדרט המשרדי — לפרויקט הזה בלבד. השמט כדי להשתמש בברירת המחדל.'
   },
+  meta:{ project:'שם הפרויקט', floor:'FL00', client:'שם הלקוח' },
+  fn:{ openspace:'Open Space', meeting:'Meeting Room', boardroom:'Board Room',
+       altmeeting:'ישיבות לא-פורמלי', phonebooth:'Phone Booth', executive:'Executive',
+       vp:'VP', director:'Group Director', staffroom:'חדר צוות', it:'IT / תקשורת',
+       nursery:'חדר הנקה', kitchenette:'מטבחון', wc:'שירותים', lounge:'Lounge', reception:'קבלה / המתנה' },
+  norm:{ openspace:'1.45–2.6 מ״ר לעובד', phonebooth:'תא לכל ~35 עמדות' },
+  qa:['אישור יועץ נגישות','אישור יועץ בטיחות ומילוט','תיאום מיזוג לחדרים פנימיים',
+      'תיאום חשמל ותקשורת מול הבניין','אישור בעל הנכס לשינויי מחיצות','תיאום אקוסטיקה בחדרי ישיבות']
+};
+const TPL_EN={
+  _readme:'Program + QA template for the RDA Test Fit Checker. Fields starting with _ are documentation only and are ignored.',
+  _fields:{
+    'meta':'Project details — shown in the review header and in every export.',
+    'program[].key':'Room type. Must be one of the values in _validKeys.',
+    'program[].fn':'Display name in the program table.',
+    'program[].count':'How many are required on the floor. A shortfall is flagged amber (up to 33%) or red (above).',
+    'program[].minArea':'Minimum area in m² for a single room.',
+    'program[].required':'true = required on the floor. A shortfall is flagged red even without count.',
+    'program[].norm':'Free text shown in the target column. If empty, it is built from count and minArea.',
+    'qa[].name':'A project QA item. Appears in the "Unseen" tab with a pass / fail / open checklist.',
+    'rules':'Overrides the office-standard thresholds, for this project only. Omit to use the defaults.'
+  },
+  meta:{ project:'Project name', floor:'FL00', client:'Client name' },
+  fn:{ openspace:'Open Space', meeting:'Meeting Room', boardroom:'Board Room',
+       altmeeting:'Informal meeting', phonebooth:'Phone Booth', executive:'Executive',
+       vp:'VP', director:'Group Director', staffroom:'Team room', it:'IT / comms',
+       nursery:'Nursing room', kitchenette:'Kitchenette', wc:'Toilets', lounge:'Lounge', reception:'Reception / waiting' },
+  norm:{ openspace:'1.45–2.6 m² per person', phonebooth:'one booth per ~35 stations' },
+  qa:['Accessibility consultant approval','Safety and egress consultant approval','HVAC coordination for internal rooms',
+      'Electrical and data coordination with the building','Landlord approval for partition changes','Acoustic coordination in meeting rooms']
+};
+function template(){
+  const t = isHe() ? TPL_HE : TPL_EN;
+  return {
+  _readme:t._readme,
+  _fields:t._fields,
   _validKeys:VALID_KEYS,
-  meta:{ project:'שם הפרויקט', floor:'FL00', client:'שם הלקוח', date:'2026-01-01', areaGross:1200, headcount:120 },
+  meta:{ project:t.meta.project, floor:t.meta.floor, client:t.meta.client,
+         date:'2026-01-01', areaGross:1200, headcount:120 },
   program:[
-    { key:'openspace',   fn:'Open Space',        count:1,  norm:'1.45–2.6 מ״ר לעובד' },
-    { key:'meeting',     fn:'Meeting Room',      count:6,  minArea:11 },
-    { key:'boardroom',   fn:'Board Room',        count:1,  minArea:40, required:true },
-    { key:'altmeeting',  fn:'ישיבות לא-פורמלי',  count:2,  minArea:15 },
-    { key:'phonebooth',  fn:'Phone Booth',       count:4,  norm:'תא לכל ~35 עמדות' },
-    { key:'executive',   fn:'Executive',         count:2,  minArea:13 },
-    { key:'vp',          fn:'VP',                count:3,  minArea:10.5 },
-    { key:'director',    fn:'Group Director',    count:4,  minArea:9.5 },
-    { key:'staffroom',   fn:'חדר צוות',          count:3,  minArea:7 },
-    { key:'it',          fn:'IT / תקשורת',       count:1,  minArea:7,  required:true },
-    { key:'nursery',     fn:'חדר הנקה',          count:1,  minArea:5,  required:true },
-    { key:'kitchenette', fn:'מטבחון',            count:1,  minArea:20, required:true },
-    { key:'wc',          fn:'שירותים',           count:2,  minArea:1.5 },
-    { key:'lounge',      fn:'Lounge',            count:2 },
-    { key:'reception',   fn:'קבלה / המתנה',      count:1 }
+    { key:'openspace',   fn:t.fn.openspace,   count:1,  norm:t.norm.openspace },
+    { key:'meeting',     fn:t.fn.meeting,     count:6,  minArea:11 },
+    { key:'boardroom',   fn:t.fn.boardroom,   count:1,  minArea:40, required:true },
+    { key:'altmeeting',  fn:t.fn.altmeeting,  count:2,  minArea:15 },
+    { key:'phonebooth',  fn:t.fn.phonebooth,  count:4,  norm:t.norm.phonebooth },
+    { key:'executive',   fn:t.fn.executive,   count:2,  minArea:13 },
+    { key:'vp',          fn:t.fn.vp,          count:3,  minArea:10.5 },
+    { key:'director',    fn:t.fn.director,    count:4,  minArea:9.5 },
+    { key:'staffroom',   fn:t.fn.staffroom,   count:3,  minArea:7 },
+    { key:'it',          fn:t.fn.it,          count:1,  minArea:7,  required:true },
+    { key:'nursery',     fn:t.fn.nursery,     count:1,  minArea:5,  required:true },
+    { key:'kitchenette', fn:t.fn.kitchenette, count:1,  minArea:20, required:true },
+    { key:'wc',          fn:t.fn.wc,          count:2,  minArea:1.5 },
+    { key:'lounge',      fn:t.fn.lounge,      count:2 },
+    { key:'reception',   fn:t.fn.reception,   count:1 }
   ],
-  qa:[
-    { name:'אישור יועץ נגישות' },
-    { name:'אישור יועץ בטיחות ומילוט' },
-    { name:'תיאום מיזוג לחדרים פנימיים' },
-    { name:'תיאום חשמל ותקשורת מול הבניין' },
-    { name:'אישור בעל הנכס לשינויי מחיצות' },
-    { name:'תיאום אקוסטיקה בחדרי ישיבות' }
-  ],
+  qa:t.qa.map(name=>({name})),
   rules:{
     openspace:{ densityMin:1.3, densityWarnLow:1.45, densityWarnHigh:2.6 },
     meeting:{ perSeatMin:1.1, perSeatMax:3.0 }
   }
-};
+  };
+}
 
-function templateText(){ return JSON.stringify(TEMPLATE,null,2); }
+function templateText(){ return JSON.stringify(template(),null,2); }
 function downloadTemplate(){
   dl('rda-program-template.json', templateText(), 'application/json');
 }
@@ -1944,30 +2465,29 @@ function showTemplate(){
   host.innerHTML=`
     <div class="modal-box" onclick="event.stopPropagation()">
       <div class="modal-head">
-        <div>תבנית פרוגרמה + QA<small>JSON — נקודת הפתיחה לכל תוכנית</small></div>
-        <button class="hb" data-x>סגור</button>
+        <div>${T('tplTitle')}<small>${T('tplSub')}</small></div>
+        <button class="hb" data-x>${T('close')}</button>
       </div>
       <div class="keylist">
-        <b>ערכי key חוקיים:</b><br>${VALID_KEYS.map(k=>`<code>${k}</code>`).join('')}
+        <b>${T('tplKeys')}</b><br>${VALID_KEYS.map(k=>`<code>${k}</code>`).join('')}
       </div>
       <div class="modal-body"><pre class="json">${esc(templateText())}</pre></div>
       <div class="modal-foot">
-        <button class="mini pri" data-dl>הורד קובץ</button>
-        <button class="mini" data-copy>העתק ללוח</button>
-        <span style="font-size:10px;opacity:.5;margin-inline-start:auto">
-          מלא את הערכים → שמור כ-.json → טען בפלטפורמה</span>
+        <button class="mini pri" data-dl>${T('tplDl')}</button>
+        <button class="mini" data-copy>${T('tplCopy')}</button>
+        <span style="font-size:10px;opacity:.5;margin-inline-start:auto">${T('tplHint')}</span>
       </div>
     </div>`;
   host.onclick=()=>host.remove();
   host.querySelector('[data-x]').onclick=()=>host.remove();
   host.querySelector('[data-dl]').onclick=()=>downloadTemplate();
   host.querySelector('[data-copy]').onclick=async()=>{
-    try{ await navigator.clipboard.writeText(templateText()); toast('הועתק ללוח'); }
+    try{ await navigator.clipboard.writeText(templateText()); toast(T('tCopied')); }
     catch(e){
       const pre=host.querySelector('pre.json'), r=document.createRange();
       r.selectNodeContents(pre);
       const s=getSelection(); s.removeAllRanges(); s.addRange(r);
-      toast('נבחר — Ctrl+C להעתקה');
+      toast(T('tSelectCopy'));
     }
   };
   document.body.appendChild(host);
@@ -1986,7 +2506,7 @@ function metaGet(){
   const base=STATE.fileName.replace(/\.(pdf|png|jpe?g)$/i,'');
   const m=STATE.meta||{};
   return {
-    project: m.project || pm.project || base || 'Test Fit',
+    project: m.project || pm.project || base || T('defaultProject'),
     client:  m.client  || pm.client  || '',
     floor:   m.floor   || pm.floor   || guessFloor(STATE.fileName) || '',
     date:    m.date    || pm.date    || new Date().toLocaleDateString('he-IL'),
@@ -1994,11 +2514,7 @@ function metaGet(){
     file:    STATE.fileName
   };
 }
-function floorTitle(){
-  const f=metaGet().floor;
-  if(!f) return 'תכנית Test Fit';
-  return /^\d+$/.test(f) ? ('תכנית Test Fit — קומה '+f) : ('תכנית Test Fit — '+f);
-}
+function floorTitle(){ return T('rptPlanTitle', metaGet().floor); }
 function projectModal(){
   const m=metaGet();
   const host=document.createElement('div');
@@ -2006,20 +2522,19 @@ function projectModal(){
   host.innerHTML=`
     <div class="modal-box" style="max-width:600px" onclick="event.stopPropagation()">
       <div class="modal-head">
-        <div>פרטי הפרויקט<small>מופיעים בכותרת כל ייצוא — PDF, Excel ו-HTML</small></div>
-        <button class="hb" data-x>סגור</button>
+        <div>${T('pmTitle')}<small>${T('pmSub')}</small></div>
+        <button class="hb" data-x>${T('close')}</button>
       </div>
       <div class="frm">
-        <div class="wide"><label>שם הפרויקט</label><input id="mProject" value="${esc(m.project)}"></div>
-        <div><label>לקוח</label><input id="mClient" value="${esc(m.client)}"></div>
-        <div><label>קומה</label><input id="mFloor" value="${esc(m.floor)}" placeholder="FL03 / 3"></div>
-        <div><label>תאריך</label><input id="mDate" value="${esc(m.date)}"></div>
-        <div><label>נבדק ע״י</label><input id="mAuthor" value="${esc(m.author)}" placeholder="שם הבודק"></div>
+        <div class="wide"><label>${T('pmProject')}</label><input id="mProject" value="${esc(m.project)}"></div>
+        <div><label>${T('pmClient')}</label><input id="mClient" value="${esc(m.client)}"></div>
+        <div><label>${T('pmFloor')}</label><input id="mFloor" value="${esc(m.floor)}" placeholder="FL03 / 3"></div>
+        <div><label>${T('pmDate')}</label><input id="mDate" value="${esc(m.date)}"></div>
+        <div><label>${T('pmAuthor')}</label><input id="mAuthor" value="${esc(m.author)}" placeholder="${T('pmAuthorPh')}"></div>
       </div>
       <div class="modal-foot">
-        <button class="mini pri" data-save>שמור</button>
-        <span style="font-size:10px;opacity:.5;margin-inline-start:auto">
-          הקומה נוחשה מתוך שם הקובץ — ניתן לתקן</span>
+        <button class="mini pri" data-save>${T('pmSave')}</button>
+        <span style="font-size:10px;opacity:.5;margin-inline-start:auto">${T('pmNote')}</span>
       </div>
     </div>`;
   const close=()=>host.remove();
@@ -2033,14 +2548,66 @@ function projectModal(){
       date:   host.querySelector('#mDate').value.trim(),
       author: host.querySelector('#mAuthor').value.trim()
     };
-    close(); stampHeader(); toast('פרטי הפרויקט נשמרו');
+    close(); stampHeader(); toast(T('tMetaSaved'));
   };
   document.body.appendChild(host);
   setTimeout(()=>host.querySelector('#mProject').focus(),30);
 }
 function stampHeader(){
   const m=metaGet();
-  $('#fname').textContent=[m.project, m.floor, STATE.mode==='manual'?'מצב ידני':''].filter(Boolean).join(' · ');
+  $('#fname').textContent=[m.project, m.floor, STATE.mode==='manual'?T('manualModeChip'):''].filter(Boolean).join(' · ');
+}
+
+/* =====================================================================
+   13b. LANGUAGE SWITCH
+   Static labels carry data-t (textContent) or data-th (innerHTML).
+   Everything else is generated through T(), so a re-render is enough.
+   ===================================================================== */
+function applyStatic(){
+  document.documentElement.lang = LANG;
+  document.documentElement.dir  = isHe() ? 'rtl' : 'ltr';
+  document.querySelectorAll('[data-t]').forEach(el=>{ el.textContent = T(el.dataset.t); });
+  document.querySelectorAll('[data-th]').forEach(el=>{ el.innerHTML  = T(el.dataset.th); });
+  const lb=$('#btnLang');
+  if(lb){
+    lb.textContent=T('langBtn'); lb.title=T('langTitle');
+    /* Keep the switch in the visual left corner in both directions. `order`
+       proved unreliable here, so move the node: in an RTL row the last child
+       is the leftmost, in an LTR row it is the first. */
+    const hd=lb.parentNode;
+    if(isHe()) hd.appendChild(lb);
+    else hd.insertBefore(lb, hd.firstChild);
+  }
+  document.title = 'RDA — Test Fit Checker';
+}
+function setLang(l){
+  if(l!=='he'&&l!=='en') return;
+  LANG=l;
+  try{ localStorage.setItem('rda-lang', l); }catch(e){}
+  applyStatic();
+  if(!PDFJS_OK) showError(T('errPdfjs'));
+  if(BASE){
+    /* rule text, type names and open items are all language-derived —
+       rebuild them so nothing is left in the previous language */
+    if(STATE.mode==='auto'&&STATE.parse){
+      STATE.rooms=STATE.parse.tags.map((tag,i)=>({tag, i:i+1, check:checkRoom(tag)}));
+      const fc=floorChecks(STATE.parse, STATE.rooms);
+      STATE.floor=fc;
+      buildNotes(STATE.rooms, fc);
+    }
+    retitleManualNotes();
+    stampHeader();
+    refresh();
+    layout();
+  }
+}
+function toggleLang(){ setLang(isHe()?'en':'he'); }
+/* hand-made notes keep the user's own words, but their generated labels follow */
+function retitleManualNotes(){
+  STATE.notes.forEach(n=>{
+    if(n.src==='cloud') n.sub=T('cloudSub');
+    else if(n.src==='custom') n.sub=T('noteManual');
+  });
 }
 
 function toggleExportMenu(e){
@@ -2055,13 +2622,15 @@ function applyProgram(p){
   if(p.rules) Object.keys(p.rules).forEach(k=>{ RULES[k]=Object.assign({}, RULES[k]||{}, p.rules[k]); });
   const b=$('#progBanner');
   b.className='prog-banner loaded';
-  b.innerHTML=`<b>פרוגרמה נטענה.</b> ${esc([p.meta&&p.meta.project, p.meta&&p.meta.floor].filter(Boolean).join(' · '))} — ${(p.program||[]).length} סעיפי פרוגרמה, ${(p.qa||[]).length} סעיפי QA. הבדיקה תרוץ מול היעדים האלה.`;
+  b.innerHTML=T('progBanner',
+    esc([p.meta&&p.meta.project, p.meta&&p.meta.floor].filter(Boolean).join(' · ')),
+    (p.program||[]).length, (p.qa||[]).length);
   if(STATE.rooms.length){
     STATE.rooms=STATE.parse.tags.map((tag,i)=>({tag,i:i+1,check:checkRoom(tag)}));
     buildNotes(STATE.rooms, floorChecks(STATE.parse, STATE.rooms));
     refresh();
   }
-  toast('פרוגרמה נטענה');
+  toast(T('tProgLoaded'));
 }
 
 function saveJson(){
@@ -2096,7 +2665,7 @@ function dlBlob(name, blob){
   document.body.appendChild(a);
   a.click();
   setTimeout(()=>{ a.remove(); URL.revokeObjectURL(url); },4000);
-  toast('הורדה: '+name);
+  toast(T('tDownload',name));
 }
 function dl(name, content, type){
   dlBlob(name, new Blob([content],{type:type+';charset=utf-8'}));
@@ -2182,11 +2751,13 @@ function sheetXml(sh){
   }).join('');
   return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'+
     '<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">'+
-    '<sheetViews><sheetView rightToLeft="1" workbookViewId="0"/></sheetViews>'+
+    '<sheetViews><sheetView rightToLeft="'+(isHe()?'1':'0')+'" workbookViewId="0"/></sheetViews>'+
     '<sheetFormatPr defaultRowHeight="15"/>'+cols+
     '<sheetData>'+rows+'</sheetData></worksheet>';
 }
-const STYLES_XML='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'+
+/* readingOrder 2 = right-to-left, 1 = left-to-right */
+const stylesXml = () => STYLES_TPL.replace(/readingOrder="2"/g, 'readingOrder="'+(isHe()?'2':'1')+'"');
+const STYLES_TPL='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'+
 '<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">'+
 '<numFmts count="1"><numFmt numFmtId="164" formatCode="0.00"/></numFmts>'+
 '<fonts count="4">'+
@@ -2248,7 +2819,7 @@ function buildXlsx(sheets){
     {name:'_rels/.rels',         data:U(rootRels)},
     {name:'xl/workbook.xml',     data:U(wb)},
     {name:'xl/_rels/workbook.xml.rels', data:U(wbRels)},
-    {name:'xl/styles.xml',       data:U(STYLES_XML)}
+    {name:'xl/styles.xml',       data:U(stylesXml())}
   ];
   sheets.forEach((s,i)=>files.push({name:`xl/worksheets/sheet${i+1}.xml`, data:U(sheetXml(s))}));
   return zipStore(files);
@@ -2261,7 +2832,7 @@ function hrow(cells){ return cells.map(c=>({v:c, s:XS.HEAD})); }
 
 function exportXlsx(){
   closeExportMenu();
-  if(!BASE){ toast('אין תוכנית טעונה'); return; }
+  if(!BASE){ toast(T('tNoPlan')); return; }
   const m=metaGet();
   const f=STATE.notes.filter(n=>n.lv==='f').length;
   const w=STATE.notes.filter(n=>n.lv==='w').length;
@@ -2271,95 +2842,98 @@ function exportXlsx(){
   const tagged=STATE.rooms.reduce((s,r)=>s+(r.tag.area||0),0);
   const measured=STATE.areas.reduce((s,a)=>s+(a.m2||0),0);
 
-  const sum={ name:'סיכום', cols:[34,46,20,20], rows:[
+  const sum={ name:T('xsSummary'), cols:[34,46,20,20], rows:[
     [{v:m.project, s:XS.TITLE}],
     [{v:floorTitle(), s:XS.BOLD}],
     [],
-    hrow(['פרט','ערך']),
-    [{v:'לקוח', s:XS.BOLD}, m.client||'—'],
-    [{v:'קומה', s:XS.BOLD}, m.floor||'—'],
-    [{v:'תאריך', s:XS.BOLD}, m.date],
-    [{v:'נבדק ע״י', s:XS.BOLD}, m.author||'—'],
-    [{v:'קובץ מקור', s:XS.BOLD}, m.file||'—'],
-    [{v:'מצב ניתוח', s:XS.BOLD}, STATE.mode==='auto'?'אוטומטי — שכבת טקסט':'ידני — ללא שכבת טקסט'],
-    [{v:'קנה מידה', s:XS.BOLD}, STATE.calib?'מכויל':'לא מכויל'],
-    [{v:'בסיס הבדיקה', s:XS.BOLD}, (STATE.program&&STATE.program.program&&STATE.program.program.length)?'פרוגרמת הפרויקט':'סטנדרט המשרד'],
+    hrow([T('xsField'),T('xsValue')]),
+    [{v:T('covClient'), s:XS.BOLD}, m.client||'—'],
+    [{v:T('covFloor'), s:XS.BOLD}, m.floor||'—'],
+    [{v:T('covDate'), s:XS.BOLD}, m.date],
+    [{v:T('covAuthor'), s:XS.BOLD}, m.author||'—'],
+    [{v:T('xsSrcFile'), s:XS.BOLD}, m.file||'—'],
+    [{v:T('covMode'), s:XS.BOLD}, STATE.mode==='auto'?T('modeAuto'):T('modeManual')],
+    [{v:T('covScale'), s:XS.BOLD}, STATE.calib?T('scaleOn'):T('scaleOff')],
+    [{v:T('xsBasis'), s:XS.BOLD}, (STATE.program&&STATE.program.program&&STATE.program.program.length)?T('progProject'):T('progOffice')],
     [],
-    hrow(['מדד','ערך']),
-    [{v:'הערות שגוי', s:XS.BOLD}, {v:f, s:f?XS.FAIL:XS.BODY}],
-    [{v:'הערות תיקון קל', s:XS.BOLD}, {v:w, s:w?XS.WARN:XS.BODY}],
-    [{v:'כללי ברזל שהושלמו', s:XS.BOLD}, {v:ironOk+' / 4', s:ironOk===4?XS.OK:XS.FAIL}],
-    [{v:'תגיות חדרים', s:XS.BOLD}, STATE.rooms.length],
-    [{v:'עמדות', s:XS.BOLD}, ws||'—'],
-    [{v:'מקומות ישיבה', s:XS.BOLD}, seats||'—'],
-    [{v:'מ״ר מתגיות התכנית', s:XS.BOLD}, tagged?+tagged.toFixed(2):'—'],
-    [{v:'מ״ר שנמדדו ידנית', s:XS.BOLD}, measured?+measured.toFixed(2):'—'],
-    [{v:'סימבולים', s:XS.BOLD}, STATE.symbols.length],
-    [{v:'קווי מידה', s:XS.BOLD}, STATE.dims.length],
-    [{v:'מדידות שטח', s:XS.BOLD}, STATE.areas.length],
+    hrow([T('xsMetric'),T('xsValue')]),
+    [{v:T('xsFails'), s:XS.BOLD}, {v:f, s:f?XS.FAIL:XS.BODY}],
+    [{v:T('xsWarns'), s:XS.BOLD}, {v:w, s:w?XS.WARN:XS.BODY}],
+    [{v:T('xsIronDone'), s:XS.BOLD}, {v:ironOk+' / 4', s:ironOk===4?XS.OK:XS.FAIL}],
+    [{v:T('xsTags'), s:XS.BOLD}, STATE.rooms.length],
+    [{v:T('xsStations'), s:XS.BOLD}, ws||'—'],
+    [{v:T('xsSeats'), s:XS.BOLD}, seats||'—'],
+    [{v:T('xsAreaTags'), s:XS.BOLD}, tagged?+tagged.toFixed(2):'—'],
+    [{v:T('xsAreaMeasured'), s:XS.BOLD}, measured?+measured.toFixed(2):'—'],
+    [{v:T('xsSyms'), s:XS.BOLD}, STATE.symbols.length],
+    [{v:T('xsDims'), s:XS.BOLD}, STATE.dims.length],
+    [{v:T('xsAreas'), s:XS.BOLD}, STATE.areas.length],
     [],
-    hrow(['כלל ברזל','סטטוס','מקור','פירוט'])
+    hrow([T('thRule'),T('thStatus'),T('thSource'),T('thDetail')])
   ]};
   (STATE.ironR||[]).forEach(r=>sum.rows.push([
-    {v:r.n, s:XS.BOLD}, {v:r.level==='o'?'תקין':'חסר', s:r.level==='o'?XS.OK:XS.FAIL},
+    {v:r.n, s:XS.BOLD}, {v:r.level==='o'?T('ironOkWord'):T('ironMissing'), s:r.level==='o'?XS.OK:XS.FAIL},
     r.src, r.msg ]));
-  sum.rows.push([], [{v:'הופק ע״י RDA Test Fit Checker. אינו מחליף בדיקת נגישות, בטיחות, מילוט או אישור יועצים.'}]);
+  sum.rows.push([], [{v:T('xsDisc')}]);
 
-  const notes={ name:'הערות', cols:[7,14,40,24,70,14], rows:[hrow(['#','דרגה','נושא','מקור','הערה','על התכנית'])] };
+  const notes={ name:T('xsNotes'), cols:[7,14,40,24,70,14],
+    rows:[hrow([T('thNum'),T('thLevel'),T('thSubject'),T('thSource'),T('thNote'),T('thOnPlan')])] };
   STATE.notes.forEach(n=>notes.rows.push([
-    {v:n.num, s:LVSTYLE[n.lv]}, {v:LVNAME[n.lv]||'', s:LVSTYLE[n.lv]},
+    {v:n.num, s:LVSTYLE[n.lv]}, {v:lvName(n.lv), s:LVSTYLE[n.lv]},
     {v:n.title, s:XS.BOLD}, n.sub, n.body,
-    n.shape==='cloud'?'ענן':(n.nx!=null?'סמן '+n.num:'—')
+    n.shape==='cloud'?T('onPlanCloud'):(n.nx!=null?T('onPlanPin',n.num):'—')
   ]));
-  if(STATE.notes.length===0) notes.rows.push([{v:'אין הערות — התוכנית עברה את כל הבדיקות שבוצעו.'}]);
+  if(STATE.notes.length===0) notes.rows.push([{v:T('rptNoNotes')}]);
 
-  const prog={ name:'פרוגרמה', cols:[34,44,34,10], rows:[hrow(['פונקציה','יעד','בתכנית','Δ'])] };
+  const prog={ name:T('xsProgram'), cols:[34,44,34,10],
+    rows:[hrow([T('thFn'),T('thGoal'),T('thFound'),'Δ'])] };
   progRows().forEach(r=>prog.rows.push([
     {v:r.fn, s:XS.BOLD}, {v:r.goal, s:LVSTYLE[r.cls]}, {v:r.found, s:LVSTYLE[r.cls]}, {v:r.delta, s:LVSTYLE[r.cls]}
   ]));
 
-  const rooms={ name:'חדרים', cols:[7,34,22,13,11,13,60], rows:[hrow(['#','שם בתגית','סוג','שטח מ״ר','קיבולת','סטטוס','ממצאים'])] };
+  const rooms={ name:T('xsRooms'), cols:[7,34,22,13,11,13,60],
+    rows:[hrow([T('thNum'),T('xsTagName'),T('xsType'),T('xsAreaCol'),T('xsCap'),T('thStatus'),T('xsFindings')])] };
   STATE.rooms.forEach(r=>{
     const lv={fail:'f',warn:'w',info:'i',ok:'o'}[r.check.level];
     rooms.rows.push([
-      r.i, {v:r.tag.name||'—', s:XS.BOLD}, TYPE_HE[r.check.type]||r.check.type,
+      r.i, {v:r.tag.name||'—', s:XS.BOLD}, typeName(r.check.type),
       r.tag.area!=null?r.tag.area:'—', r.tag.ppl!=null?r.tag.ppl:'—',
-      {v:LVNAME[lv]||'', s:LVSTYLE[lv]},
+      {v:lvName(lv), s:LVSTYLE[lv]},
       r.check.msgs.map(x=>x.m).join(' · ')
     ]);
   });
-  if(!STATE.rooms.length) rooms.rows.push([{v:'לא זוהו תגיות חדרים — הקובץ נטען במצב סימון ידני.'}]);
+  if(!STATE.rooms.length) rooms.rows.push([{v:T('xsNoRooms')}]);
 
-  const meas={ name:'מדידות', cols:[34,18,18,14], rows:[hrow(['חדר / אזור','שטח מדוד מ״ר','היקף מ׳','נקודות'])] };
+  const meas={ name:T('xsMeasures'), cols:[34,18,18,14],
+    rows:[hrow([T('thRoomArea'),T('xsMeasuredM2'),T('xsPerimM'),T('thPts')])] };
   STATE.areas.forEach(a=>meas.rows.push([
-    {v:a.name||'חדר ללא שם', s:XS.BOLD},
-    a.m2?+a.m2.toFixed(2):'לא מכויל',
+    {v:a.name||T('roomNoName'), s:XS.BOLD},
+    a.m2?+a.m2.toFixed(2):T('scaleOff'),
     a.perim?+a.perim.toFixed(2):'—',
     (a.pts||[]).length
   ]));
-  if(measured) meas.rows.push([{v:'סה״כ שטח מדוד', s:XS.BOLD}, {v:+measured.toFixed(2), s:XS.OK}]);
-  if(!STATE.areas.length) meas.rows.push([{v:'לא נמדדו שטחים.'}]);
-  meas.rows.push([], hrow(['קו מידה','אורך','מקור','']));
+  if(measured) meas.rows.push([{v:T('totalMeasured'), s:XS.BOLD}, {v:+measured.toFixed(2), s:XS.OK}]);
+  if(!STATE.areas.length) meas.rows.push([{v:T('xsNoAreas')}]);
+  meas.rows.push([], hrow([T('thDimLine'),T('thLength'),T('thSource'),'']));
   STATE.dims.forEach((d,i)=>meas.rows.push([
-    {v:'קו '+(i+1)+(d.calib?' — קו הכיול':''), s:XS.BOLD},
+    {v:T('dimN',i+1)+(d.calib?T('calibLine'):''), s:XS.BOLD},
     d.label||'—',
-    d.calib?'הוזן ידנית — בסיס הכיול':(d.manualLabel?'הוזן ידנית':'חושב מקנה המידה')
+    dimSource(d)
   ]));
-  if(!STATE.dims.length) meas.rows.push([{v:'לא שורטטו קווי מידה.'}]);
+  if(!STATE.dims.length) meas.rows.push([{v:T('xsNoDims')}]);
 
-  const openList=MANUAL_CHECKS.concat((STATE.openItems||[]).map(i=>({id:i.id,n:i.n,note:i.scope})));
-  const open={ name:'פריטים לאימות', cols:[46,14,60], rows:[hrow(['סעיף','סטטוס','הערה'])] };
-  openList.forEach(c=>{
+  const open={ name:T('xsOpen'), cols:[46,14,60], rows:[hrow([T('thItem'),T('thStatus'),T('thNote')])] };
+  openList().forEach(c=>{
     const cur=STATE.manual[c.id]||'na';
-    const lbl={ok:'תקין',fail:'לא תקין',na:'פתוח'}[cur];
+    const lbl={ok:T('stOk'),fail:T('stFail'),na:T('stNa')}[cur];
     open.rows.push([{v:c.n, s:XS.BOLD}, {v:lbl, s:cur==='ok'?XS.OK:cur==='fail'?XS.FAIL:XS.WARN}, c.note||'']);
   });
 
   try{
     dlBlob(exportBase()+'-review.xlsx', buildXlsx([sum,notes,prog,rooms,meas,open]));
   }catch(err){
-    toast('שגיאה ביצירת Excel');
-    showError('<b>שגיאה ביצירת קובץ Excel</b>'+esc(err.message));
+    toast(T('tXlsxErr'));
+    showError(T('errXlsx', esc(err.message)));
   }
 }
 
@@ -2383,30 +2957,16 @@ function routeFile(f){
   if(/\.json$/.test(n))           return readJson(f);
   if(/\.(dwg|dxf)$/.test(n))      return needsExport(f,'DWG','AutoCAD','Plot → DWG To PDF');
   if(/\.(rvt|rfa)$/.test(n))      return rvtPending(f);
-  showError('<b>סוג קובץ לא נתמך</b>' + esc(f.name) + ' — נתמכים: PDF, PNG, JPG, JSON.');
+  showError(T('errUnsupported', esc(f.name)));
 }
 
 /* RVT is a closed binary format — a browser alone cannot open it. The plan is
    a server-side converter; until that exists, say so and give the PDF route. */
-function rvtPending(f){
-  showError(
-    `<b>חיבור RVT — בהכנה.</b>`+
-    `הקובץ <u>${esc(f.name)}</u> זוהה, אך פענוח Revit דורש שירות המרה בצד שרת — דפדפן לבדו לא קורא את הפורמט. `+
-    `נחבר את המסלול הזה בשלב הבא.<br>`+
-    `בינתיים: Revit → File → Export → PDF, והעלה את ה-PDF כאן. שכבת הטקסט של תגיות החדרים נשמרת בייצוא, והניתוח יהיה מלא ואוטומטי.`
-  );
-}
+function rvtPending(f){ showError(T('errRvt', esc(f.name))); }
 
 /* DWG is likewise a proprietary binary format.
    Say so plainly and give the 10-second workaround instead of failing silently. */
-function needsExport(f, fmt, app, path){
-  showError(
-    `<b>${fmt} הוא פורמט בינארי סגור — לא ניתן לפענוח בדפדפן.</b>`+
-    `ייצא PDF מתוך ${app} (<u>${esc(path)}</u>) והעלה אותו כאן. `+
-    `שכבת הטקסט של תגיות החדרים נשמרת בייצוא — והניתוח יהיה מלא ואוטומטי.<br>`+
-    `לחלופין, העלה תמונה (PNG/JPG) של התכנית ועבוד במצב סימון ידני עם כל הכלים.`
-  );
-}
+function needsExport(f, fmt, app, path){ showError(T('errDwg', fmt, app, esc(path))); }
 
 function readJson(f){
   const r=new FileReader();
@@ -2415,7 +2975,7 @@ function readJson(f){
       const j=JSON.parse(r.result);
       applyProgram(j);
       if(j.review && BASE) restoreReview(j.review);
-    }catch(err){ showError('<b>JSON לא תקין</b>'+esc(err.message)); }
+    }catch(err){ showError(T('errBadJson', esc(err.message))); }
   };
   r.readAsText(f);
 }
@@ -2431,11 +2991,11 @@ function restoreReview(rv){
     if(!STATE.notes.some(x=>x.id===n.id)) STATE.notes.push(Object.assign({edited:true}, n));
   });
   STATE.seq=Math.max(STATE.seq, STATE.symbols.length+STATE.dims.length+STATE.areas.length+STATE.notes.length+1);
-  refresh(); toast('סימונים שוחזרו');
+  refresh(); toast(T('tRestored'));
 }
 
 async function handlePdf(file){
-  if(!PDFJS_OK){ showError(PDFJS_MSG); return; }
+  if(!PDFJS_OK){ showError(T('errPdfjs')); return; }
   showLoading(true);
   try{
     const parse=await parsePdf(new Uint8Array(await file.arrayBuffer()), file.name);
@@ -2443,9 +3003,9 @@ async function handlePdf(file){
       /* flat / scanned PDF — still usable as a manual markup workspace */
       await renderBase(parse.page);
       await runManual(BASE, file.name);
-      toast('לא זוהתה שכבת טקסט — מצב סימון ידני');
+      toast(T('tManualMode'));
     } else await run(parse);
-  }catch(err){ showError('<b>שגיאה בניתוח</b>'+esc(err.message)); }
+  }catch(err){ showError(T('errParse', esc(err.message))); }
   showLoading(false);
 }
 
@@ -2455,7 +3015,7 @@ async function handleImage(file){
     const url=URL.createObjectURL(file);
     const img=await new Promise((res,rej)=>{
       const i=new Image();
-      i.onload=()=>res(i); i.onerror=()=>rej(new Error('לא ניתן לקרוא את התמונה'));
+      i.onload=()=>res(i); i.onerror=()=>rej(new Error(isHe()?'לא ניתן לקרוא את התמונה':'Could not read the image'));
       i.src=url;
     });
     const sc=Math.min(1, 2400/Math.max(img.width,img.height));
@@ -2466,22 +3026,17 @@ async function handleImage(file){
     x.imageSmoothingQuality='high'; x.drawImage(img,0,0,c.width,c.height);
     URL.revokeObjectURL(url);
     await runManual(c, file.name);
-    toast('תמונה נטענה — מצב סימון ידני');
-  }catch(e){ showError('<b>שגיאה</b>'+esc(e.message)); }
+    toast(T('tImgLoaded'));
+  }catch(e){ showError(T('errGeneric', esc(e.message))); }
   showLoading(false);
 }
 
 function showLoading(on){ $('#loading').classList.toggle('on',on); if(on) showError(null); }
 function showError(m){ const e=$('#loadError'); e.style.display=m?'block':'none'; e.innerHTML=m||''; }
 
-const PDFJS_MSG =
-  '<b>מנוע קריאת ה-PDF לא נטען.</b>'+
-  'הקובץ <u>lib/pdf.min.js</u> חייב לשבת בתיקייה ליד הדף הזה. '+
-  'בנוסף — יש לפתוח את הדף דרך שרת מקומי (http://localhost) ולא בלחיצה כפולה על הקובץ, '+
-  'כי דפדפנים חוסמים את ה-worker של pdf.js בכתובות <u>file://</u>.<br>'+
-  'העלאת PNG/JPG של התכנית עובדת גם בלי המנוע — במצב סימון ידני.';
-/* surface it the moment the page opens, not only after a failed upload */
-if(!PDFJS_OK) showError(PDFJS_MSG);
+/* paint every static label, then surface a missing engine straight away */
+applyStatic();
+if(!PDFJS_OK) showError(T('errPdfjs'));
 
 /* =====================================================================
    15. EXPORT — same tool, different interface. Live editable, offline.
@@ -2498,12 +3053,13 @@ function progRows(){
     const m=STATE.rooms.filter(r=>types.includes(r.check.type));
     let cls,found,delta;
     if(!m.length){
-      cls=(p.required||p.count)?'f':'n'; found='לא נמצא'; delta=p.count?('−'+p.count):'—';
+      cls=(p.required||p.count)?'f':'n'; found=T('notFound'); delta=p.count?('−'+p.count):'—';
     } else {
       cls=m.some(r=>r.check.level==='fail')?'f':m.some(r=>r.check.level==='warn')?'w':'o';
       const a=m.map(r=>r.tag.area).filter(x=>x!=null);
-      const bits=[m.length+' יח׳'];
-      if(a.length) bits.push(Math.min(...a)===Math.max(...a)?a[0]+' מ״ר':Math.min(...a)+'–'+Math.max(...a)+' מ״ר');
+      const bits=[T('unitsShort',m.length)];
+      if(a.length) bits.push(Math.min(...a)===Math.max(...a)
+        ? a[0]+' '+T('uM2') : Math.min(...a)+'–'+Math.max(...a)+' '+T('uM2'));
       found=bits.join(' · ');
       if(p.count){
         const d=m.length-p.count;
@@ -2516,8 +3072,9 @@ function progRows(){
         }
       } else delta='✓';
     }
-    const goal=p.norm||[p.count?p.count+' יח׳':null,p.minArea?'≥'+p.minArea+' מ״ר':null].filter(Boolean).join(' · ')||'—';
-    return { fn:p.fn||p.label||p.key, goal, found, delta, cls };
+    const goal=L(p.norm)||[p.count?T('unitsShort',p.count):null,
+      p.minArea?'≥'+p.minArea+' '+T('uM2'):null].filter(Boolean).join(' · ')||'—';
+    return { fn:L(p.fn)||L(p.label)||p.key, goal, found, delta, cls };
   });
 }
 
@@ -2537,7 +3094,7 @@ function paintSymbolsOn(c,w,h){
     c.fillText(d.t, x, y+0.5*k);
     if(s.label){
       c.font='500 '+(9*k).toFixed(1)+'px Helvetica,Arial';
-      c.direction='rtl'; c.textAlign='right';
+      c.direction=isHe()?'rtl':'ltr'; c.textAlign='right';
       const tw=c.measureText(s.label).width+6*k;
       c.fillStyle='#fff'; c.fillRect(x-S/2-tw-2*k, y-7*k, tw, 14*k);
       c.strokeStyle=col; c.lineWidth=1*k; c.strokeRect(x-S/2-tw-2*k, y-7*k, tw, 14*k);
@@ -2564,7 +3121,7 @@ function renderComposite(maxW){
    No PDF library ships with this file, and none of them set Hebrew
    type properly without an embedded font; the print pipeline does.
    ===================================================================== */
-const LVNAME={f:'שגוי',w:'תיקון קל',i:'מידע / ידני',o:'תקין'};
+const lvName = lv => (T('lvName')||{})[lv]||'';
 function chunk(a,n){ const o=[]; for(let i=0;i<a.length;i+=n) o.push(a.slice(i,i+n)); return o; }
 
 function coverSheet(){
@@ -2576,29 +3133,30 @@ function coverSheet(){
   const seats=STATE.rooms.filter(r=>['meeting','boardroom'].includes(r.check.type)).reduce((s,r)=>s+(r.tag.ppl||0),0);
   const tagged=STATE.rooms.reduce((s,r)=>s+(r.tag.area||0),0);
   const measured=STATE.areas.reduce((s,a)=>s+(a.m2||0),0);
-  const head = f ? `<em>${f}</em> נושאים לתיקון` : (w ? `<em>${w}</em> תיקונים קלים` : 'לא נמצאו חריגות');
+  const head = f ? `<em>${f}</em> ${esc(T('rptFixes'))}`
+                 : (w ? `<em>${w}</em> ${esc(T('rptMinor'))}` : esc(T('rptClean')));
   return `
     <div class="cov">
       <div class="ck">Roy David Architects · Test Fit Checker</div>
       <h1>${esc(m.project)}</h1>
-      <div class="csub">${esc([m.floor&&floorTitle(), m.client].filter(Boolean).join(' · ') || 'דוח בדיקת Test Fit')} — ${head}</div>
+      <div class="csub">${esc([m.floor&&floorTitle(), m.client].filter(Boolean).join(' · ') || T('rptReport'))} — ${head}</div>
       <div class="covgrid">
-        <div><div class="k">לקוח</div><div class="v">${esc(m.client||'—')}</div></div>
-        <div><div class="k">קומה</div><div class="v">${esc(m.floor||'—')}</div></div>
-        <div><div class="k">תאריך</div><div class="v">${esc(m.date)}</div></div>
-        <div><div class="k">נבדק ע״י</div><div class="v">${esc(m.author||'—')}</div></div>
-        <div><div class="k">קובץ מקור</div><div class="v" style="font-size:10px">${esc(m.file||'—')}</div></div>
-        <div><div class="k">מצב ניתוח</div><div class="v" style="font-size:11px">${STATE.mode==='auto'?'אוטומטי — שכבת טקסט':'ידני — ללא שכבת טקסט'}</div></div>
-        <div><div class="k">קנה מידה</div><div class="v" style="font-size:11px">${STATE.calib?'מכויל':'לא מכויל'}</div></div>
-        <div><div class="k">פרוגרמה</div><div class="v" style="font-size:11px">${(STATE.program&&STATE.program.program&&STATE.program.program.length)?'פרוגרמת הפרויקט':'סטנדרט המשרד'}</div></div>
+        <div><div class="k">${T('covClient')}</div><div class="v">${esc(m.client||'—')}</div></div>
+        <div><div class="k">${T('covFloor')}</div><div class="v">${esc(m.floor||'—')}</div></div>
+        <div><div class="k">${T('covDate')}</div><div class="v">${esc(m.date)}</div></div>
+        <div><div class="k">${T('covAuthor')}</div><div class="v">${esc(m.author||'—')}</div></div>
+        <div><div class="k">${T('covFile')}</div><div class="v" style="font-size:10px">${esc(m.file||'—')}</div></div>
+        <div><div class="k">${T('covMode')}</div><div class="v" style="font-size:11px">${STATE.mode==='auto'?T('modeAuto'):T('modeManual')}</div></div>
+        <div><div class="k">${T('covScale')}</div><div class="v" style="font-size:11px">${STATE.calib?T('scaleOn'):T('scaleOff')}</div></div>
+        <div><div class="k">${T('covProg')}</div><div class="v" style="font-size:11px">${(STATE.program&&STATE.program.program&&STATE.program.program.length)?T('progProject'):T('progOffice')}</div></div>
       </div>
       <div class="covstat">
-        <div><div class="n" style="color:${f?'var(--fail)':'inherit'}">${f}</div><div class="l">שגוי</div></div>
-        <div><div class="n" style="color:${w?'var(--warn)':'inherit'}">${w}</div><div class="l">תיקון קל</div></div>
-        <div><div class="n" style="color:${ironOk===4?'var(--ok)':'var(--fail)'}">${ironOk}/4</div><div class="l">כללי ברזל</div></div>
-        <div><div class="n">${STATE.rooms.length||'—'}</div><div class="l">תגיות</div></div>
-        <div><div class="n">${ws||'—'}</div><div class="l">עמדות</div></div>
-        <div><div class="n">${measured?measured.toFixed(0):(tagged?tagged.toFixed(0):'—')}</div><div class="l">מ״ר${measured?' נמדד':''}</div></div>
+        <div><div class="n" style="color:${f?'var(--fail)':'inherit'}">${f}</div><div class="l">${T('tlFail')}</div></div>
+        <div><div class="n" style="color:${w?'var(--warn)':'inherit'}">${w}</div><div class="l">${T('tlWarn')}</div></div>
+        <div><div class="n" style="color:${ironOk===4?'var(--ok)':'var(--fail)'}">${ironOk}/4</div><div class="l">${T('tlIron')}</div></div>
+        <div><div class="n">${STATE.rooms.length||'—'}</div><div class="l">${T('tlTags')}</div></div>
+        <div><div class="n">${ws||'—'}</div><div class="l">${T('tlStations')}</div></div>
+        <div><div class="n">${measured?measured.toFixed(0):(tagged?tagged.toFixed(0):'—')}</div><div class="l">${T('uM2')}</div></div>
       </div>
     </div>`;
 }
@@ -2607,41 +3165,41 @@ function planSheet(dataUrl){
   return `
     <div class="planwrap"><img src="${dataUrl}" alt="plan"></div>
     <div class="rlg">
-      <span><i style="background:#E1504B"></i>שגוי / ענן הערה</span>
-      <span><i style="background:#E38B00"></i>תיקון קל</span>
-      <span><i style="background:#0000FF"></i>מידע · מדידת שטח</span>
-      <span><i style="background:#16A34A"></i>תקין · תנועה</span>
-      <span><i style="background:#D6009A"></i>קווי מידה</span>
-      <span><i style="background:#7C3AED"></i>חשמל</span>
-      <span><i style="background:#0EA5E9"></i>תקשורת</span>
+      <span><i style="background:#E1504B"></i>${T('lgCloud')}</span>
+      <span><i style="background:#E38B00"></i>${T('lgWarn')}</span>
+      <span><i style="background:#0000FF"></i>${T('lgInfoArea')}</span>
+      <span><i style="background:#16A34A"></i>${T('lgOkMove')}</span>
+      <span><i style="background:#D6009A"></i>${T('lgDim')}</span>
+      <span><i style="background:#7C3AED"></i>${T('lgEl')}</span>
+      <span><i style="background:#0EA5E9"></i>${T('lgIt')}</span>
     </div>`;
 }
 
 function notesTable(rows){
   return `<table class="rt"><thead><tr>
-      <th style="width:12mm">#</th><th style="width:22mm">דרגה</th><th style="width:58mm">נושא</th>
-      <th style="width:34mm">מקור</th><th>הערה</th><th style="width:20mm">על התכנית</th>
+      <th style="width:12mm">${T('thNum')}</th><th style="width:22mm">${T('thLevel')}</th><th style="width:58mm">${T('thSubject')}</th>
+      <th style="width:34mm">${T('thSource')}</th><th>${T('thNote')}</th><th style="width:20mm">${T('thOnPlan')}</th>
     </tr></thead><tbody>`+
     rows.map(n=>`<tr class="${n.lv}">
       <td><span class="rnum" style="background:${lvColor(n.lv)}">${n.num}</span></td>
-      <td><span class="rchip" style="background:${lvColor(n.lv)}">${LVNAME[n.lv]||''}</span></td>
+      <td><span class="rchip" style="background:${lvColor(n.lv)}">${lvName(n.lv)}</span></td>
       <td class="b">${esc(n.title)}</td>
       <td>${esc(n.sub)}</td>
       <td>${esc(n.body)}</td>
-      <td>${n.shape==='cloud'?'ענן':(n.nx!=null?'סמן '+n.num:'—')}</td>
+      <td>${n.shape==='cloud'?T('onPlanCloud'):(n.nx!=null?T('onPlanPin',n.num):'—')}</td>
     </tr>`).join('')+'</tbody></table>';
 }
 function progTable(rows){
   return `<table class="rt"><thead><tr>
-      <th style="width:60mm">פונקציה</th><th>יעד</th><th>בתכנית</th><th style="width:18mm">Δ</th>
+      <th style="width:60mm">${T('thFn')}</th><th>${T('thGoal')}</th><th>${T('thFound')}</th><th style="width:18mm">Δ</th>
     </tr></thead><tbody>`+
     rows.map(r=>`<tr class="${r.cls}"><td class="b">${esc(r.fn)}</td><td>${esc(r.goal)}</td>
       <td>${esc(r.found)}</td><td>${esc(r.delta)}</td></tr>`).join('')+'</tbody></table>';
 }
 function openTable(rows){
-  const st={ok:['תקין','#16A34A'], fail:['לא תקין','#E1504B'], na:['פתוח','#8A8A8A']};
+  const st={ok:[T('stOk'),'#16A34A'], fail:[T('stFail'),'#E1504B'], na:[T('stNa'),'#8A8A8A']};
   return `<table class="rt"><thead><tr>
-      <th style="width:70mm">סעיף</th><th style="width:22mm">סטטוס</th><th>הערה</th>
+      <th style="width:70mm">${T('thItem')}</th><th style="width:22mm">${T('thStatus')}</th><th>${T('thNote')}</th>
     </tr></thead><tbody>`+
     rows.map(c=>{
       const s=st[STATE.manual[c.id]||'na'];
@@ -2650,31 +3208,34 @@ function openTable(rows){
         <td>${esc(c.note||'')}</td></tr>`;
     }).join('')+'</tbody></table>';
 }
+function dimSource(d){
+  return d.calib ? T('dimCalibBase') : (d.manualM!=null ? T('dimManual') : T('dimFromScale'));
+}
 function measureTable(){
   let h='';
   if(STATE.areas.length){
     const tot=STATE.areas.reduce((s,a)=>s+(a.m2||0),0);
     h+=`<table class="rt" style="margin-bottom:6mm"><thead><tr>
-        <th style="width:70mm">חדר / אזור</th><th style="width:30mm">שטח מדוד</th>
-        <th style="width:30mm">היקף</th><th>נקודות קונטור</th>
+        <th style="width:70mm">${T('thRoomArea')}</th><th style="width:30mm">${T('thMeasured')}</th>
+        <th style="width:30mm">${T('thPerim')}</th><th>${T('thPts')}</th>
       </tr></thead><tbody>`+
-      STATE.areas.map(a=>`<tr><td class="b">${esc(a.name||'חדר ללא שם')}</td>
-        <td>${a.m2?a.m2.toFixed(2)+' מ״ר':'לא מכויל'}</td>
-        <td>${a.perim?a.perim.toFixed(2)+' מ׳':'—'}</td>
+      STATE.areas.map(a=>`<tr><td class="b">${esc(a.name||T('roomNoName'))}</td>
+        <td>${a.m2?esc(fmtM2(a.m2)):esc(T('scaleOff'))}</td>
+        <td>${a.perim?esc(fmtM(a.perim)):'—'}</td>
         <td>${(a.pts||[]).length}</td></tr>`).join('')+
-      (tot?`<tr class="o"><td class="b">סה״כ שטח מדוד</td><td class="b">${tot.toFixed(2)} מ״ר</td><td></td><td></td></tr>`:'')+
+      (tot?`<tr class="o"><td class="b">${T('totalMeasured')}</td><td class="b">${esc(fmtM2(tot))}</td><td></td><td></td></tr>`:'')+
       '</tbody></table>';
   }
   if(STATE.dims.length){
     h+=`<table class="rt"><thead><tr>
-        <th style="width:70mm">קו מידה</th><th style="width:40mm">אורך</th><th>מקור</th>
+        <th style="width:70mm">${T('thDimLine')}</th><th style="width:40mm">${T('thLength')}</th><th>${T('thSource')}</th>
       </tr></thead><tbody>`+
-      STATE.dims.map((d,i)=>`<tr><td class="b">קו ${i+1}${d.calib?' — קו הכיול':''}</td>
+      STATE.dims.map((d,i)=>`<tr><td class="b">${esc(T('dimN',i+1))}${d.calib?esc(T('calibLine')):''}</td>
         <td>${esc(d.label||'—')}</td>
-        <td>${d.calib?'הוזן ידנית — בסיס הכיול':(d.manualLabel?'הוזן ידנית':'חושב מקנה המידה')}</td></tr>`).join('')+
+        <td>${esc(dimSource(d))}</td></tr>`).join('')+
       '</tbody></table>';
   }
-  return h||'<div class="rempty">לא בוצעו מדידות.</div>';
+  return h||`<div class="rempty">${T('noMeasures')}</div>`;
 }
 
 function buildReport(){
@@ -2682,39 +3243,37 @@ function buildReport(){
   const img=renderComposite(2000).toDataURL('image/png');
   const sheets=[];
   sheets.push({cover:true, html:coverSheet()});
-  sheets.push({title:floorTitle(), kicker:'תכנית מסומנת', cls:'plan', html:planSheet(img)});
+  sheets.push({title:floorTitle(), kicker:T('rptMarkedPlan'), cls:'plan', html:planSheet(img)});
 
   const notes=STATE.notes.slice();
   if(notes.length) chunk(notes,11).forEach((c,i,all)=>sheets.push({
-    title:'הערות הבדיקה', kicker:all.length>1?`${i+1} מתוך ${all.length}`:`${notes.length} הערות`,
+    title:T('rptNotes'), kicker:all.length>1?T('rptOf',i+1,all.length):T('rptNotesCount',notes.length),
     html:notesTable(c) }));
-  else sheets.push({title:'הערות הבדיקה', kicker:'נקי', html:'<div class="rempty">אין הערות — התוכנית עברה את כל הבדיקות שבוצעו.</div>'});
+  else sheets.push({title:T('rptNotes'), kicker:T('rptNotesClean'), html:`<div class="rempty">${T('rptNoNotes')}</div>`});
 
   const prog=progRows();
   chunk(prog,16).forEach((c,i,all)=>sheets.push({
-    title:(STATE.program&&STATE.program.program&&STATE.program.program.length)?'פרוגרמת הפרויקט':'סטנדרט המשרד',
-    kicker:all.length>1?`${i+1} מתוך ${all.length}`:'השוואה מול היעד', html:progTable(c) }));
+    title:(STATE.program&&STATE.program.program&&STATE.program.program.length)?T('progProject'):T('progOffice'),
+    kicker:all.length>1?T('rptOf',i+1,all.length):T('rptVsGoal'), html:progTable(c) }));
 
   if(STATE.areas.length||STATE.dims.length)
-    sheets.push({title:'מדידות מהתכנית', kicker:'שטחים וקווי מידה', html:measureTable()});
+    sheets.push({title:T('rptMeasures'), kicker:T('rptMeasuresSub'), html:measureTable()});
 
   const iron=(STATE.ironR||[]);
-  if(iron.length) sheets.push({ title:'כללי ברזל', kicker:'נקודת פתיחה לכל בדיקה', html:
-    `<table class="rt"><thead><tr><th style="width:60mm">כלל</th><th style="width:24mm">סטטוס</th>
-      <th style="width:30mm">מקור</th><th>פירוט</th></tr></thead><tbody>`+
+  if(iron.length) sheets.push({ title:T('rptIron'), kicker:T('rptIronSub'), html:
+    `<table class="rt"><thead><tr><th style="width:60mm">${T('thRule')}</th><th style="width:24mm">${T('thStatus')}</th>
+      <th style="width:30mm">${T('thSource')}</th><th>${T('thDetail')}</th></tr></thead><tbody>`+
     iron.map(r=>`<tr class="${r.level==='o'?'o':'f'}"><td class="b">${esc(r.n)}</td>
-      <td><span class="rchip" style="background:${r.level==='o'?'#16A34A':'#E1504B'}">${r.level==='o'?'תקין':'חסר'}</span></td>
+      <td><span class="rchip" style="background:${r.level==='o'?'#16A34A':'#E1504B'}">${r.level==='o'?T('ironOkWord'):T('ironMissing')}</span></td>
       <td>${esc(r.src)}</td><td>${esc(r.msg)}</td></tr>`).join('')+'</tbody></table>' });
 
-  const open=MANUAL_CHECKS.concat((STATE.openItems||[]).map(i=>({id:i.id,n:i.n,note:i.scope})));
-  chunk(open,14).forEach((c,i,all)=>sheets.push({
-    title:'מה שהתכנית לא מגלה', kicker:all.length>1?`${i+1} מתוך ${all.length}`:'פריטים לאימות',
+  chunk(openList(),14).forEach((c,i,all)=>sheets.push({
+    title:T('rptOpen'), kicker:all.length>1?T('rptOf',i+1,all.length):T('rptOpenSub'),
     html:openTable(c) }));
 
   const total=sheets.length;
   const projLine=esc([m.project, m.floor, m.client].filter(Boolean).join(' · '));
-  const disc='הופק ע״י RDA Test Fit Checker מתוך תגיות התוכנית ובדיקה ידנית. '+
-             'אינו מחליף בדיקת נגישות, בטיחות, מילוט או אישור יועצים.';
+  const disc=T('rptDisc');
   $('#report').innerHTML = sheets.map((s,i)=>`
     <section class="sheet">
       <div class="sh-head">
@@ -2724,15 +3283,15 @@ function buildReport(){
       ${s.cover ? s.html : `
         <div class="sh-title">${esc(s.title)}${s.kicker?`<small>${esc(s.kicker)}</small>`:''}</div>
         <div class="sh-body ${s.cls||''}">${s.html}</div>`}
-      <div class="sh-foot"><span>${disc}</span><span><b>עמוד ${i+1} / ${total}</b></span></div>
+      <div class="sh-foot"><span>${esc(disc)}</span><span><b>${esc(T('rptPage',i+1,total))}</b></span></div>
     </section>`).join('');
   return total;
 }
 
 async function exportPdf(){
   closeExportMenu();
-  if(!BASE){ toast('אין תוכנית טעונה'); return; }
-  toast('בונה דוח…');
+  if(!BASE){ toast(T('tNoPlan')); return; }
+  toast(T('tBuilding'));
   /* let the toast paint before the composite render blocks the thread */
   await new Promise(r=>setTimeout(r,40));
   const n=buildReport();
@@ -2756,13 +3315,13 @@ async function exportPdf(){
     layout();
   };
   window.addEventListener('afterprint',done);
-  toast(n+' עמודים — בחר "שמור כ-PDF" בתיבת ההדפסה');
+  toast(T('tPages',n));
   window.print();
 }
 
 function exportHtml(){
   closeExportMenu();
-  if(!BASE){ toast('אין תוכנית טעונה'); return; }
+  if(!BASE){ toast(T('tNoPlan')); return; }
   const maxW=2000;
   let img=BASE;
   if(BASE.width>maxW){
@@ -2794,23 +3353,36 @@ function exportHtml(){
     symbols:STATE.symbols, dims:STATE.dims, areas:STATE.areas, manual:STATE.manual, symdefs,
     iron:STATE.ironR.map(r=>({n:r.n,level:r.level,src:r.src,msg:r.msg})),
     prog:progRows(),
-    progTitle:(P&&P.program&&P.program.length)?'פרוגרמת הפרויקט':'סטנדרט המשרד',
-    openList:MANUAL_CHECKS.concat(STATE.openItems.map(i=>({id:i.id,n:i.n,note:i.scope}))),
+    progTitle:(P&&P.program&&P.program.length)?T('progProject'):T('progOffice'),
+    openList:openList(),
     stats:{ tags:STATE.rooms.length, ws, seats, area:area?area.toFixed(0):0,
             measured:STATE.areas.reduce((s,a)=>s+(a.m2||0),0).toFixed(0) },
-    meta:M
+    meta:M,
+    lang:LANG,
+    /* the export runs offline with no access to STR — ship the strings it needs */
+    t:['tabIron','tabNotes','tabProg','tabOpen','tabMarks',
+       'tlFail','tlWarn','tlIron','tlTags','tlStations','tlSeats','tlArea','tlSyms',
+       'grpFail','grpWarn','grpInfo','grpOk','noNotes','changeLevel','showOnPlan','del',
+       'ironTitle','ironOk','ironMissing','ironOkWord','thFn','thGoal','thFound','openTitle',
+       'stOk','stFail','stNa','symTitle','symOnPlan','noSyms','areasTitle','totalArea',
+       'noAreas','dimsTitle','noDims','roomNoName','perim','uM','uM2',
+       'rptDisc','rptOpen','rptMeasures','lgFail','lgWarn','lgInfo','lgEl','lgIt','lgMove','lgDim','lgArea',
+       'lyNotes','lySyms','lyDims','lyAreas','saveCopyBtn','copySaved','calibLine',
+       'addSymHint','onPlanWord','clickPlan','dimWord','printOpenTitle','tabProg'
+      ].reduce((o,k)=>{ o[k]=T(k); return o; }, {})
   };
 
   const css=$('#exportCSS').textContent;
   const js=$('#exportJS').textContent;
   const metaLine=[M.project,M.floor,M.client].filter(Boolean).join(' · ');
 
-  const html='<!DOCTYPE html>\n<html lang="he" dir="rtl">\n<head>\n<meta charset="UTF-8">\n'+
+  const t=st.t, lgi=(c,k)=>'<span class="lg"><i style="background:'+c+'"></i>'+esc(t[k])+'</span>';
+  const html='<!DOCTYPE html>\n<html lang="'+LANG+'" dir="'+(isHe()?'rtl':'ltr')+'">\n<head>\n<meta charset="UTF-8">\n'+
 '<meta name="viewport" content="width=device-width,initial-scale=1">\n'+
 '<title>RDA — '+esc(title)+'</title>\n<style>'+css+'</style>\n</head>\n<body>\n'+
 '<header><div class="brand">RD&amp;A</div><div class="tool">Test Fit Review</div>'+
 '<div class="meta">'+esc(metaLine)+'</div>'+
-'<button class="hb" onclick="saveCopy()">שמור עותק מעודכן</button>'+
+'<button class="hb" onclick="saveCopy()">'+esc(t.saveCopyBtn)+'</button>'+
 '<button class="hb" onclick="saveData()">JSON</button>'+
 '<button class="hb" onclick="window.print()">PDF</button></header>\n'+
 '<div class="abar"></div>\n<div id="app">\n'+
@@ -2818,27 +3390,23 @@ function exportHtml(){
 '<button class="tb" onclick="zoom(1)">Fit</button>'+
 '<button class="tb" onclick="zoom(ZOOM/1.25)">−</button><span class="zl" id="zl">100%</span>'+
 '<button class="tb" onclick="zoom(ZOOM*1.25)">+</button>'+
-'<button class="tb on" id="b1" onclick="lay(\'notes\',\'b1\')">הערות</button>'+
-'<button class="tb on" id="b2" onclick="lay(\'syms\',\'b2\')">סימבולים</button>'+
-'<button class="tb on" id="b3" onclick="lay(\'dims\',\'b3\')">מידות</button>'+
-'<button class="tb on" id="b4" onclick="lay(\'areas\',\'b4\')">שטחים</button></div>\n'+
+'<button class="tb on" id="b1" onclick="lay(\'notes\',\'b1\')">'+esc(t.lyNotes)+'</button>'+
+'<button class="tb on" id="b2" onclick="lay(\'syms\',\'b2\')">'+esc(t.lySyms)+'</button>'+
+'<button class="tb on" id="b3" onclick="lay(\'dims\',\'b3\')">'+esc(t.lyDims)+'</button>'+
+'<button class="tb on" id="b4" onclick="lay(\'areas\',\'b4\')">'+esc(t.lyAreas)+'</button></div>\n'+
 '<div id="host"><div id="box"><img id="planImg" src="'+dataUrl+'" alt="plan">'+
 '<canvas id="ov"></canvas><div id="sl"></div></div></div>\n'+
 '<div id="lg">'+
-'<span class="lg"><i style="background:#E1504B"></i>שגוי</span>'+
-'<span class="lg"><i style="background:#E38B00"></i>תיקון קל</span>'+
-'<span class="lg"><i style="background:#0000FF"></i>מידע</span>'+
-'<span class="lg"><i style="background:#7C3AED"></i>חשמל</span>'+
-'<span class="lg"><i style="background:#0EA5E9"></i>תקשורת</span>'+
-'<span class="lg"><i style="background:#16A34A"></i>תנועה</span>'+
-'<span class="lg"><i style="background:#D6009A"></i>מידות</span></div>\n</div>\n'+
+lgi('#E1504B','lgFail')+lgi('#E38B00','lgWarn')+lgi('#0000FF','lgInfo')+
+lgi('#7C3AED','lgEl')+lgi('#0EA5E9','lgIt')+lgi('#16A34A','lgMove')+
+lgi('#D6009A','lgDim')+'</div>\n</div>\n'+
 '<aside id="panel"><div id="tiles"></div><div id="tabs"></div><div id="body"></div></aside>\n'+
 '</div>\n<div id="print"></div>\n<div id="toast"></div>\n'+
 '<script type="application/json" id="stateJSON">'+JSON.stringify(st).replace(/</g,'\\u003c')+'<\/script>\n'+
 '<script>'+js+'<\/script>\n</body>\n</html>';
 
   dl(exportBase()+'-review.html', html, 'text/html');
-  toast('Export נוצר — ניתן לערוך ולשמור מחדש');
+  toast(T('tExportMade'));
 }
 </script>
 
@@ -2952,6 +3520,9 @@ var SD = S.symdefs, ZOOM = 1, SEL = null, TAB = 'notes', TOOL = null;
 var LAY = { notes:true, syms:true, dims:true, areas:true };
 var CLR = { f:'#E1504B', w:'#E38B00', i:'#0000FF', o:'#16A34A' };
 var AREA_CLR = '#0000FF';
+var TT = S.t || {};                     /* strings shipped with the state */
+var RTL = (S.lang||'he') === 'he';
+function isHe(){ return RTL; }
 function lvc(lv){ return CLR[lv]||'#8A8A8A'; }
 function shoe(p){ var s=0,i; for(i=0;i<p.length;i++){ var a=p[i],b=p[(i+1)%p.length]; s+=a.x*b.y-b.x*a.y; } return s/2; }
 function bnds(p){ var r={x0:1,y0:1,x1:0,y1:0}; p.forEach(function(q){
@@ -3033,7 +3604,7 @@ function cloud(c,f,k,n){
   if(n.body){
     c.save();
     c.font='500 '+(11*k).toFixed(1)+'px Helvetica,Arial';
-    c.direction='rtl'; c.textAlign='right'; c.textBaseline='top';
+    c.direction=isHe()?'rtl':'ltr'; c.textAlign='right'; c.textBaseline='top';
     var lines=wrapL(c,n.body,Math.max(150*k,(bb.x1-bb.x0)*f.w),3);
     var lh=14*k, pad=5*k;
     var tw=Math.max.apply(null,lines.map(function(l){return c.measureText(l).width;}))+pad*2;
@@ -3070,7 +3641,7 @@ function draw(){
     var ct=cent(a.pts), lines=[a.label||'—'];
     if(a.name) lines.unshift(a.name);
     c.font='600 '+(11.5*k).toFixed(1)+'px Helvetica,Arial';
-    c.textAlign='center'; c.textBaseline='middle'; c.direction='rtl';
+    c.textAlign='center'; c.textBaseline='middle'; c.direction=isHe()?'rtl':'ltr';
     var tw=Math.max.apply(null,lines.map(function(l){return c.measureText(l).width;}))+11*k;
     var lh=14*k, th=lines.length*lh+6*k, cx=ct.x*f.w, cy=ct.y*f.h;
     c.fillStyle='rgba(255,255,255,.94)'; c.fillRect(cx-tw/2,cy-th/2,tw,th);
@@ -3092,7 +3663,7 @@ function draw(){
     });
     var lb=d.label||'—', mx=(x1+x2)/2, my=(y1+y2)/2;
     c.font='600 '+(11*k).toFixed(1)+'px Helvetica,Arial';
-    c.textAlign='center'; c.textBaseline='middle'; c.direction='rtl';
+    c.textAlign='center'; c.textBaseline='middle'; c.direction=isHe()?'rtl':'ltr';
     var tw=c.measureText(lb).width+9*k, th=16*k;
     c.fillStyle='#fff'; c.fillRect(mx-tw/2,my-th/2,tw,th);
     c.strokeStyle=col; c.lineWidth=1.2*k; c.strokeRect(mx-tw/2,my-th/2,tw,th);
@@ -3164,16 +3735,16 @@ function zoom(z){ ZOOM=Math.min(6,Math.max(0.3,z)); layout(); }
 function lay(k,btn){ LAY[k]=!LAY[k]; document.getElementById(btn).classList.toggle('on',LAY[k]); layout(); }
 
 /* ---------- panel ---------- */
-var TABS=[['iron','ברזל'],['notes','הערות'],['prog','פרוגרמה'],['open','לא נראה'],['sym','סימונים']];
+var TABS=[['iron',TT.tabIron],['notes',TT.tabNotes],['prog',TT.tabProg],['open',TT.tabOpen],['sym',TT.tabMarks]];
 function render(){
   var f=S.notes.filter(function(n){return n.lv==='f';}).length;
   var w=S.notes.filter(function(n){return n.lv==='w';}).length;
   var io=(S.iron||[]).filter(function(r){return r.level==='o';}).length;
   Q('#tiles').innerHTML=
-    tile(f,'שגוי',f?'#E1504B':'')+tile(w,'תיקון קל',w?'#E38B00':'')+
-    tile(io+'/4','כללי ברזל',io===4?'#16A34A':'#E1504B')+tile(S.stats.tags,'תגיות','')+
-    tile(S.stats.ws||'—','עמדות','')+tile(S.stats.seats||'—','מקומות','')+
-    tile(S.stats.area||'—','מ״ר','')+tile((S.symbols||[]).length,'סימבולים','');
+    tile(f,TT.tlFail,f?'#E1504B':'')+tile(w,TT.tlWarn,w?'#E38B00':'')+
+    tile(io+'/4',TT.tlIron,io===4?'#16A34A':'#E1504B')+tile(S.stats.tags,TT.tlTags,'')+
+    tile(S.stats.ws||'—',TT.tlStations,'')+tile(S.stats.seats||'—',TT.tlSeats,'')+
+    tile(S.stats.area||'—',TT.tlArea,'')+tile((S.symbols||[]).length,TT.tlSyms,'');
   Q('#tabs').innerHTML=TABS.map(function(t){
     return '<button class="tab '+(TAB===t[0]?'on':'')+'" onclick="setTab(\''+t[0]+'\')">'+t[1]+'</button>';
   }).join('');
@@ -3190,8 +3761,8 @@ function tile(n,l,c){
 }
 function setTab(k){ TAB=k; render(); }
 function vNotes(){
-  if(!S.notes.length) return '<div class="empty">אין הערות.</div>';
-  var g=[['f','שגוי — לתיקון'],['w','תיקון קל'],['i','מידע / ידני'],['o','תקין']], h='';
+  if(!S.notes.length) return '<div class="empty">'+esc(TT.noNotes)+'</div>';
+  var g=[['f',TT.grpFail],['w',TT.grpWarn],['i',TT.grpInfo],['o',TT.grpOk]], h='';
   g.forEach(function(x){
     var L=S.notes.filter(function(n){return n.lv===x[0];});
     if(!L.length) return;
@@ -3201,9 +3772,9 @@ function vNotes(){
         '<div class="ch"><span class="num '+n.lv+'">'+n.num+'</span>'+
         '<span class="ct">'+esc(n.title)+'</span><span class="cs">'+esc(n.sub)+'</span></div>'+
         '<div class="cb" contenteditable="true" data-id="'+n.id+'">'+esc(n.body)+'</div>'+
-        '<div class="cact"><button class="xb" data-a="lv" data-id="'+n.id+'">שנה דרגה</button>'+
-        ((n.nx!=null||n.shape==='cloud')?'<button class="xb" data-a="go" data-id="'+n.id+'">הצג</button>':'')+
-        '<button class="xb" data-a="del" data-id="'+n.id+'">מחק</button></div></div>';
+        '<div class="cact"><button class="xb" data-a="lv" data-id="'+n.id+'">'+esc(TT.changeLevel)+'</button>'+
+        ((n.nx!=null||n.shape==='cloud')?'<button class="xb" data-a="go" data-id="'+n.id+'">'+esc(TT.showOnPlan)+'</button>':'')+
+        '<button class="xb" data-a="del" data-id="'+n.id+'">'+esc(TT.del)+'</button></div></div>';
     }).join('');
   });
   return h;
@@ -3232,15 +3803,16 @@ function renum(){
   S.notes.forEach(function(n,i){ n.num=i+1; });
 }
 function vIron(){
-  return '<div class="gt">כללי ברזל</div>'+(S.iron||[]).map(function(r){
+  return '<div class="gt">'+esc(TT.ironTitle)+'</div>'+(S.iron||[]).map(function(r){
     return '<div class="iron '+r.level+'"><div class="ih"><span class="chip '+
-      (r.level==='o'?'o':'f')+'">'+(r.level==='o'?'✓':'חסר')+'</span><span class="it">'+
+      (r.level==='o'?'o':'f')+'">'+(r.level==='o'?TT.ironOk:esc(TT.ironMissing))+'</span><span class="it">'+
       esc(r.n)+'</span><span class="cs">'+esc(r.src)+'</span></div><div class="ib">'+esc(r.msg)+'</div></div>';
   }).join('');
 }
 function vProg(){
-  var h='<div class="gt">'+(S.progTitle||'פרוגרמה')+'</div>';
-  h+='<table class="pg"><thead><tr><th>פונקציה</th><th>יעד</th><th>בתכנית</th><th>Δ</th></tr></thead><tbody>';
+  var h='<div class="gt">'+esc(S.progTitle||TT.tabProg)+'</div>';
+  h+='<table class="pg"><thead><tr><th>'+esc(TT.thFn)+'</th><th>'+esc(TT.thGoal)+
+     '</th><th>'+esc(TT.thFound)+'</th><th>Δ</th></tr></thead><tbody>';
   (S.prog||[]).forEach(function(r){
     h+='<tr class="'+r.cls+'"><td class="fn">'+esc(r.fn)+'</td><td>'+esc(r.goal)+
        '</td><td>'+esc(r.found)+'</td><td>'+esc(r.delta)+'</td></tr>';
@@ -3248,55 +3820,56 @@ function vProg(){
   return h+'</tbody></table>';
 }
 function vOpen(){
-  return '<div class="gt">מה שהתכנית לא מגלה</div>'+(S.openList||[]).map(function(c){
+  return '<div class="gt">'+esc(TT.openTitle)+'</div>'+(S.openList||[]).map(function(c){
     var cur=S.manual[c.id]||'na';
     return '<div class="iron '+(cur==='ok'?'o':cur==='fail'?'f':'w')+'"><div class="ih">'+
       '<span class="it">'+esc(c.n)+'</span><span class="tri">'+
-      '<button class="'+(cur==='ok'?'a-ok':'')+'" onclick="mset(\''+c.id+'\',\'ok\')">תקין</button>'+
-      '<button class="'+(cur==='fail'?'a-fail':'')+'" onclick="mset(\''+c.id+'\',\'fail\')">לא תקין</button>'+
-      '<button class="'+(cur==='na'?'a-na':'')+'" onclick="mset(\''+c.id+'\',\'na\')">פתוח</button>'+
+      '<button class="'+(cur==='ok'?'a-ok':'')+'" onclick="mset(\''+c.id+'\',\'ok\')">'+esc(TT.stOk)+'</button>'+
+      '<button class="'+(cur==='fail'?'a-fail':'')+'" onclick="mset(\''+c.id+'\',\'fail\')">'+esc(TT.stFail)+'</button>'+
+      '<button class="'+(cur==='na'?'a-na':'')+'" onclick="mset(\''+c.id+'\',\'na\')">'+esc(TT.stNa)+'</button>'+
       '</span></div><div class="ib">'+esc(c.note||'')+'</div></div>';
   }).join('');
 }
 function mset(id,v){ S.manual[id]=v; render(); }
 function vSym(){
-  var h='<div class="gt">הוסף סימבול — לחץ ואז לחץ על התכנית</div><div style="display:grid;grid-template-columns:repeat(2,1fr);gap:5px">';
+  var h='<div class="gt">'+esc(TT.addSymHint)+'</div><div style="display:grid;grid-template-columns:repeat(2,1fr);gap:5px">';
   Object.keys(SD).forEach(function(k){
     var d=SD[k];
     h+='<div class="card" style="border-inline-start-color:'+d.c+'" onclick="arm(\''+k+'\')">'+
        '<div class="ch"><span class="num" style="background:'+d.c+'">'+esc(d.t)+
        '</span><span class="ct" style="font-size:10px">'+esc(d.n)+'</span></div></div>';
   });
-  h+='</div><div class="gt">על התכנית · '+(S.symbols||[]).length+'</div>';
+  h+='</div><div class="gt">'+esc(TT.onPlanWord)+' · '+(S.symbols||[]).length+'</div>';
   h+=(S.symbols||[]).length ? S.symbols.map(function(s){
     var d=SD[s.k];
     return '<div class="card"><div class="ch"><span class="num" style="background:'+d.c+'">'+
       esc(d.t)+'</span><span class="ct">'+esc(d.n)+'</span></div></div>';
-  }).join('') : '<div class="empty">אין סימבולים.</div>';
+  }).join('') : '<div class="empty">'+esc(TT.noSyms)+'</div>';
 
   var tot=(S.areas||[]).reduce(function(s,a){ return s+(a.m2||0); },0);
-  h+='<div class="gt">מדידות שטח · '+(S.areas||[]).length+(tot?' · סה״כ '+tot.toFixed(2)+' מ״ר':'')+'</div>';
+  h+='<div class="gt">'+esc(TT.areasTitle)+' · '+(S.areas||[]).length+
+     (tot?' · '+esc(TT.totalArea)+' '+tot.toFixed(2)+' '+esc(TT.uM2):'')+'</div>';
   h+=(S.areas||[]).length ? S.areas.map(function(a){
     return '<div class="card" style="border-inline-start-color:'+AREA_CLR+'"><div class="ch">'+
       '<span class="num" style="background:'+AREA_CLR+'">⬚</span>'+
-      '<span class="ct">'+esc(a.name||'חדר ללא שם')+'</span>'+
+      '<span class="ct">'+esc(a.name||TT.roomNoName)+'</span>'+
       '<span class="cs">'+esc(a.label||'—')+'</span></div></div>';
-  }).join('') : '<div class="empty">אין מדידות שטח.</div>';
+  }).join('') : '<div class="empty">'+esc(TT.noAreas)+'</div>';
 
-  h+='<div class="gt">קווי מידה · '+(S.dims||[]).length+'</div>';
+  h+='<div class="gt">'+esc(TT.dimsTitle)+' · '+(S.dims||[]).length+'</div>';
   h+=(S.dims||[]).length ? S.dims.map(function(d,i){
     var col=d.calib?'#0000FF':'#D6009A';
     return '<div class="card" style="border-inline-start-color:'+col+'"><div class="ch">'+
       '<span class="num" style="background:'+col+'">↔</span>'+
-      '<span class="ct">קו '+(i+1)+'</span><span class="cs">'+esc(d.label||'—')+'</span></div></div>';
-  }).join('') : '<div class="empty">אין קווי מידה.</div>';
+      '<span class="ct">'+esc(TT.dimWord)+' '+(i+1)+'</span><span class="cs">'+esc(d.label||'—')+'</span></div></div>';
+  }).join('') : '<div class="empty">'+esc(TT.noDims)+'</div>';
   return h;
 }
-function arm(k){ TOOL='sym:'+k; Q('#box').style.cursor='crosshair'; toast('לחץ על התכנית'); }
+function arm(k){ TOOL='sym:'+k; Q('#box').style.cursor='crosshair'; toast(TT.clickPlan); }
 
 /* ---------- print sheet ---------- */
 function buildPrint(){
-  var g=[['f','שגוי — לתיקון'],['w','תיקון קל'],['i','מידע / ידני']], h='';
+  var g=[['f',TT.grpFail],['w',TT.grpWarn],['i',TT.grpInfo]], h='';
   var mm=S.meta||{};
   h+='<h3>'+esc(S.title)+(mm.client?' · '+esc(mm.client):'')+' · '+esc(S.date)+'</h3>';
   h+='<div style="font-size:11px;opacity:.6;margin:-4px 0 10px">'+esc(S.floorTitle||'')+'</div>';
@@ -3311,24 +3884,24 @@ function buildPrint(){
     }).join('');
   });
   if((S.areas||[]).length){
-    h+='<h3>מדידות שטח</h3>';
+    h+='<h3>'+esc(TT.areasTitle)+'</h3>';
     h+=S.areas.map(function(a){
       return '<div class="pi"><div class="pn" style="background:#0000FF">⬚</div>'+
-        '<div class="pr">'+esc(a.name||'חדר ללא שם')+'<small>'+
-        (a.perim?'היקף '+a.perim.toFixed(2)+' מ׳':'')+'</small></div>'+
+        '<div class="pr">'+esc(a.name||TT.roomNoName)+'<small>'+
+        (a.perim?esc(TT.perim)+' '+a.perim.toFixed(2)+' '+esc(TT.uM):'')+'</small></div>'+
         '<div class="pw">'+esc(a.label||'—')+'</div></div>';
     }).join('');
   }
   var open=(S.openList||[]).filter(function(c){ return (S.manual[c.id]||'na')!=='ok'; });
   if(open.length){
-    h+='<h3>פריטים פתוחים לאימות</h3>';
+    h+='<h3>'+esc(TT.printOpenTitle)+'</h3>';
     h+=open.map(function(c){
       return '<div class="pi"><div class="pn" style="background:#8A8A8A">○</div>'+
         '<div class="pr">'+esc(c.n)+'</div><div class="pw">'+esc(c.note||'')+'</div></div>';
     }).join('');
   }
   h+='<div style="margin-top:26px;padding-top:12px;border-top:1px solid #1B1B1B;font-size:10px;opacity:.6;line-height:1.7">'+
-     'הופק ע״י RDA Test Fit Checker מתוך תגיות התוכנית ובדיקה ידנית. אינו מחליף בדיקת נגישות, בטיחות, מילוט או אישור יועצים. Roy David Architects · roydavid.co</div>';
+     esc(TT.rptDisc)+' Roy David Architects · roydavid.co</div>';
   Q('#print').innerHTML=h;
 }
 
@@ -3345,7 +3918,7 @@ function saveCopy(){
   a.click();
   setTimeout(function(){ URL.revokeObjectURL(a.href); },4000);
   render();
-  toast('עותק מעודכן נשמר');
+  toast(TT.copySaved);
 }
 function saveData(){
   var out={ meta:{title:S.title,date:S.date}, notes:S.notes, symbols:S.symbols,
