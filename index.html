@@ -88,7 +88,12 @@
   .dz-small{font-size:11px; opacity:.42;}
   #fileInput,#jsonInput{display:none;}
   .fmt{display:flex; gap:6px; justify-content:center; flex-wrap:wrap; margin-top:20px;}
-  .fmt span{font-size:10px; letter-spacing:.12em; border:1px solid var(--border); padding:5px 12px; opacity:.6;}
+  .scope-note{font-size:10.5px; opacity:.45; margin-top:14px; line-height:1.6; max-width:420px; margin-inline:auto;}
+  .fmt span{
+    font-size:10px; letter-spacing:.12em; border:1px solid var(--border); padding:5px 12px;
+    opacity:.6; cursor:pointer; background:none; font-family:inherit; transition:.15s;
+  }
+  .fmt span:hover{opacity:1; border-color:var(--black); background:var(--gray);}
   .fmt span.pri{border-color:var(--black); opacity:1; font-weight:500;}
   .alt{margin-top:28px; font-size:11px; opacity:.5;}
   .alt button{
@@ -110,6 +115,43 @@
   .prog-banner.loaded{display:block;}
   .prog-banner b{font-weight:500;}
 
+  /* RVT inline panel — same visual language as the other landing-page
+     banners (border, no overlay), so dropping an .rvt still feels like the
+     same tool, just with one more step before the workspace opens. */
+  #rvtPanel{
+    display:none; margin-top:20px; border:1px solid var(--black); text-align:start;
+    padding:18px 20px;
+  }
+  #rvtPanel.on{display:block;}
+  #rvtPanel .rv-title{font-size:13px; font-weight:500; margin-bottom:2px;}
+  #rvtPanel .rv-sub{font-size:11px; opacity:.5; margin-bottom:14px;}
+  .rv-grid{display:grid; grid-template-columns:1fr 1fr; gap:0 1px; background:var(--border); margin-bottom:14px;}
+  .rv-grid div{background:var(--white); padding:7px 10px;}
+  .rv-grid .k{font-size:8px; letter-spacing:.12em; text-transform:uppercase; opacity:.4; margin-bottom:2px;}
+  .rv-grid .v{font-size:12px;}
+  .rv-links{font-size:11px; margin-bottom:14px;}
+  .rv-links .lnk{display:flex; align-items:center; gap:8px; padding:5px 0; border-bottom:1px solid var(--border);}
+  .rv-links .lnk:last-child{border-bottom:none;}
+  .rv-links .lnk .p{flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; opacity:.7;}
+  .rv-step{border-top:1px dashed var(--border); padding-top:14px;}
+  .rv-step label{display:block; font-size:10px; letter-spacing:.1em; text-transform:uppercase; opacity:.5; margin-bottom:6px;}
+  .rv-step input{
+    width:100%; border:1px solid var(--border); padding:9px 11px; font-size:13px;
+    background:var(--white); color:var(--black); margin-bottom:12px;
+  }
+  .rv-step input:focus{outline:none; border-color:var(--black); box-shadow:inset 0 -2px 0 var(--accent);}
+  .rv-howto{list-style:none; counter-reset:rvstep; margin-bottom:14px;}
+  .rv-howto li{
+    counter-increment:rvstep; position:relative; padding-inline-start:26px;
+    font-size:11.5px; opacity:.75; line-height:1.6; margin-bottom:6px;
+  }
+  .rv-howto li::before{
+    content:counter(rvstep); position:absolute; inset-inline-start:0; top:1px;
+    width:17px; height:17px; border-radius:50%; background:var(--black); color:var(--white);
+    font-size:9px; font-weight:600; display:flex; align-items:center; justify-content:center;
+  }
+  .rv-actions{display:flex; gap:8px; flex-wrap:wrap;}
+
   /* ---------- workspace ---------- */
   #workView{display:none; height:calc(100vh - 49px);}
   #workView.on{display:flex;}
@@ -127,8 +169,16 @@
   .tb.armed{background:var(--s-prog); color:#fff;}
   .tbsep{width:1px; height:18px; background:var(--border); margin:0 5px;}
   .zlabel{font-size:10px; opacity:.5; min-width:38px; text-align:center;}
-  #planHost{flex:1; overflow:auto; display:flex; align-items:center; justify-content:center; padding:12px;}
-  #planBox{position:relative; flex:0 0 auto; background:#fff; box-shadow:0 0 0 1px var(--border);}
+  /* Centering via the flex parent's align-items/justify-content clips the
+     scrollable overflow at the start edge — a well-known flexbox gotcha: the
+     browser computes negative free space when the child is bigger than the
+     box, but never lets you scroll into it, so a zoomed-in plan looks cut off
+     on the left/top with no way to pan there. Centering the CHILD instead
+     (margin:auto, parent left at default alignment) avoids the bug entirely:
+     the box still centers when it fits, and scrolls freely on every side
+     once it's larger than the viewport. */
+  #planHost{flex:1; overflow:auto; display:flex; padding:12px;}
+  #planBox{position:relative; flex:0 0 auto; margin:auto; background:#fff; box-shadow:0 0 0 1px var(--border);}
   #planCanvas,#ovl{position:absolute; inset:0; display:block;}
   #symLayer{position:absolute; inset:0;}
   #legend{
@@ -460,12 +510,36 @@
     <input type="file" id="jsonInput" accept=".json,application/json">
 
     <div class="fmt">
-      <span class="pri">PDF</span><span data-t="rvtSoon"></span>
+      <span class="pri" onclick="document.getElementById('fileInput').click()">PDF</span>
+      <span data-t="rvtSoon" onclick="document.getElementById('fileInput').click()"></span>
     </div>
+
+    <div class="scope-note" data-t="scopeNote"></div>
 
     <div class="loading" id="loading" data-t="loadingPlan"></div>
     <div id="loadError"></div>
     <div class="prog-banner" id="progBanner"></div>
+
+    <div id="rvtPanel">
+      <div class="rv-title" data-t="rvtTitle"></div>
+      <div class="rv-sub" data-t="rvtSub"></div>
+      <div class="rv-grid" id="rvtGrid"></div>
+      <div class="rv-links" id="rvtLinks"></div>
+      <div class="rv-step">
+        <label data-t="rvtLevelLabel"></label>
+        <input type="text" id="rvtLevelHint" data-tp="rvtLevelPh">
+        <ol class="rv-howto">
+          <li data-t="rvtHow1"></li>
+          <li data-t="rvtHow2"></li>
+          <li data-t="rvtHow3"></li>
+          <li data-t="rvtHow4"></li>
+        </ol>
+        <div class="rv-actions">
+          <a class="mini pri" href="RDA_TestFit_Export_Macro.cs" download data-t="rvtDlMacro"></a>
+          <button class="mini" id="rvtUploadBtn" data-t="rvtUploadJson"></button>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -554,6 +628,9 @@ he:{
   heroH1:'בדוק <em>Test Fit</em><br>בשניות.',
   dzBig:'גרור תוכנית לכאן', dzSmall:'PDF מיוצא מ-Revit · או לחץ לבחירת קובץ',
   rvtSoon:'RVT', loadingPlan:'מנתח תוכנית…',
+  scopeNote:'כלי פנימי של Roy David Architects — עובד לגמרי בדפדפן, בלי שרת ובלי העלאת קבצים לשום מקום. '+
+    'אין להעלות אליו קבצים ללקוחות חוץ ואין לשתף את הקישור מחוץ למשרד. '+
+    'הבדיקה היא תצפית אינפורמטיבית שנגזרת מבנצ׳מרקים — לא חוות דעת רגולטורית; נגישות, מילוט, בטיחות אש ותקינה מחייבים בדיקה של יועץ מוסמך.',
   /* --- layers, tools, legend --- */
   lyNotes:'הערות', lySyms:'סימבולים', lyDims:'מידות', lyAreas:'שטחים',
   tDim:'קו מידה', tArea:'מדידת שטח', tCalib:'כיול', tPin:'הערה ממוספרת', tCloud:'ענן הערה',
@@ -609,7 +686,10 @@ he:{
   progProject:'פרוגרמת הפרויקט', progOffice:'סטנדרט המשרד',
   progJsonTitle:'פרוגרמת הפרויקט (JSON)', progNoJson:'סטנדרט המשרד — לא נטענה פרוגרמה',
   progHint:'לכל תוכנית פרוגרמה משלה. טען JSON לבדיקה מול היעדים של הפרויקט.',
+  progPipeline:'הפרוגרמה יכולה להגיע מהשאלון (שלב 01) שעובר איחוד קומתי (שלב 02, טרם נבנה) ומגיע לכאן (שלב 03) — או מ-JSON שנבנה ידנית.',
   loadJson:'טען JSON', showTpl:'הצג תבנית',
+  progSrcTitle:'הגשות מקור', progSrcMeta:(n,d)=>n+' הגשות שאלון · הופק ב-'+d,
+  progSrcDerivHead:'איך כל שורה בפרוגרמה חושבה', progSrcConfMapped:'ממופה', progSrcConfGuess:'ניחוש — לאמת',
   thFn:'פונקציה', thGoal:'יעד', thFound:'בתכנית', thDelta:'Δ', thStatus:'סטטוס',
   notFound:'לא נמצא', unitsShort:n=>n+' יח׳',
   /* --- panel: open items --- */
@@ -681,8 +761,15 @@ he:{
   rvtProject:'פרויקט', rvtOrg:'משרד אדריכלים', rvtBuilding:'שם בניין', rvtIssue:'תאריך הנפקה',
   rvtVersion:'גרסת Revit', rvtWorksharing:'שיתוף עבודה', rvtCentral:'קובץ מרכזי',
   rvtLinksTitle:'קישורים חיצוניים', rvtLinkOk:'נטען', rvtLinkBad:'לא נמצא', rvtNoLinks:'אין קישורים חיצוניים בקובץ.',
-  rvtNextTitle:'לניתוח מלא של חדרים ושטחים', rvtNextBody:'הורד את המאקרו, הרץ אותו פעם אחת בתוך Revit (ללא התקנת Add-in), והעלה את קובץ ה-JSON שהוא מייצא — כאן, בכפתור למטה.',
+  rvtLevelLabel:'שם התכנית / הקומה שברצונך לבדוק',
+  rvtLevelPh:'לדוגמה: FL03, קומה 3',
+  rvtHow1:'Revit 2025 ומעלה: ודא ש-Macros מאופשרים — Options ← Macros ← Enable application macros, ואז סגור ופתח מחדש את Revit (חד-פעמי).',
+  rvtHow2:'ב-Revit 2025+ בלבד: אם זו הפעם הראשונה, ודא ש-.NET SDK 8 ו-Visual Studio Code מותקנים במחשב (נדרש להרצת עורך המאקרו).',
+  rvtHow3:'Manage ← Macros ← Macro Manager ← "My Macros" (Application, לא Document) ← Create, הדבק את קוד המאקרו שהורדת, ולחץ Run.',
+  rvtHow4:'סייר קבצים ייפתח לבד עם קובץ ה-JSON מסומן — גררו אותו לכפתור "העלה JSON מהמאקרו" למטה. השם שהקלדת מעלה יבחר את הקומה הנכונה מתוך הייצוא.',
   rvtDlMacro:'הורד מאקרו (.cs)', rvtUploadJson:'העלה JSON מהמאקרו',
+  rvtLevelNoMatch:n=>`לא נמצאה קומה בשם "${n}" בקובץ — נבחרה הקומה עם הכי הרבה חדרים במקום.`,
+  rvtLevelMatched:n=>`נבחרה הקומה "${n}" לפי מה שהקלדת.`,
   errDwg:(fmt,app,path)=>'<b>'+fmt+' הוא פורמט בינארי סגור — לא ניתן לפענוח בדפדפן.</b>'+
     'ייצא PDF מתוך '+app+' (<u>'+path+'</u>) והעלה אותו כאן. '+
     'שכבת הטקסט של תגיות החדרים נשמרת בייצוא — והניתוח יהיה מלא ואוטומטי.<br>'+
@@ -759,6 +846,9 @@ en:{
   heroH1:'Check a <em>Test Fit</em><br>in seconds.',
   dzBig:'Drop a plan here', dzSmall:'PDF exported from Revit · or click to choose a file',
   rvtSoon:'RVT', loadingPlan:'Analysing plan…',
+  scopeNote:'An internal Roy David Architects tool — runs entirely in the browser, no server, nothing uploaded anywhere. '+
+    'Do not upload files for outside clients here, and do not share this link outside the office. '+
+    'The check is an informative observation derived from benchmarks, not a regulatory opinion; accessibility, egress, fire safety and code compliance require review by a licensed consultant.',
   /* --- layers, tools, legend --- */
   lyNotes:'Notes', lySyms:'Symbols', lyDims:'Dimensions', lyAreas:'Areas',
   tDim:'Dimension', tArea:'Measure area', tCalib:'Calibrate', tPin:'Numbered note', tCloud:'Cloud note',
@@ -814,7 +904,10 @@ en:{
   progProject:'Project program', progOffice:'Office standard',
   progJsonTitle:'Project program (JSON)', progNoJson:'Office standard — no program loaded',
   progHint:'Every plan has its own program. Load a JSON to check against this project’s targets.',
+  progPipeline:'The program can arrive from the questionnaire (phase 01) after a floor-level rollup (phase 02, not yet built) and reach here (phase 03) — or from a hand-built JSON.',
   loadJson:'Load JSON', showTpl:'Show template',
+  progSrcTitle:'Source submissions', progSrcMeta:(n,d)=>n+' questionnaire submission(s) · generated '+d,
+  progSrcDerivHead:'How each program line was derived', progSrcConfMapped:'mapped', progSrcConfGuess:'guessed — verify',
   thFn:'Function', thGoal:'Target', thFound:'On plan', thDelta:'Δ', thStatus:'Status',
   notFound:'Not found', unitsShort:n=>n+' pcs',
   /* --- panel: open items --- */
@@ -886,8 +979,15 @@ en:{
   rvtProject:'Project', rvtOrg:'Architecture firm', rvtBuilding:'Building name', rvtIssue:'Issue date',
   rvtVersion:'Revit version', rvtWorksharing:'Worksharing', rvtCentral:'Central model file',
   rvtLinksTitle:'External links', rvtLinkOk:'Loaded', rvtLinkBad:'Not found', rvtNoLinks:'No external links in this file.',
-  rvtNextTitle:'For a full room and area analysis', rvtNextBody:'Download the macro, run it once inside Revit (no add-in install), and upload the JSON file it exports — with the button below.',
+  rvtLevelLabel:'Name of the plan / floor you want to check',
+  rvtLevelPh:'e.g. FL03, Level 3',
+  rvtHow1:'Revit 2025+: make sure Macros are enabled — Options → Macros → Enable application macros, then close and reopen Revit (one-time).',
+  rvtHow2:'Revit 2025+ only: the first time, make sure .NET SDK 8 and Visual Studio Code are installed (needed to run the macro editor).',
+  rvtHow3:'Manage → Macros → Macro Manager → "My Macros" (Application, not Document) → Create, paste in the macro code you downloaded, and click Run.',
+  rvtHow4:'A File Explorer window opens on its own with the JSON file selected — drag it onto the "Upload the macro’s JSON" button below. The name you typed above picks the right floor out of that export.',
   rvtDlMacro:'Download macro (.cs)', rvtUploadJson:'Upload the macro’s JSON',
+  rvtLevelNoMatch:n=>`No level named "${n}" was found in the file — used the level with the most rooms instead.`,
+  rvtLevelMatched:n=>`Selected the "${n}" level, matching what you typed.`,
   errDwg:(fmt,app,path)=>'<b>'+fmt+' is a closed binary format — a browser cannot read it.</b>'+
     'Export a PDF from '+app+' (<u>'+path+'</u>) and upload it here. '+
     'The room-tag text layer survives the export, so the analysis will be full and automatic.<br>'+
@@ -2229,14 +2329,31 @@ function buildOrder(){
   STATE.notes.forEach((n,i)=>n.num=i+1);
 }
 
+function viewProgramSource(src){
+  const subs=Array.isArray(src.submissions)?src.submissions:[];
+  const deriv=Array.isArray(src.derivation)?src.derivation:[];
+  let h=`<div class="iron i" style="margin-bottom:10px"><div class="ib"><b>${T('progSrcTitle')}</b><br>`
+    +esc(T('progSrcMeta', subs.length, src.generated||'—'))+'</div></div>';
+  if(deriv.length){
+    h+=`<table class="pg" style="margin-bottom:10px"><thead><tr><th>${T('thFn')}</th><th>${T('progSrcDerivHead')}</th><th></th></tr></thead><tbody>`;
+    deriv.forEach(d=>{
+      const guessed=d.confidence && d.confidence!=='mapped';
+      h+=`<tr><td class="fn">${esc(d.key||'')}</td><td>${esc(d.from||'')}</td>`
+        +`<td style="color:var(${guessed?'--warn':'--ok'})">${esc(guessed?T('progSrcConfGuess'):T('progSrcConfMapped'))}</td></tr>`;
+    });
+    h+='</tbody></table>';
+  }
+  return h;
+}
 function viewProgram(){
   const P=STATE.program;
   const isJson=!!(P&&P.program&&P.program.length);
   let h=`<div class="grp-title">${isJson?T('progJsonTitle'):T('progNoJson')}</div>`;
-  if(!isJson) h+=`<div class="iron w" style="margin-bottom:10px"><div class="ib">${T('progHint')}</div>
+  if(!isJson) h+=`<div class="iron w" style="margin-bottom:10px"><div class="ib">${T('progHint')}<br><span style="opacity:.7">${T('progPipeline')}</span></div>
     <div class="cact"><button class="xb" onclick="document.getElementById('jsonInput').click()">${T('loadJson')}</button>
     <button class="xb" onclick="showTemplate()">${T('showTpl')}</button></div></div>`;
   if(P&&P.meta) h+=`<div class="ib" style="font-size:11px;opacity:.65;margin-bottom:10px">${esc([P.meta.project,P.meta.floor,P.meta.client].filter(Boolean).join(' · '))}</div>`;
+  if(P&&P._source) h+=viewProgramSource(P._source);
 
   h+=`<table class="pg"><thead><tr><th>${T('thFn')}</th><th>${T('thGoal')}</th><th>${T('thFound')}</th><th style="width:52px">Δ</th></tr></thead><tbody>`;
   progRows().forEach(r=>{
@@ -2403,17 +2520,46 @@ async function run(parse, prebuiltBase){
    world scale is known outright: no manual calibration step, and every
    dimension/area tool is correct from the first click.
    ===================================================================== */
-function pickPrimaryLevel(exp){
+/* a hand-edited export can put a number where a string belongs or vice versa
+   — never let that throw mid-import, just fall back cleanly */
+const numOr=(v,fallback)=>{ const n=Number(v); return Number.isFinite(n)?n:fallback; };
+const strOr=v=> typeof v==='string' ? v : '';
+
+function pickPrimaryLevel(exp, hint){
   const byLevel={};
-  (exp.rooms||[]).forEach(r=>{ (byLevel[r.level||'']=byLevel[r.level||'']||[]).push(r); });
+  /* a hand-edited or partially-written export could carry a null entry, a
+     bare string, anything — only real room objects get grouped */
+  (Array.isArray(exp.rooms)?exp.rooms:[]).filter(r=>r&&typeof r==='object').forEach(r=>{
+    const lv=typeof r.level==='string'?r.level:'';
+    (byLevel[lv]=byLevel[lv]||[]).push(r);
+  });
+  const names=Object.keys(byLevel);
+  let matched=null;
+  if(hint){
+    const h=hint.toLowerCase();
+    matched = names.find(k=>k.toLowerCase()===h) || names.find(k=>k.toLowerCase().includes(h));
+  }
+  if(matched) return { level:matched, rooms:byLevel[matched], hintMatched:true };
+
   let best=null, bestN=-1;
-  Object.keys(byLevel).forEach(k=>{ if(byLevel[k].length>bestN){ bestN=byLevel[k].length; best=k; } });
-  return { level:best, rooms:best!=null?byLevel[best]:[] };
+  names.forEach(k=>{ if(byLevel[k].length>bestN){ bestN=byLevel[k].length; best=k; } });
+  return { level:best, rooms:best!=null?byLevel[best]:[], hintMatched:false };
 }
 /* the outer loop is whichever ring encloses the most area — inner loops
    (columns, shafts) are smaller and drawn as unfilled holes */
+/* A hand-edited or partially-written export can carry a point that isn't a
+   [x,y] pair, or a coordinate that isn't a finite number — never let one bad
+   point silently become a NaN that draws nothing and derails the room's
+   whole bounding box. Bad points are dropped; a loop left with under 3
+   points (not a real polygon) is dropped entirely. */
 function outerLoop(room){
-  const loops=(room.boundary||[]).map(loop=>loop.map(p=>({x:p[0],y:p[1]})));
+  const rawLoops=Array.isArray(room.boundary)?room.boundary:[];
+  const loops=rawLoops.map(loop=>{
+    if(!Array.isArray(loop)) return [];
+    return loop
+      .filter(p=>Array.isArray(p) && Number.isFinite(p[0]) && Number.isFinite(p[1]))
+      .map(p=>({x:p[0],y:p[1]}));
+  }).filter(l=>l.length>=3);
   if(!loops.length) return {outer:null, holes:[]};
   let oi=0, best=-1;
   loops.forEach((l,i)=>{ const a=Math.abs(shoelace(l)); if(a>best){ best=a; oi=i; } });
@@ -2454,31 +2600,35 @@ function renderRoomsBase(rooms){
     });
     const ct=polyCentroid(outer.map(p=>({x:p.x,y:p.y})));
     const cpx=toPx(ct);
-    const label=(r.name||'')+(r.number?' '+r.number:'');
+    const areaM2=numOr(r.areaM2,null);
+    const label=(strOr(r.name))+(r.number!=null&&r.number!==''?' '+r.number:'');
     c.fillStyle='#1B1B1B'; c.textAlign='center'; c.textBaseline='middle';
     c.font='600 12px Helvetica,Arial';
     if(label) c.fillText(label, cpx.x, cpx.y-7);
     c.font='400 11px Helvetica,Arial';
-    c.fillText(r.areaM2?r.areaM2.toFixed(1)+' '+T('uM2'):'', cpx.x, cpx.y+8);
+    c.fillText(areaM2?areaM2.toFixed(1)+' '+T('uM2'):'', cpx.x, cpx.y+8);
     r._centroidPx={x:cpx.x/w, y:cpx.y/h};
   });
   return { canvas:cv, w, h, scale, minX, minY, maxX, maxY };
 }
 
-async function applyRoomExport(exp){
-  const picked=pickPrimaryLevel(exp);
+async function applyRoomExport(exp, levelHint){
+  const picked=pickPrimaryLevel(exp, levelHint);
   if(!picked.rooms.length) throw new Error(isHe()?'לא נמצאו חדרים בקובץ':'No rooms found in the file');
   const built=renderRoomsBase(picked.rooms);
 
-  const tags=picked.rooms.map(r=>({
-    area:r.areaM2!=null?+r.areaM2.toFixed(2):null,
-    ppl:r.capacity!=null?Math.round(r.capacity):null,
-    stations:null, code:null, isDept:false, names:[],
-    name:((r.name||'')+(r.number?' '+r.number:'')).trim(),
-    nx:r._centroidPx?r._centroidPx.x:0.5, ny:r._centroidPx?r._centroidPx.y:0.5,
-    pdfX:0, pdfY:0
-  }));
-  const allText=picked.rooms.flatMap(r=>[r.name,r.department,r.comments].filter(Boolean).map(s=>s.toLowerCase()));
+  const tags=picked.rooms.map(r=>{
+    const area=numOr(r.areaM2,null);
+    return {
+      area:area!=null?+area.toFixed(2):null,
+      ppl:numOr(r.capacity,null)!=null?Math.round(numOr(r.capacity,0)):null,
+      stations:null, code:null, isDept:false, names:[],
+      name:(strOr(r.name)+(r.number!=null&&r.number!==''?' '+r.number:'')).trim(),
+      nx:r._centroidPx?r._centroidPx.x:0.5, ny:r._centroidPx?r._centroidPx.y:0.5,
+      pdfX:0, pdfY:0
+    };
+  });
+  const allText=picked.rooms.flatMap(r=>[r.name,r.department,r.comments].filter(v=>typeof v==='string'&&v).map(s=>s.toLowerCase()));
   const parse={ tags, allText, fileName:(exp.meta&&exp.meta.fileName)||'revit-export', page:null, vp1:null };
 
   if(exp.meta){
@@ -2494,9 +2644,12 @@ async function applyRoomExport(exp){
   STATE.calib={ mPerPx: 1/built.scale };
   await run(parse, built.canvas);
   relabelMeasures(); refresh();
-  toast(isHe()
-    ? `יובאו ${picked.rooms.length} חדרים מרוויט — קנה המידה מדויק, אין צורך בכיול.`
-    : `Imported ${picked.rooms.length} rooms from Revit — the scale is exact, no calibration needed.`);
+
+  const base = isHe()
+    ? `יובאו ${picked.rooms.length} חדרים מרוויט (${picked.level||'—'}) — קנה המידה מדויק, אין צורך בכיול.`
+    : `Imported ${picked.rooms.length} rooms from Revit (${picked.level||'—'}) — the scale is exact, no calibration needed.`;
+  const hintNote = levelHint ? ' '+(picked.hintMatched ? T('rvtLevelMatched',picked.level) : T('rvtLevelNoMatch',levelHint)) : '';
+  toast(base+hintNote);
 }
 
 /* =====================================================================
@@ -2697,6 +2850,7 @@ function applyStatic(){
   document.documentElement.dir  = isHe() ? 'rtl' : 'ltr';
   document.querySelectorAll('[data-t]').forEach(el=>{ el.textContent = T(el.dataset.t); });
   document.querySelectorAll('[data-th]').forEach(el=>{ el.innerHTML  = T(el.dataset.th); });
+  document.querySelectorAll('[data-tp]').forEach(el=>{ el.placeholder = T(el.dataset.tp); });
   const lb=$('#btnLang');
   if(lb){
     lb.textContent=T('langBtn'); lb.title=T('langTitle');
@@ -2770,6 +2924,7 @@ function saveJson(){
     program:(STATE.program&&STATE.program.program)||PROGRAM_REF,
     qa:(STATE.program&&STATE.program.qa)||[],
     rules:(STATE.program&&STATE.program.rules)||{},
+    _source:(STATE.program&&STATE.program._source)||undefined,
     review:{
       notes:STATE.notes.map(n=>({id:n.id,num:n.num,lv:n.lv,src:n.src,shape:n.shape,
         title:n.title,sub:n.sub,body:n.body,nx:n.nx,ny:n.ny,pts:n.pts})),
@@ -3069,10 +3224,15 @@ function exportXlsx(){
 /* =====================================================================
    14. INPUT WIRING
    ===================================================================== */
-const dz=$('#dropzone');
-dz.addEventListener('dragover',e=>{e.preventDefault();dz.classList.add('drag');});
-dz.addEventListener('dragleave',()=>dz.classList.remove('drag'));
-dz.addEventListener('drop',e=>{
+/* The visible target is the dashed box, but the drop LISTENERS live on the
+   whole landing view — a file dropped on the title, the format chips, or any
+   blank margin still works. Requiring a pixel-perfect drop on the dropzone
+   is exactly the kind of thing that looks like "drag and drop doesn't work"
+   from the user's side when it actually just landed a few pixels off. */
+const dz=$('#dropzone'), uploadView=$('#uploadView');
+uploadView.addEventListener('dragover',e=>{ e.preventDefault(); dz.classList.add('drag'); });
+uploadView.addEventListener('dragleave',e=>{ if(e.target===uploadView||!uploadView.contains(e.relatedTarget)) dz.classList.remove('drag'); });
+uploadView.addEventListener('drop',e=>{
   e.preventDefault(); dz.classList.remove('drag');
   if(e.dataTransfer.files[0]) routeFile(e.dataTransfer.files[0]);
 });
@@ -3081,6 +3241,7 @@ $('#jsonInput').addEventListener('change',e=>{ if(e.target.files[0]) readJson(e.
 
 function routeFile(f){
   const n=f.name.toLowerCase();
+  if(!/\.(rvt|rfa)$/.test(n)) hideRvtPanel();
   if(/\.pdf$/.test(n))            return handlePdf(f);
   if(/\.(png|jpe?g|webp)$/.test(n)) return handleImage(f);
   if(/\.json$/.test(n))           return readJson(f);
@@ -3317,11 +3478,17 @@ function needsExport(f, fmt, app, path){ showError(T('errDwg', fmt, app, esc(pat
    external-link health) the instant the file drops, then hand off to the
    macro for the geometry a raw binary reader cannot responsibly extract.
    ===================================================================== */
+/* the level name typed into #rvtLevelHint — read by applyRoomExport() once
+   the matching JSON export is uploaded, so the same field that tells the
+   user what to look for in Revit also tells us which level to load */
+let RVT_LEVEL_HINT='';
+
+function hideRvtPanel(){ const p=$('#rvtPanel'); if(p) p.classList.remove('on'); }
+
 async function handleRvt(file){
   showLoading(true);
-  let info=null, err=null;
-  try{ info=await readRvt(file); }
-  catch(e){ err=e; }
+  let info=null;
+  try{ info=await readRvt(file); }catch(e){ /* handled below via null info */ }
   showLoading(false);
   if(!info){ showError(T('errRvtBad', esc(file.name))); return; }
 
@@ -3329,45 +3496,27 @@ async function handleRvt(file){
   const links=info.links||[];
   const linkRows=links.map(l=>{
     const ok=l.state==='Loaded';
-    return `<tr class="${ok?'o':'f'}"><td class="fn">${esc(l.type)}</td><td>${esc(l.path)}</td>`+
-      `<td><span class="rchip" style="background:${ok?'#16A34A':'#E1504B'}">${ok?T('rvtLinkOk'):T('rvtLinkBad')}</span></td></tr>`;
+    return `<div class="lnk"><span class="rchip" style="background:${ok?'#16A34A':'#E1504B'}">${ok?T('rvtLinkOk'):T('rvtLinkBad')}</span>`+
+      `<span class="p" title="${esc(l.path)}">${esc(l.path)}</span></div>`;
   }).join('');
 
-  const host=document.createElement('div');
-  host.className='modal';
-  host.innerHTML=`
-    <div class="modal-box" style="max-width:640px" onclick="event.stopPropagation()">
-      <div class="modal-head">
-        <div>${T('rvtTitle')}<small>${T('rvtSub')}</small></div>
-        <button class="hb" data-x>${T('close')}</button>
-      </div>
-      <div class="frm" style="grid-template-columns:1fr 1fr">
-        ${row(T('rvtProject'), info.title)}
-        ${row(T('rvtOrg'), info.params['Organization Name'])}
-        ${row(T('rvtBuilding'), info.params['Building Name'])}
-        ${row(T('rvtIssue'), info.params['Project Issue Date']!=='Issue Date'?info.params['Project Issue Date']:'')}
-        ${row(T('rvtVersion'), info.productVersion||info.version)}
-        ${row(T('rvtWorksharing'), info.worksharing)}
-      </div>
-      <div class="modal-body" style="padding:0 16px 16px">
-        <div class="grp-title">${T('rvtLinksTitle')}</div>
-        ${links.length?`<table class="pg"><tbody>${linkRows}</tbody></table>`:`<div class="empty">${T('rvtNoLinks')}</div>`}
-        <div class="iron w" style="margin-top:14px">
-          <div class="ih"><span class="it">${T('rvtNextTitle')}</span></div>
-          <div class="ib">${T('rvtNextBody')}</div>
-        </div>
-      </div>
-      <div class="modal-foot">
-        <a class="mini pri" href="RDA_TestFit_Export_Macro.cs" download>${T('rvtDlMacro')}</a>
-        <button class="mini" data-upload>${T('rvtUploadJson')}</button>
-      </div>
-    </div>`;
-  const close=()=>host.remove();
-  host.onclick=close;
-  host.querySelector('[data-x]').onclick=close;
-  host.querySelector('[data-upload]').onclick=()=>{ close(); $('#jsonInput').click(); };
-  document.body.appendChild(host);
+  $('#rvtGrid').innerHTML =
+    row(T('rvtProject'), info.title) +
+    row(T('rvtOrg'), info.params['Organization Name']) +
+    row(T('rvtBuilding'), info.params['Building Name']) +
+    row(T('rvtIssue'), info.params['Project Issue Date']!=='Issue Date'?info.params['Project Issue Date']:'') +
+    row(T('rvtVersion'), info.productVersion||info.version) +
+    row(T('rvtWorksharing'), info.worksharing);
+
+  $('#rvtLinks').innerHTML = `<div class="grp-title">${T('rvtLinksTitle')}</div>` +
+    (links.length ? linkRows : `<div class="empty" style="padding:6px 0">${T('rvtNoLinks')}</div>`);
+
+  showError(null);
+  $('#rvtPanel').classList.add('on');
 }
+
+$('#rvtLevelHint').addEventListener('input', e=>{ RVT_LEVEL_HINT=e.target.value.trim(); });
+$('#rvtUploadBtn').addEventListener('click', ()=> $('#jsonInput').click());
 
 function readJson(f){
   const r=new FileReader();
@@ -3379,7 +3528,7 @@ function readJson(f){
          is a target/QA list checked against whatever plan is already loaded */
       if(Array.isArray(j.rooms) && j.rooms.length){
         showLoading(true);
-        try{ await applyRoomExport(j); }
+        try{ await applyRoomExport(j, RVT_LEVEL_HINT); }
         catch(err){ showError(T('errParse', esc(err.message))); }
         showLoading(false);
       }
