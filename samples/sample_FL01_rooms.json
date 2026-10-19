@@ -1,0 +1,563 @@
+{
+  "meta": {
+    "project": "SAMPLE_CO",
+    "client": "Sample Client",
+    "fileName": "SAMPLE_CO.rvt",
+    "exportedAt": "2026-01-01 10:00",
+    "revitVersion": "2025"
+  },
+  "levels": [
+    {
+      "id": 1,
+      "name": "FL01",
+      "elevationM": 0
+    },
+    {
+      "id": 2,
+      "name": "FL02",
+      "elevationM": 3.6
+    }
+  ],
+  "rooms": [
+    {
+      "id": 1001,
+      "name": "Open Space FL01-OS-01",
+      "number": "FL01-OS-01",
+      "level": "FL01",
+      "areaM2": 75.0,
+      "department": "מכירות",
+      "comments": "",
+      "capacity": 6,
+      "boundary": [
+        [
+          [
+            0,
+            0
+          ],
+          [
+            10,
+            0
+          ],
+          [
+            10,
+            7.5
+          ],
+          [
+            0,
+            7.5
+          ]
+        ]
+      ]
+    },
+    {
+      "id": 1002,
+      "name": "Open Space FL01-OS-02",
+      "number": "FL01-OS-02",
+      "level": "FL01",
+      "areaM2": 60.0,
+      "department": "פיתוח",
+      "comments": "",
+      "capacity": 5,
+      "boundary": [
+        [
+          [
+            10,
+            0
+          ],
+          [
+            18,
+            0
+          ],
+          [
+            18,
+            7.5
+          ],
+          [
+            10,
+            7.5
+          ]
+        ]
+      ]
+    },
+    {
+      "id": 1003,
+      "name": "Open Space FL01-OS-02",
+      "number": "FL01-OS-02",
+      "level": "FL01",
+      "areaM2": 30.0,
+      "department": "פיתוח",
+      "comments": "",
+      "capacity": 2,
+      "boundary": [
+        [
+          [
+            18,
+            0
+          ],
+          [
+            22,
+            0
+          ],
+          [
+            22,
+            7.5
+          ],
+          [
+            18,
+            7.5
+          ]
+        ]
+      ]
+    },
+    {
+      "id": 1004,
+      "name": "אופן ספייס שיווק",
+      "number": "",
+      "level": "FL01",
+      "areaM2": 30.0,
+      "department": "שיווק",
+      "comments": "",
+      "capacity": 3,
+      "boundary": [
+        [
+          [
+            22,
+            0
+          ],
+          [
+            26,
+            0
+          ],
+          [
+            26,
+            7.5
+          ],
+          [
+            22,
+            7.5
+          ]
+        ]
+      ]
+    },
+    {
+      "id": 1005,
+      "name": "מסדרון",
+      "number": "",
+      "level": "FL01",
+      "areaM2": 60.0,
+      "department": "",
+      "comments": "",
+      "capacity": null,
+      "boundary": [
+        [
+          [
+            0,
+            7.5
+          ],
+          [
+            30,
+            7.5
+          ],
+          [
+            30,
+            9.5
+          ],
+          [
+            0,
+            9.5
+          ]
+        ]
+      ]
+    },
+    {
+      "id": 1006,
+      "name": "שירותים",
+      "number": "",
+      "level": "FL01",
+      "areaM2": 8,
+      "department": "",
+      "comments": "",
+      "capacity": null,
+      "boundary": [
+        [
+          [
+            30,
+            0
+          ],
+          [
+            32,
+            0
+          ],
+          [
+            32,
+            4
+          ],
+          [
+            30,
+            4
+          ]
+        ]
+      ]
+    },
+    {
+      "id": 1007,
+      "name": "חדר ישיבות FL01-MR-01",
+      "number": "FL01-MR-01",
+      "level": "FL01",
+      "areaM2": 18.0,
+      "department": "",
+      "comments": "",
+      "capacity": 6,
+      "boundary": [
+        [
+          [
+            0,
+            9.5
+          ],
+          [
+            4,
+            9.5
+          ],
+          [
+            4,
+            14
+          ],
+          [
+            0,
+            14
+          ]
+        ]
+      ]
+    },
+    {
+      "id": 1008,
+      "name": "חדר ישיבות fl01 mr 2",
+      "number": "fl01 mr 2",
+      "level": "FL01",
+      "areaM2": 22.5,
+      "department": "",
+      "comments": "",
+      "capacity": 8,
+      "boundary": [
+        [
+          [
+            4,
+            9.5
+          ],
+          [
+            9,
+            9.5
+          ],
+          [
+            9,
+            14
+          ],
+          [
+            4,
+            14
+          ]
+        ]
+      ]
+    },
+    {
+      "id": 1009,
+      "name": "משרד מנכ״ל",
+      "number": "",
+      "level": "FL01",
+      "areaM2": 18.0,
+      "department": "הנהלה",
+      "comments": "",
+      "capacity": null,
+      "boundary": [
+        [
+          [
+            9,
+            9.5
+          ],
+          [
+            13,
+            9.5
+          ],
+          [
+            13,
+            14
+          ],
+          [
+            9,
+            14
+          ]
+        ]
+      ]
+    },
+    {
+      "id": 1010,
+      "name": "משרד סמנכ״ל כספים FL01-VP-01",
+      "number": "FL01-VP-01",
+      "level": "FL01",
+      "areaM2": 13.5,
+      "department": "כספים",
+      "comments": "",
+      "capacity": null,
+      "boundary": [
+        [
+          [
+            13,
+            9.5
+          ],
+          [
+            16,
+            9.5
+          ],
+          [
+            16,
+            14
+          ],
+          [
+            13,
+            14
+          ]
+        ]
+      ]
+    },
+    {
+      "id": 1011,
+      "name": "חדר שרתים FL01-IT-01",
+      "number": "FL01-IT-01",
+      "level": "FL01",
+      "areaM2": 8.1,
+      "department": "",
+      "comments": "",
+      "capacity": null,
+      "boundary": [
+        [
+          [
+            16,
+            9.5
+          ],
+          [
+            19,
+            9.5
+          ],
+          [
+            19,
+            12.2
+          ],
+          [
+            16,
+            12.2
+          ]
+        ]
+      ]
+    },
+    {
+      "id": 1012,
+      "name": "קבלה FL01-RC-01",
+      "number": "FL01-RC-01",
+      "level": "FL01",
+      "areaM2": 27.0,
+      "department": "",
+      "comments": "",
+      "capacity": null,
+      "boundary": [
+        [
+          [
+            19,
+            9.5
+          ],
+          [
+            25,
+            9.5
+          ],
+          [
+            25,
+            14
+          ],
+          [
+            19,
+            14
+          ]
+        ]
+      ]
+    },
+    {
+      "id": 1013,
+      "name": "Phone Booth FL01-PB-01",
+      "number": "FL01-PB-01",
+      "level": "FL01",
+      "areaM2": 1.8,
+      "department": "",
+      "comments": "",
+      "capacity": null,
+      "boundary": [
+        [
+          [
+            25,
+            9.5
+          ],
+          [
+            26.2,
+            9.5
+          ],
+          [
+            26.2,
+            11
+          ],
+          [
+            25,
+            11
+          ]
+        ]
+      ]
+    },
+    {
+      "id": 1014,
+      "name": "מחסן FL01-ST-01",
+      "number": "FL01-ST-01",
+      "level": "FL01",
+      "areaM2": 3.0,
+      "department": "",
+      "comments": "",
+      "capacity": null,
+      "boundary": [
+        [
+          [
+            25,
+            12
+          ],
+          [
+            26.5,
+            12
+          ],
+          [
+            26.5,
+            14
+          ],
+          [
+            25,
+            14
+          ]
+        ]
+      ]
+    },
+    {
+      "id": 1015,
+      "name": "חדר ישיבות קטן FL01-MR-01",
+      "number": "FL01-MR-01",
+      "level": "FL01",
+      "areaM2": 14.0,
+      "department": "",
+      "comments": "",
+      "capacity": 4,
+      "boundary": [
+        [
+          [
+            26.5,
+            0
+          ],
+          [
+            30,
+            0
+          ],
+          [
+            30,
+            4
+          ],
+          [
+            26.5,
+            4
+          ]
+        ]
+      ]
+    },
+    {
+      "id": 1016,
+      "name": "סטודיו FL01-SP-09",
+      "number": "FL01-SP-09",
+      "level": "FL01",
+      "areaM2": 15.75,
+      "department": "",
+      "comments": "",
+      "capacity": null,
+      "boundary": [
+        [
+          [
+            26.5,
+            9.5
+          ],
+          [
+            30,
+            9.5
+          ],
+          [
+            30,
+            14
+          ],
+          [
+            26.5,
+            14
+          ]
+        ]
+      ]
+    },
+    {
+      "id": 1017,
+      "name": "חדר משחקים",
+      "number": "",
+      "level": "FL01",
+      "areaM2": 12.25,
+      "department": "",
+      "comments": "",
+      "capacity": null,
+      "boundary": [
+        [
+          [
+            26.5,
+            4
+          ],
+          [
+            30,
+            4
+          ],
+          [
+            30,
+            7.5
+          ],
+          [
+            26.5,
+            7.5
+          ]
+        ]
+      ]
+    },
+    {
+      "id": 1018,
+      "name": "Open Space FL02-OS-01",
+      "number": "FL02-OS-01",
+      "level": "FL02",
+      "areaM2": 75.0,
+      "department": "מכירות",
+      "comments": "",
+      "capacity": 8,
+      "boundary": [
+        [
+          [
+            0,
+            0
+          ],
+          [
+            10,
+            0
+          ],
+          [
+            10,
+            7.5
+          ],
+          [
+            0,
+            7.5
+          ]
+        ]
+      ]
+    }
+  ]
+}

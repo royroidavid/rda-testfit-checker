@@ -249,6 +249,15 @@
   .card .cb{font-size:11px; font-weight:300; opacity:.85; line-height:1.5;}
   .card .cb[contenteditable="true"]:focus{outline:1px solid var(--accent); background:#fff;}
   .card .cact{display:flex; gap:5px; margin-top:6px;}
+  .card .asg{display:flex; align-items:center; gap:6px; margin-top:6px;}
+  .card .asg label{font-size:9px; letter-spacing:.1em; text-transform:uppercase; opacity:.5; white-space:nowrap;}
+  .card .asg select{flex:1; min-width:0; font:inherit; font-size:11px; border:1px solid var(--border); background:var(--white); color:var(--black); padding:3px 4px;}
+  .card .asg select:focus{outline:none; border-color:var(--black); box-shadow:inset 0 -2px 0 var(--accent);}
+  .msx{margin-top:12px;}
+  .msx .grp-title{margin-top:10px;}
+  .msx ul{list-style:none; font-size:11px; font-weight:300;}
+  .msx li{padding:4px 0; border-bottom:1px solid var(--border);}
+  .msx li b{font-weight:500;}
   .xb{
     font-size:9px; padding:3px 7px; border:1px solid var(--border); background:var(--white);
     cursor:pointer; letter-spacing:.05em; opacity:.7;
@@ -831,7 +840,41 @@ he:{
   iEntryOk:'כניסה ויציאה מסומנות.', iEntryBad:'לא זוהה סימון כניסה/יציאה. גרור IN ו-EX מהמחסן.',
   iPanels:'ארונות חשמל ותקשורת',
   iPanelsOk:'ארונות חשמל ותקשורת מסומנים.', iPanelsBad:'לא זוהה סימון ארונות. גרור EL ו-IT מהמחסן.',
-  srcAuto:'זוהה אוטומטית', srcManual:'הושלם ידנית', srcMissing:'חסר'
+  srcAuto:'זוהה אוטומטית', srcManual:'הושלם ידנית', srcMissing:'חסר',
+  /* --- programme schedule: room codes from the RD&A site --- */
+  circulation:'מעבר / גרעין',
+  sMatchedCode:c=>'מותאם לפי קוד '+c, sMatchedType:c=>'מותאם לפי סוג ל-'+c+' — מומלץ להקליד את הקוד בשדה Number',
+  sMatchedManual:c=>'שויך ידנית ל-'+c, sUnassigned:'לא שויך לפרוגרמה — בחר קוד מהרשימה',
+  sUnknownCode:c=>'הקוד '+c+' לא קיים בפרוגרמה', sOtherFloor:(c,f)=>'הקוד '+c+' שייך לקומה אחרת (הבדיקה היא ל-'+f+')',
+  sDupCode:c=>'הקוד '+c+' מופיע ביותר מחדר אחד',
+  sExtra:'לא נדרש בפרוגרמה — חדר עודף', sExtraType:t=>'יותר חדרי '+t+' ממה שהפרוגרמה מבקשת', sMarkedExtra:'סומן ידנית כעודף',
+  sAreaFail:(a,m)=>a+' מ״ר — מתחת לדרישה '+m+' מ״ר', sAreaEdge:(a,m)=>a+' מ״ר — על הגבול מול '+m+' מ״ר',
+  sAreaOk:(a,m)=>a+' מ״ר ≥ '+m+' מ״ר', sNoArea:'אין שטח בחדר',
+  sSeatsFail:(c,s)=>c+' מקומות — הפרוגרמה מבקשת '+s, sSeatsOk:(c,s)=>c+' מקומות ≥ '+s,
+  sNoCap:n=>'אין Capacity בחדר — לא ניתן לבדוק '+n+' מקומות. מלא Capacity ברוויט',
+  sDesksFail:(c,d)=>c+' עמדות — המחלקה צריכה '+d, sDesksOk:(c,d)=>c+' עמדות ≥ '+d,
+  sOsArea:(a,t)=>'שטח '+a+' מ״ר מול '+t+' מ״ר בפרוגרמה', sOsAreaLow:(a,t)=>'שטח '+a+' מ״ר — פחות מ-90% מ-'+t+' מ״ר בפרוגרמה',
+  sDeptBad:(d,p)=>'Department "'+d+'" — בפרוגרמה "'+p+'"', sDeptMissing:p=>'Department ריק — בפרוגרמה "'+p+'"',
+  sOsSplit:n=>'המחלקה משורטטת ב-'+n+' חדרים — נבדק הסכום',
+  sOsNoDept:'אופן ספייס בלי מחלקה — מלא Department או שייך לקוד',
+  thCode:'קוד', thReq:'דרישה', thDrawn:'בתכנית',
+  stMissing:'חסר', reqMin:m=>'≥ '+m+' מ״ר', reqSeats:s=>s+' מקומות', reqDesks:d=>d+' עמדות', reqArea:a=>'~'+a+' מ״ר',
+  byType:'≈ לפי סוג', byManual:'ידני',
+  missTitle:n=>'חסרים · '+n, extraTitle:n=>'עודפים · '+n, noMissing:'אין חסרים', noExtra:'אין עודפים',
+  fSched:'חדרי הפרוגרמה', fSchedMsg:(m,t,x)=>m+' מתוך '+t+' קודים נמצאו בתכנית'+(x?' · '+x+' חסרים':''),
+  fHead:'עמדות מול כוח אדם', fHeadMsg:(d,o,h)=>d+' עמדות + '+o+' משרדים סגורים = '+(d+o)+' מול '+h+' עובדים',
+  fHeadNoCap:h=>'אין Capacity באופן ספייס — לא ניתן לספור עמדות מול '+h+' עובדים',
+  fNet:'נטו מול ברוטו', fNetMsg:(n,g,p)=>n+' מ״ר נטו משורטט מול '+g+' מ״ר ברוטו ('+p+'%)',
+  fNetOver:(n,g)=>n+' מ״ר נטו גדול מ-'+g+' מ״ר ברוטו — בדוק את השטחים',
+  fExtras:'חדרים עודפים', fExtrasMsg:(n,l)=>n+' חדרים לא בפרוגרמה: '+l,
+  fCodes:'קודים כפולים / לא מוכרים', fCodesMsg:l=>l,
+  fUnassigned:'חדרים בלי שיוך', fUnassignedMsg:n=>n+' חדרים מחכים לשיוך ידני (בטאב הערות)',
+  assignLbl:'שיוך לפרוגרמה', assignAuto:'אוטומטי', assignExtra:'לא בפרוגרמה (עודף)',
+  adjTouch:'צמודים — קיר משותף', adjNear:m=>'קרובים — '+m+' מ׳', adjFar:m=>'רחוקים — '+m+' מ׳ · כדאי לבדוק',
+  adjNoDept:d=>'המחלקה "'+d+'" לא נמצאה בתכנית', adjNoGeo:'אין גיאומטריה — לבדוק בעין',
+  adjScope:'סמיכות', revitCodes:'הורד קודים לרוויט (Excel)', revitCodesSheet:'קודים לרוויט',
+  rcNumber:'Number', rcName:'Name', rcDept:'Department', rcReq:'דרישה', rcFrom:'מקור',
+  xsSched:'חסרים ועודפים', rptMissExtra:'חסרים ועודפים'
 },
 en:{
   /* --- units --- */
@@ -1049,7 +1092,41 @@ en:{
   iEntryOk:'Entry and exit are marked.', iEntryBad:'No entry/exit marking detected. Drag IN and EX from the library.',
   iPanels:'Electrical and data cabinets',
   iPanelsOk:'Electrical and data cabinets are marked.', iPanelsBad:'No cabinet marking detected. Drag EL and IT from the library.',
-  srcAuto:'Detected automatically', srcManual:'Completed manually', srcMissing:'Missing'
+  srcAuto:'Detected automatically', srcManual:'Completed manually', srcMissing:'Missing',
+  /* --- programme schedule: room codes from the RD&A site --- */
+  circulation:'Circulation / core',
+  sMatchedCode:c=>'Matched by code '+c, sMatchedType:c=>'Matched by type to '+c+' — type the code into Number',
+  sMatchedManual:c=>'Assigned by hand to '+c, sUnassigned:'Not assigned to the programme — pick a code from the list',
+  sUnknownCode:c=>'Code '+c+' is not in the programme', sOtherFloor:(c,f)=>'Code '+c+' belongs to another floor (this check is for '+f+')',
+  sDupCode:c=>'Code '+c+' is used by more than one room',
+  sExtra:'Not in the programme — extra room', sExtraType:t=>'More '+t+' rooms than the programme asks for', sMarkedExtra:'Marked as extra by hand',
+  sAreaFail:(a,m)=>a+' m² — below the required '+m+' m²', sAreaEdge:(a,m)=>a+' m² — borderline against '+m+' m²',
+  sAreaOk:(a,m)=>a+' m² ≥ '+m+' m²', sNoArea:'The room has no area',
+  sSeatsFail:(c,s)=>c+' seats — the programme asks for '+s, sSeatsOk:(c,s)=>c+' seats ≥ '+s,
+  sNoCap:n=>'No Capacity on the room — '+n+' seats cannot be checked. Fill Capacity in Revit',
+  sDesksFail:(c,d)=>c+' desks — the department needs '+d, sDesksOk:(c,d)=>c+' desks ≥ '+d,
+  sOsArea:(a,t)=>'Area '+a+' m² against '+t+' m² in the programme', sOsAreaLow:(a,t)=>'Area '+a+' m² — under 90% of the programme’s '+t+' m²',
+  sDeptBad:(d,p)=>'Department "'+d+'" — the programme says "'+p+'"', sDeptMissing:p=>'Department is empty — the programme says "'+p+'"',
+  sOsSplit:n=>'The department is drawn as '+n+' rooms — the total is checked',
+  sOsNoDept:'Open space with no department — fill Department or assign a code',
+  thCode:'Code', thReq:'Requirement', thDrawn:'On plan',
+  stMissing:'Missing', reqMin:m=>'≥ '+m+' m²', reqSeats:s=>s+' seats', reqDesks:d=>d+' desks', reqArea:a=>'~'+a+' m²',
+  byType:'≈ by type', byManual:'by hand',
+  missTitle:n=>'Missing · '+n, extraTitle:n=>'Extra · '+n, noMissing:'Nothing missing', noExtra:'No extras',
+  fSched:'Programme rooms', fSchedMsg:(m,t,x)=>m+' of '+t+' codes found on the plan'+(x?' · '+x+' missing':''),
+  fHead:'Desks against headcount', fHeadMsg:(d,o,h)=>d+' desks + '+o+' enclosed offices = '+(d+o)+' against '+h+' people',
+  fHeadNoCap:h=>'No Capacity on the open space — desks cannot be counted against '+h+' people',
+  fNet:'Net against gross', fNetMsg:(n,g,p)=>n+' m² net drawn against '+g+' m² gross ('+p+'%)',
+  fNetOver:(n,g)=>n+' m² net is more than '+g+' m² gross — check the areas',
+  fExtras:'Extra rooms', fExtrasMsg:(n,l)=>n+' rooms not in the programme: '+l,
+  fCodes:'Duplicate / unknown codes', fCodesMsg:l=>l,
+  fUnassigned:'Unassigned rooms', fUnassignedMsg:n=>n+' rooms waiting to be assigned by hand (Notes tab)',
+  assignLbl:'Programme assignment', assignAuto:'Automatic', assignExtra:'Not in the programme (extra)',
+  adjTouch:'Adjacent — shared wall', adjNear:m=>'Near — '+m+' m', adjFar:m=>'Far — '+m+' m · worth a look',
+  adjNoDept:d=>'Department "'+d+'" was not found on the plan', adjNoGeo:'No geometry — check by eye',
+  adjScope:'Adjacency', revitCodes:'Download codes for Revit (Excel)', revitCodesSheet:'Codes for Revit',
+  rcNumber:'Number', rcName:'Name', rcDept:'Department', rcReq:'Requirement', rcFrom:'Source',
+  xsSched:'Missing and extra', rptMissExtra:'Missing and extra'
 }};
 
 function T(k){
@@ -1210,7 +1287,8 @@ const TYPE_OPEN_ITEMS = {
    ===================================================================== */
 const STATE = {
   mode:'auto', fileName:'', meta:{}, rooms:[], notes:[], symbols:[], dims:[], areas:[],
-  manual:{}, open:{}, program:null, calib:null, iron:{}, seq:1
+  manual:{}, open:{}, program:null, calib:null, iron:{}, seq:1,
+  assign:{}, sched:null, adj:[]
 };
 let PDFPAGE=null, BASE=null, VP1=null, ZOOM=1, TOOL=null, SEL=null, PENDING=null;
 const LAYERS = { notes:true, syms:true, dims:true, areas:true };
@@ -1314,9 +1392,17 @@ async function parsePdf(data, fileName){
    4. CLASSIFICATION + ROOM RULES
    ===================================================================== */
 function classify(name, tag){
-  const n=(name||'').toLowerCase();
   if(tag&&tag.isDept) return 'workstations';
+  /* a programme code typed into Revit's Number says what the room is */
+  if(tag&&tag.codeType&&hasSchedule()) return tag.codeType;
+  /* the Revit import keeps the bare room name apart from its number, so a
+     code like FL01-IT-01 can never be mistaken for words in the name */
+  const n=((tag&&tag.rname!=null&&hasSchedule())?tag.rname:(name||'')).toLowerCase();
   if(!n) return 'unknown';
+  const he=classifyHe(n);
+  if(he) return he;
+  if(/open ?space/.test(n)) return 'openspace';
+  if(/corridor|circulation|\bstairs?\b|\blifts?\b|elevator|\bshaft\b|\bcore\b|lift lobby/.test(n)) return 'circulation';
   if(n.includes('board')) return 'boardroom';
   if(n.includes('alternative meeting')) return 'altmeeting';
   if(n.includes('meet up')||n.includes('game room')) return 'social';
@@ -1345,7 +1431,215 @@ function classify(name, tag){
   if(/\bvr\b/.test(n)) return 'specialty';
   if(n.includes('neighbourhood')||n.includes('neighborhood')||n.includes('open')) return 'openspace';
   if(/^room\b/.test(n)) return 'future';
+  if(/\boffice\b/.test(n)) return 'staffroom';
   return 'unknown';
+}
+/* Hebrew room names. Order matters: סמנכ״ל contains מנכ״ל, "ישיבות לא
+   פורמלי" contains ישיבות, and an open-space name often carries a
+   department such as "IT" — so the specific forms are tested first. */
+const HE_TYPES=[
+  [/אופן ?ספייס|חלל עבודה פתוח|עמדות עבודה|ישיבה פתוחה/, 'openspace'],
+  [/מסדרון|מעבר|מדרגות|מעליות|פיר|גרעין|חדר מכונות/, 'circulation'],
+  [/דירקטוריון|בורדרום/, 'boardroom'],
+  [/ישיבות? (לא[ -]?פורמלי|אלטרנטיבי)|פינת ישיבה/, 'altmeeting'],
+  [/ישיבות|ישיבה|פגישות|ועידה/, 'meeting'],
+  [/טלפון|פון ?בוט|תא שקט|תא שיחה/, 'phonebooth'],
+  [/סמנכ["״׳']?ל/, 'vp'],
+  [/מנכ["״׳']?ל|יו["״]?ר|הנהלה/, 'executive'],
+  [/משאבי אנוש/, 'hr'],
+  [/שרתים|תקשורת/, 'it'],
+  [/הנקה/, 'nursery'],
+  [/מטבח|קפיטריה|פינת קפה/, 'kitchenette'],
+  [/לובי מעליות/, 'circulation'],
+  [/קבלה|המתנה|לובי/, 'reception'],
+  [/מחסן|ארכיון|אחסון/, 'storage'],
+  [/הדפסה|צילום|מדפסת/, 'printcopy'],
+  [/שירותים|שרותים|נכים/, 'wc'],
+  [/מקלחת/, 'shower'],
+  [/לאונג/, 'lounge'],
+  [/עתודה/, 'future'],
+  [/אחזקה|תפעול/, 'facilities'],
+  [/קולנוע|השמעה|תצוגה|סטודיו|אולפן/, 'specialty'],
+  [/מנהל/, 'director'],
+  [/חדר צוות|חדר עבודה|משרד/, 'staffroom']
+];
+function classifyHe(n){
+  if(!/[֐-׿]/.test(n)) return null;
+  for(const [re,t] of HE_TYPES) if(re.test(n)) return t;
+  return null;
+}
+
+/* =====================================================================
+   4a. PROGRAMME SCHEDULE — codes such as FL01-MR-02, typed by the
+   architect into the Revit room's Number, tie each drawn room to one
+   programme entry. Without a `schedule` in the programme nothing here
+   runs and the checker behaves exactly as before.
+   ===================================================================== */
+const CODE_PREFIX={ OS:'openspace', MR:'meeting', BR:'boardroom', AM:'altmeeting', SO:'social',
+  PB:'phonebooth', EX:'executive', VP:'vp', DR:'director', HB:'hrbp', TR:'staffroom', HR:'hr',
+  FA:'facilities', IT:'it', NU:'nursery', KT:'kitchenette', WC:'wc', SH:'shower', LG:'lounge',
+  RC:'reception', PC:'printcopy', ST:'storage', SV:'service', FU:'future', SP:'specialty' };
+/* enclosed rooms that seat one person each when Capacity is empty */
+const OFFICE_KEYS=['executive','vp','director','hrbp','staffroom','hr'];
+/* drawn rooms that no programme asks for, but nobody should call "extra" */
+const NEUTRAL_KEYS=['circulation','wc','shower','service'];
+
+/* "fl01 - mr 2" → {floor:'FL01', pre:'MR', num:2, key:'FL01-MR-02'} */
+function parseCode(s){
+  const t=String(s==null?'':s).toUpperCase().replace(/[–—_]/g,'-').replace(/\s+/g,'');
+  const m=/^(?:(FL\d{1,3})-?)?([A-Z]{2})-?(\d{1,3})$/.exec(t);
+  if(!m || !CODE_PREFIX[m[2]]) return null;
+  const num=parseInt(m[3],10);
+  return { floor:m[1]||'', pre:m[2], num, key:(m[1]?m[1]+'-':'')+m[2]+'-'+String(num).padStart(2,'0') };
+}
+/* a code inside free text — the PDF path has no Number field */
+function findCode(s){
+  const m=/(?:FL\d{1,3}\s*-\s*)?\b[A-Z]{2}\s*-\s*\d{1,3}\b/i.exec(String(s||''));
+  return m?parseCode(m[0]):null;
+}
+function normDept(s){
+  return String(s==null?'':s).normalize('NFC').toLowerCase()
+    .replace(/["״׳'`]/g,'').replace(/[–—]/g,'-').replace(/\s*-\s*/g,'-').replace(/\s+/g,' ').trim();
+}
+const hasSchedule = () => !!(STATE.program && Array.isArray(STATE.program.schedule) && STATE.program.schedule.length);
+const roomKey = (tag,i) => tag.rid!=null ? 'id'+tag.rid : 'r'+i;
+
+/* Match every drawn room to at most one schedule entry:
+   1. exact code (Number, or a code inside the name);
+   2. by type, preferring the same Department, biggest room to biggest need;
+   3. what is left is either extra, neutral (corridors, WC) or unassigned.
+   A choice made by hand in a note's dropdown (STATE.assign) beats all three. */
+function matchSchedule(rooms){
+  const P=STATE.program, sch=P.schedule.filter(e=>e&&e.code);
+  const floor=String((P.meta&&P.meta.floor)||'').toUpperCase();
+  const entries=sch.map((e,ix)=>({ e, ix, pc:parseCode(e.code)||{key:String(e.code).toUpperCase()}, rooms:[] }));
+  const byKey={}; entries.forEach(x=>{ byKey[x.pc.key]=x; if(x.pc.floor) byKey[x.pc.key.replace(/^FL\d+-/,'')]=byKey[x.pc.key.replace(/^FL\d+-/,'')]||x; });
+  const codeIssues=[];
+  const ctx=rooms.map(r=>({ r, entry:null, how:null, flags:[] }));
+  const take=(c,x,how)=>{ c.entry=x; c.how=how; x.rooms.push(c); };
+  const isOS=x=>x.e.key==='openspace';
+
+  /* 0. by hand */
+  ctx.forEach(c=>{
+    const a=STATE.assign[roomKey(c.r.tag,c.r.i)];
+    if(!a) return;
+    if(a==='__extra'){ c.how='extra-manual'; return; }
+    const x=entries.find(y=>y.e.code===a);
+    if(x) take(c,x,'manual');
+  });
+  /* 1. by code */
+  ctx.forEach(c=>{
+    if(c.how) return;
+    const t=c.r.tag, pc=parseCode(t.number)||findCode(t.number)||findCode(t.rname!=null?t.rname:t.name)||findCode(t.code);
+    if(!pc) return;
+    c.code=pc;
+    if(pc.floor && floor && pc.floor!==floor){ c.flags.push(['w',T('sOtherFloor',pc.key,floor)]); codeIssues.push(T('sOtherFloor',pc.key,floor)); return; }
+    const x=byKey[pc.key]||byKey[pc.key.replace(/^FL\d+-/,'')];
+    if(!x){ c.flags.push(['w',T('sUnknownCode',pc.key)]); codeIssues.push(T('sUnknownCode',pc.key)); return; }
+    /* one department's open space may be drawn as several rooms — that is a
+       split, not a duplicate; any other code used twice is a mistake */
+    if(x.rooms.length && !isOS(x)){
+      c.flags.push(['w',T('sDupCode',x.e.code)]);
+      if(!codeIssues.includes(T('sDupCode',x.e.code))) codeIssues.push(T('sDupCode',x.e.code));
+      return;
+    }
+    take(c,x,'code');
+  });
+  /* 2. by type — department first, then size */
+  const free=x=>!x.rooms.length;
+  const need=x=>numN(x.e.minArea)??numN(x.e.area)??0;
+  const left=ctx.filter(c=>!c.how);
+  left.forEach(c=>{ c.type=classify(c.r.tag.name,c.r.tag); });
+  /* open space: one entry per department, so only the department can decide */
+  left.filter(c=>c.type==='openspace'||c.type==='workstations').forEach(c=>{
+    const os=entries.filter(isOS);
+    if(!os.length) return;
+    const d=normDept(c.r.tag.department);
+    let x=d?os.find(y=>normDept(y.e.dept)===d):null;
+    if(!x && os.length===1) x=os[0];
+    if(x) take(c,x,'type'); else c.how='os-nodept';
+  });
+  const groups={};
+  left.filter(c=>!c.how).forEach(c=>{ (groups[c.type]=groups[c.type]||[]).push(c); });
+  Object.keys(groups).forEach(type=>{
+    const cs=groups[type].sort((a,b)=>(b.r.tag.area||0)-(a.r.tag.area||0));
+    cs.forEach(c=>{
+      const pool=entries.filter(x=>x.e.key===type && free(x));
+      if(!pool.length) return;
+      const d=normDept(c.r.tag.department);
+      const same=d?pool.filter(x=>normDept(x.e.dept)===d):[];
+      const cand=(same.length?same:pool).sort((a,b)=>need(b)-need(a));
+      /* the biggest need this room can still satisfy, else the smallest need */
+      const a=c.r.tag.area;
+      const fit=a!=null?cand.find(x=>need(x)<=a):null;
+      take(c, fit||cand[cand.length-1], 'type');
+    });
+  });
+  /* 3. the rest */
+  const schedKeys=new Set(entries.map(x=>x.e.key));
+  ctx.forEach(c=>{
+    if(c.how) return;
+    const type=c.type||classify(c.r.tag.name,c.r.tag);
+    if(NEUTRAL_KEYS.includes(type)) c.how='neutral';
+    else if(type==='unknown') c.how='unassigned';
+    else { c.how='extra'; c.extraWhy=schedKeys.has(type)?T('sExtraType',typeName(type)):T('sExtra'); }
+  });
+
+  /* open-space totals per department entry */
+  entries.forEach(x=>{
+    const rs=x.rooms.map(c=>c.r.tag);
+    const areas=rs.map(t=>t.area).filter(v=>v!=null), caps=rs.map(t=>t.ppl).filter(v=>v!=null);
+    x.area=areas.length?+areas.reduce((s,v)=>s+v,0).toFixed(2):null;
+    x.cap=caps.length?caps.reduce((s,v)=>s+v,0):null;
+  });
+  ctx.forEach(c=>{ c.r.sched=c; });
+  return { entries, ctx, codeIssues,
+    missing: entries.filter(free),
+    extra:   ctx.filter(c=>c.how==='extra'||c.how==='extra-manual'),
+    unassigned: ctx.filter(c=>c.how==='unassigned'||c.how==='os-nodept') };
+}
+
+/* The checks one schedule entry asks of its drawn room(s). Returns the
+   messages; checkRoom folds them into the room's own result. */
+function scheduleMsgs(c){
+  const out=[], x=c.entry, e=x&&x.e;
+  c.flags.forEach(f=>out.push({l:f[0]==='w'?'warn':'info', m:f[1]}));
+  if(c.how==='extra') out.push({l:'warn', m:c.extraWhy});
+  if(c.how==='extra-manual') out.push({l:'info', m:T('sMarkedExtra')});
+  if(c.how==='unassigned') out.push({l:'warn', m:T('sUnassigned')});
+  if(c.how==='os-nodept') out.push({l:'warn', m:T('sOsNoDept')});
+  if(!e) return out;
+  out.push({l:c.how==='type'?'info':'ok', m:c.how==='code'?T('sMatchedCode',e.code):c.how==='manual'?T('sMatchedManual',e.code):T('sMatchedType',e.code)});
+  const t=c.r.tag, os=e.key==='openspace';
+  const a=os?x.area:t.area, cap=os?x.cap:t.ppl;
+  if(os && x.rooms.length>1) out.push({l:'info', m:T('sOsSplit',x.rooms.length)});
+  const min=numN(e.minArea);
+  if(min!=null){
+    if(a==null) out.push({l:'info', m:T('sNoArea')});
+    else if(a<min*0.95) out.push({l:'fail', m:T('sAreaFail',a,min)});
+    else if(a<min) out.push({l:'warn', m:T('sAreaEdge',a,min)});
+    else out.push({l:'ok', m:T('sAreaOk',a,min)});
+  }
+  if(os){
+    const d=numN(e.desks), ta=numN(e.area);
+    if(d!=null){
+      if(cap==null) out.push({l:'info', m:T('sNoCap',d)});
+      else if(cap<d) out.push({l:'fail', m:T('sDesksFail',cap,d)});
+      else out.push({l:'ok', m:T('sDesksOk',cap,d)});
+    }
+    if(ta!=null && a!=null) out.push(a<ta*0.9 ? {l:'warn', m:T('sOsAreaLow',a,ta)} : {l:'ok', m:T('sOsArea',a,ta)});
+  }
+  const s=numN(e.seats);
+  if(s!=null && !os){
+    if(cap==null) out.push({l:'info', m:T('sNoCap',s)});
+    else if(cap<s) out.push({l:'fail', m:T('sSeatsFail',cap,s)});
+    else out.push({l:'ok', m:T('sSeatsOk',cap,s)});
+  }
+  if(e.dept){
+    if(!t.department) out.push({l:'info', m:T('sDeptMissing',e.dept)});
+    else if(normDept(t.department)!==normDept(e.dept)) out.push({l:'warn', m:T('sDeptBad',t.department,e.dept)});
+  }
+  return out;
 }
 const TYPE_NAME={
   boardroom:{he:'חדר דירקטוריון', en:'Board room'}, meeting:{he:'חדר ישיבות', en:'Meeting room'},
@@ -1359,6 +1653,7 @@ const TYPE_NAME={
   lounge:{he:'לאונג׳', en:'Lounge'}, social:{he:'מפגש / משחק', en:'Meet up / game'},
   printcopy:{he:'הדפסה', en:'Print & copy'}, storage:{he:'אחסון', en:'Storage'},
   specialty:{he:'ייעודי', en:'Specialty'}, reception:{he:'קבלה / המתנה', en:'Reception / waiting'},
+  circulation:{he:'מעבר / גרעין', en:'Circulation / core'},
   unknown:{he:'לא מזוהה', en:'Unrecognised'}
 };
 const typeName = t => L(TYPE_NAME[t]) || t;
@@ -1372,7 +1667,21 @@ function interpSeat(tbl,s){
   const [sL,aL]=tbl[tbl.length-1]; return aL*s/sL;
 }
 
-function checkRoom(tag){
+/* With a programme schedule, a room matched to an entry is judged by that
+   entry's own numbers — the office-standard thresholds would only repeat
+   or contradict them. Rooms the schedule does not claim keep the standard
+   checks, plus a line saying why they are unclaimed. */
+function checkRoom(tag, sc){
+  if(!sc) return checkRoomStd(tag);
+  const base = sc.entry ? {type:sc.entry.e.key, level:'ok', msgs:[]} : checkRoomStd(tag);
+  if(sc.how==='neutral' && base.type==='circulation') return base;
+  const extra=scheduleMsgs(sc);
+  const rank={ok:0,info:0,warn:1,fail:2}, back=['ok','warn','fail'];
+  let lv=rank[base.level]||0;
+  extra.forEach(m=>{ lv=Math.max(lv, rank[m.l]||0); });
+  return { type:base.type, level:back[lv], msgs:extra.concat(base.msgs) };
+}
+function checkRoomStd(tag){
   const type=classify(tag.name,tag), R=RULES[type]||{};
   const out={type,level:'ok',msgs:[]};
   const fail=m=>{out.level='fail'; out.msgs.push({l:'fail',m});};
@@ -1381,6 +1690,7 @@ function checkRoom(tag){
   const ok=m=>out.msgs.push({l:'ok',m});
 
   if(type==='unknown'){ warn(tag.name?T('mUnknownNamed',tag.name):T('mUnknownBlank')); return out; }
+  if(type==='circulation'){ ok(T('circulation')); return out; }
   if(type==='workstations'){
     ok(T('mStations', tag.stations, tag.name));
     if(!tag.name) warn(T('mDeptNoName'));
@@ -1551,7 +1861,105 @@ function floorChecks(parse, rooms){
   if(noCap) out.push({ level:'warn', n:T('fCapCover'), m:T('fCapCoverMsg',noCap,capRelevant.length) });
   const dq=rooms.length?Math.round(100*rooms.filter(r=>r.tag.name).length/rooms.length):0;
   out.push({level:dq>=95?'ok':dq>=80?'warn':'fail', n:T('fDataQ'), m:T('fDataQMsg',dq)});
+  if(STATE.sched) out.push(...scheduleFloorChecks(rooms));
   return out;
+}
+
+function scheduleFloorChecks(rooms){
+  const S=STATE.sched, meta=(STATE.program&&STATE.program.meta)||{}, out=[];
+  const tot=S.entries.length, miss=S.missing.length;
+  out.push({ level:miss?'fail':'ok', n:T('fSched'), m:T('fSchedMsg',tot-miss,tot,miss) });
+
+  /* headcount = open-space desks + one person per enclosed office (its
+     Capacity when filled) — exactly how the programme reaches its total */
+  const hc=numN(meta.headcount);
+  if(hc!=null){
+    const osRooms=rooms.filter(r=>['openspace','workstations'].includes(r.check.type));
+    const caps=osRooms.map(r=>r.tag.ppl).filter(v=>v!=null);
+    const offices=rooms.filter(r=>OFFICE_KEYS.includes(r.check.type) && r.sched && r.sched.how!=='extra-manual')
+      .reduce((s,r)=>s+(r.tag.ppl!=null?r.tag.ppl:1),0);
+    if(osRooms.length && !caps.length) out.push({ level:'warn', n:T('fHead'), m:T('fHeadNoCap',hc) });
+    else {
+      const desks=caps.reduce((s,v)=>s+v,0), all=desks+offices;
+      out.push({ level: all>=hc?'ok' : all>=hc*0.9?'warn':'fail', n:T('fHead'), m:T('fHeadMsg',desks,offices,hc) });
+    }
+  }
+  const gross=numN(meta.areaGross);
+  const net=rooms.reduce((s,r)=>s+(r.tag.area||0),0);
+  if(gross && net){
+    const n=+net.toFixed(0), p=Math.round(100*net/gross);
+    out.push(net>gross*1.02
+      ? { level:'warn', n:T('fNet'), m:T('fNetOver',n,gross) }
+      : { level:'info', n:T('fNet'), m:T('fNetMsg',n,gross,p) });
+  }
+  if(S.extra.length){
+    const names=S.extra.filter(c=>c.how==='extra').map(c=>c.r.tag.name||('#'+c.r.i));
+    if(names.length) out.push({ level:'warn', n:T('fExtras'), m:T('fExtrasMsg',names.length,names.join(' · ')) });
+  }
+  if(S.codeIssues.length) out.push({ level:'warn', n:T('fCodes'), m:T('fCodesMsg',S.codeIssues.join(' · ')) });
+  if(S.unassigned.length) out.push({ level:'warn', n:T('fUnassigned'), m:T('fUnassignedMsg',S.unassigned.length) });
+  return out;
+}
+
+/* =====================================================================
+   6a. ADJACENCY — the programme's "A ↔ B" QA lines, measured on the
+   drawn outlines. Only ever a suggestion on the QA list, never a fail:
+   a corridor between two departments can be exactly what was intended.
+   ===================================================================== */
+const ADJ_TOUCH=0.35, ADJ_NEAR=6;  /* metres: a partition is ~10–20 cm */
+function parseAdj(name){
+  const s=String(name||'');
+  if(s.indexOf('↔')<0) return null;
+  const [a,b]=s.split('↔');
+  const clean=x=>x.replace(/\s+[—–]\s+.*$/,'').trim();
+  const A=clean(a), B=clean(b);
+  return (A&&B)?{a:A,b:B}:null;
+}
+function segDist(p,q,r,s){
+  const d=(a,b,c)=>{ /* point a to segment b–c */
+    const vx=c.x-b.x, vy=c.y-b.y, L2=vx*vx+vy*vy;
+    let t=L2?((a.x-b.x)*vx+(a.y-b.y)*vy)/L2:0; t=Math.max(0,Math.min(1,t));
+    return Math.hypot(a.x-(b.x+t*vx), a.y-(b.y+t*vy));
+  };
+  return Math.min(d(p,r,s), d(q,r,s), d(r,p,q), d(s,p,q));
+}
+function polyDist(A,B){
+  let best=Infinity;
+  for(let i=0;i<A.length;i++){ const p=A[i], q=A[(i+1)%A.length];
+    for(let j=0;j<B.length;j++){ const r=B[j], s=B[(j+1)%B.length];
+      const v=segDist(p,q,r,s); if(v<best) best=v; if(best===0) return 0; } }
+  return best;
+}
+function adjacency(rooms){
+  const qa=(STATE.program&&STATE.program.qa)||[];
+  const pairs=qa.map((q,i)=>({i, p:parseAdj(q&&q.name||q)})).filter(x=>x.p);
+  if(!pairs.length) return [];
+  /* a room speaks for its own Department, else for the programme entry it matched */
+  const byDept={};
+  rooms.forEach(r=>{
+    const d=normDept(r.tag.department || (r.sched&&r.sched.entry&&r.sched.entry.e.dept) || '');
+    if(d) (byDept[d]=byDept[d]||[]).push(r);
+  });
+  return pairs.map(({i,p})=>{
+    const A=byDept[normDept(p.a)]||[], B=byDept[normDept(p.b)]||[];
+    let lv='i', msg;
+    if(!A.length) msg=T('adjNoDept',p.a);
+    else if(!B.length) msg=T('adjNoDept',p.b);
+    else {
+      const pa=A.filter(r=>r.tag.poly), pb=B.filter(r=>r.tag.poly);
+      if(!pa.length||!pb.length) msg=T('adjNoGeo');
+      else {
+        let d=Infinity;
+        pa.forEach(x=>pb.forEach(y=>{ if(x!==y) d=Math.min(d, polyDist(x.tag.poly,y.tag.poly)); }));
+        if(pa.some(x=>pb.includes(x))) d=0; /* one room holding both departments */
+        const m=d.toFixed(1);
+        if(d<=ADJ_TOUCH){ lv='o'; msg=T('adjTouch'); }
+        else if(d<=ADJ_NEAR){ lv='o'; msg=T('adjNear',m); }
+        else { lv='w'; msg=T('adjFar',m); }
+      }
+    }
+    return { qa:i, a:p.a, b:p.b, lv, msg };
+  });
 }
 
 /* =====================================================================
@@ -1570,7 +1978,9 @@ function openItems(rooms){
     });
   });
   (STATE.program&&STATE.program.qa||[]).forEach((q,i)=>{
-    out.push({ id:'qa'+i, type:'qa', scope:T('qaScope'), n:q.name||q });
+    const adj=(STATE.adj||[]).find(a=>a.qa===i);
+    out.push({ id:'qa'+i, type:adj?'adj':'qa', n:q.name||q,
+      scope: adj ? T('adjScope')+': '+adj.msg : T('qaScope'), adjLv:adj?adj.lv:null });
   });
   return out;
 }
@@ -1587,7 +1997,7 @@ function buildNotes(rooms, fc){
     if(r.check.level==='ok') return;
     const body=r.check.msgs.filter(m=>m.l===r.check.level).map(m=>m.m).join(' · ');
     out.push({ id:'r'+r.i, lv:LV[r.check.level], src:'room',
-      title:r.tag.name||T('mUnknownBlank'), sub:typeName(r.check.type),
+      title:r.tag.name||T('mUnknownBlank'), sub:typeName(r.check.type), rk:roomKey(r.tag,r.i),
       body: edits['r'+r.i]||body, edited:!!edits['r'+r.i],
       nx:r.tag.nx, ny:r.tag.ny, area:r.tag.area, ppl:r.tag.ppl });
   });
@@ -2290,6 +2700,7 @@ function notesList(){
           <span class="cs">${n.shape==='cloud'?'☁ ':''}${esc(n.sub)}</span>
         </div>
         <div class="cb" contenteditable="true" data-id="${n.id}">${esc(n.body)}</div>
+        ${n.rk&&STATE.sched?assignSelect(n.rk):''}
         <div class="cact">
           ${(n.shape==='cloud'||n.nx!=null)
             ? `<button class="xb" data-act="goto" data-id="${n.id}">${T('showOnPlan')}</button>`
@@ -2300,6 +2711,23 @@ function notesList(){
       </div>`).join('');
   });
   return h;
+}
+/* every code is offered; the ones another room already holds are marked,
+   since moving a code is as legitimate as filling a gap */
+function assignSelect(rk){
+  const S=STATE.sched, cur=STATE.assign[rk]||'';
+  const holder={}; S.ctx.forEach(c=>{ if(c.entry) holder[c.entry.e.code]=holder[c.entry.e.code]||roomKey(c.r.tag,c.r.i); });
+  const opts=S.entries.map(x=>{
+    const e=x.e, taken=holder[e.code]&&holder[e.code]!==rk;
+    const lbl=e.code+' · '+(L(e.fn)||e.key)+(e.dept?' · '+e.dept:'')+(taken?' ●':'');
+    return `<option value="${esc(e.code)}" ${cur===e.code?'selected':''}>${esc(lbl)}</option>`;
+  }).join('');
+  return `<div class="asg"><label>${T('assignLbl')}</label>
+    <select onchange="setAssign('${rk}', this.value)" onclick="event.stopPropagation()">
+      <option value="" ${!cur?'selected':''}>${T('assignAuto')}</option>
+      <option value="__extra" ${cur==='__extra'?'selected':''}>${T('assignExtra')}</option>
+      ${opts}
+    </select></div>`;
 }
 function bindNotes(){
   $('#tabBody').querySelectorAll('.cb').forEach(el=>{
@@ -2359,7 +2787,19 @@ function viewProgram(){
   progRows().forEach(r=>{
     h+=`<tr class="${r.cls}"><td class="fn">${esc(r.fn)}</td><td>${esc(r.goal)}</td><td>${esc(r.found)}</td><td>${esc(r.delta)}</td></tr>`;
   });
-  return h+'</tbody></table>';
+  h+='</tbody></table>';
+  if(hasSchedule()){
+    if(STATE.sched){
+      const ms=missingList(), ex=extraList();
+      h+=`<div class="msx"><div class="grp-title">${T('missTitle',ms.length)}</div>`+
+        (ms.length?`<ul>${ms.map(m=>`<li><b>${esc(m.code)}</b> · ${esc(m.name)} — ${esc(m.req)}</li>`).join('')}</ul>`:`<div class="empty">${T('noMissing')}</div>`)+
+        `<div class="grp-title">${T('extraTitle',ex.length)}</div>`+
+        (ex.length?`<ul>${ex.map(x=>`<li><b>${esc(x.name)}</b> · ${esc(x.type)}${x.area!=null?' · '+x.area+' '+T('uM2'):''} — ${esc(x.why)}</li>`).join('')}</ul>`:`<div class="empty">${T('noExtra')}</div>`)+
+        '</div>';
+    }
+    h+=`<div class="cact" style="margin-top:12px"><button class="xb" onclick="exportRevitCodes()">${T('revitCodes')}</button></div>`;
+  }
+  return h;
 }
 
 function viewOpen(){
@@ -2374,7 +2814,7 @@ function viewOpen(){
           <button class="${cur==='fail'?'a-fail':''}" onclick="setManual('${c.id}','fail')">${T('stFail')}</button>
           <button class="${cur==='na'?'a-na':''}" onclick="setManual('${c.id}','na')">${T('stNa')}</button>
         </span></div>
-      <div class="ib">${esc(c.note||'')}</div>
+      <div class="ib"${c.adjLv?` style="color:${lvColor(c.adjLv)};opacity:1"`:''}>${esc(c.note||'')}</div>
     </div>`;
   }).join('');
   return h;
@@ -2382,7 +2822,7 @@ function viewOpen(){
 /* one list for the panel, the PDF sheet and the Excel tab */
 function openList(){
   return MANUAL_CHECKS.map(c=>({id:c.id, n:L(c.n), note:L(c.note)}))
-    .concat((STATE.openItems||[]).map(i=>({id:i.id, n:i.n, note:i.scope})));
+    .concat((STATE.openItems||[]).map(i=>({id:i.id, n:i.n, note:i.scope, adjLv:i.adjLv||null})));
 }
 function setManual(id,v){ STATE.manual[id]=v; renderPanel(); }
 
@@ -2494,16 +2934,32 @@ async function runManual(canvas, name){
    own canvas and skip renderBase() entirely — every check downstream reads
    from parse.tags, not from the PDF page, so the rest of the pipeline is
    identical either way. */
+/* Every room/floor result is derived from the parse + the programme + the
+   hand assignments. One place rebuilds it all, so loading a programme
+   after the plan, switching language or assigning a room can never leave
+   a stale table behind. */
+function recheck(){
+  if(!STATE.parse) return;
+  STATE.rooms=STATE.parse.tags.map((tag,i)=>({tag, i:i+1}));
+  STATE.sched = hasSchedule() ? matchSchedule(STATE.rooms) : null;
+  STATE.rooms.forEach(r=>{ r.check=checkRoom(r.tag, STATE.sched?r.sched:null); });
+  STATE.adj = adjacency(STATE.rooms);
+  const fc=floorChecks(STATE.parse, STATE.rooms);
+  STATE.floor=fc;
+  buildNotes(STATE.rooms, fc);
+  STATE.openItems=openItems(STATE.rooms);
+}
+function setAssign(rk, v){
+  if(v) STATE.assign[rk]=v; else delete STATE.assign[rk];
+  recheck(); refresh();
+}
+
 async function run(parse, prebuiltBase){
   STATE.mode='auto';
   STATE.parse=parse; STATE.fileName=parse.fileName;
   PDFPAGE=parse.page||null; VP1=parse.vp1||null;
-  STATE.rooms=parse.tags.map((tag,i)=>({tag, i:i+1, check:checkRoom(tag)}));
-  const fc=floorChecks(parse, STATE.rooms);
-  STATE.floor=fc;
-  buildNotes(STATE.rooms, fc);
+  recheck();
   STATE.ironR=ironChecks(parse, STATE.rooms);
-  STATE.openItems=openItems(STATE.rooms);
 
   stampHeader();
   $('#hbtns').style.display='flex';
@@ -2523,7 +2979,15 @@ async function run(parse, prebuiltBase){
 /* a hand-edited export can put a number where a string belongs or vice versa
    — never let that throw mid-import, just fall back cleanly */
 const numOr=(v,fallback)=>{ const n=Number(v); return Number.isFinite(n)?n:fallback; };
+/* Number(null) and Number('') are 0 — an empty Revit field must stay empty */
+const numN=v=> (v==null||v==='') ? null : numOr(v,null);
 const strOr=v=> typeof v==='string' ? v : '';
+/* Revit's Room.Name getter returns "Name Number" — drop the trailing number
+   so it is not shown (or matched) twice */
+function roomName(r){
+  const n=strOr(r.name).trim(), num=r.number!=null?String(r.number).trim():'';
+  return (num && n.length>num.length && n.endsWith(' '+num)) ? n.slice(0,-num.length).trim() : n;
+}
 
 function pickPrimaryLevel(exp, hint){
   const byLevel={};
@@ -2601,7 +3065,7 @@ function renderRoomsBase(rooms){
     const ct=polyCentroid(outer.map(p=>({x:p.x,y:p.y})));
     const cpx=toPx(ct);
     const areaM2=numOr(r.areaM2,null);
-    const label=(strOr(r.name))+(r.number!=null&&r.number!==''?' '+r.number:'');
+    const label=(roomName(r))+(r.number!=null&&r.number!==''?' '+r.number:'');
     c.fillStyle='#1B1B1B'; c.textAlign='center'; c.textBaseline='middle';
     c.font='600 12px Helvetica,Arial';
     if(label) c.fillText(label, cpx.x, cpx.y-7);
@@ -2619,11 +3083,20 @@ async function applyRoomExport(exp, levelHint){
 
   const tags=picked.rooms.map(r=>{
     const area=numOr(r.areaM2,null);
+    /* Revit Number may hold a programme code (FL01-MR-02) — it is kept on
+       its own, and also tells classify() the room type outright */
+    const number=r.number!=null?String(r.number).trim():'';
+    const pc=parseCode(number);
+    const lp=outerLoop(r);
     return {
       area:area!=null?+area.toFixed(2):null,
-      ppl:numOr(r.capacity,null)!=null?Math.round(numOr(r.capacity,0)):null,
+      ppl:numN(r.capacity)!=null?Math.round(numN(r.capacity)):null,
       stations:null, code:null, isDept:false, names:[],
-      name:(strOr(r.name)+(r.number!=null&&r.number!==''?' '+r.number:'')).trim(),
+      name:(roomName(r)+(number?' '+number:'')).trim(),
+      rname:roomName(r), number, department:strOr(r.department).trim(),
+      codeType:pc?CODE_PREFIX[pc.pre]:null,
+      rid:(r.id!=null&&r.id!=='')?r.id:null,
+      poly:lp.outer,
       nx:r._centroidPx?r._centroidPx.x:0.5, ny:r._centroidPx?r._centroidPx.y:0.5,
       pdfX:0, pdfY:0
     };
@@ -2873,10 +3346,8 @@ function setLang(l){
     /* rule text, type names and open items are all language-derived —
        rebuild them so nothing is left in the previous language */
     if(STATE.mode==='auto'&&STATE.parse){
-      STATE.rooms=STATE.parse.tags.map((tag,i)=>({tag, i:i+1, check:checkRoom(tag)}));
-      const fc=floorChecks(STATE.parse, STATE.rooms);
-      STATE.floor=fc;
-      buildNotes(STATE.rooms, fc);
+      recheck();
+      STATE.ironR=ironChecks(STATE.parse, STATE.rooms);
     }
     retitleManualNotes();
     stampHeader();
@@ -2908,9 +3379,8 @@ function applyProgram(p){
   b.innerHTML=T('progBanner',
     esc([p.meta&&p.meta.project, p.meta&&p.meta.floor].filter(Boolean).join(' · ')),
     (p.program||[]).length, (p.qa||[]).length);
-  if(STATE.rooms.length){
-    STATE.rooms=STATE.parse.tags.map((tag,i)=>({tag,i:i+1,check:checkRoom(tag)}));
-    buildNotes(STATE.rooms, floorChecks(STATE.parse, STATE.rooms));
+  if(STATE.rooms.length && STATE.parse){
+    recheck();
     refresh();
   }
   toast(T('tProgLoaded'));
@@ -2922,6 +3392,7 @@ function saveJson(){
     meta:Object.assign({file:STATE.fileName, exported:new Date().toISOString().slice(0,10)},
       (STATE.program&&STATE.program.meta)||{}, metaGet()),
     program:(STATE.program&&STATE.program.program)||PROGRAM_REF,
+    schedule:(STATE.program&&STATE.program.schedule)||undefined,
     qa:(STATE.program&&STATE.program.qa)||[],
     rules:(STATE.program&&STATE.program.rules)||{},
     _source:(STATE.program&&STATE.program._source)||undefined,
@@ -2929,7 +3400,15 @@ function saveJson(){
       notes:STATE.notes.map(n=>({id:n.id,num:n.num,lv:n.lv,src:n.src,shape:n.shape,
         title:n.title,sub:n.sub,body:n.body,nx:n.nx,ny:n.ny,pts:n.pts})),
       symbols:STATE.symbols, dims:STATE.dims, areas:STATE.areas,
-      manual:STATE.manual, iron:STATE.iron, calib:STATE.calib
+      manual:STATE.manual, iron:STATE.iron, calib:STATE.calib,
+      assign:STATE.assign,
+      /* a read-only snapshot of the programme check, for whoever reads the
+         file next (the site, Roy) — it is recomputed on load, never restored */
+      schedule: STATE.sched ? {
+        rows: schedRows().map(r=>({code:r.code, requirement:r.goal, found:r.found, status:r.cls})),
+        missing: missingList(), extra: extraList(),
+        adjacency: (STATE.adj||[]).map(a=>({a:a.a, b:a.b, level:a.lv, note:a.msg}))
+      } : undefined
     }
   };
   dl(exportBase()+'-review.json', JSON.stringify(out,null,2), 'application/json');
@@ -3175,18 +3654,38 @@ function exportXlsx(){
     {v:r.fn, s:XS.BOLD}, {v:r.goal, s:LVSTYLE[r.cls]}, {v:r.found, s:LVSTYLE[r.cls]}, {v:r.delta, s:LVSTYLE[r.cls]}
   ]));
 
-  const rooms={ name:T('xsRooms'), cols:[7,34,22,13,11,13,60],
-    rows:[hrow([T('thNum'),T('xsTagName'),T('xsType'),T('xsAreaCol'),T('xsCap'),T('thStatus'),T('xsFindings')])] };
+  /* the schedule adds three columns; without it the sheet is unchanged */
+  const SC=!!STATE.sched;
+  const rooms={ name:T('xsRooms'), cols:SC?[7,34,16,24,16,22,13,11,13,60]:[7,34,22,13,11,13,60],
+    rows:[hrow(SC
+      ?[T('thNum'),T('xsTagName'),T('rcNumber'),T('rcDept'),T('thCode'),T('xsType'),T('xsAreaCol'),T('xsCap'),T('thStatus'),T('xsFindings')]
+      :[T('thNum'),T('xsTagName'),T('xsType'),T('xsAreaCol'),T('xsCap'),T('thStatus'),T('xsFindings')])] };
   STATE.rooms.forEach(r=>{
     const lv={fail:'f',warn:'w',info:'i',ok:'o'}[r.check.level];
+    const ent=SC&&r.sched&&r.sched.entry;
     rooms.rows.push([
-      r.i, {v:r.tag.name||'—', s:XS.BOLD}, typeName(r.check.type),
+      r.i, {v:r.tag.name||'—', s:XS.BOLD},
+      ...(SC?[r.tag.number||'—', r.tag.department||'—', ent?ent.e.code:'—']:[]),
+      typeName(r.check.type),
       r.tag.area!=null?r.tag.area:'—', r.tag.ppl!=null?r.tag.ppl:'—',
       {v:lvName(lv), s:LVSTYLE[lv]},
       r.check.msgs.map(x=>x.m).join(' · ')
     ]);
   });
   if(!STATE.rooms.length) rooms.rows.push([{v:T('xsNoRooms')}]);
+
+  const sheets=[sum,notes,prog,rooms];
+  if(SC){
+    const ms=missingList(), ex=extraList();
+    const mx={ name:T('xsSched'), cols:[22,34,44,16],
+      rows:[[{v:T('missTitle',ms.length), s:XS.BOLD}], hrow([T('thCode'),T('thFn'),T('thReq'),''])] };
+    ms.forEach(m=>mx.rows.push([{v:m.code, s:XS.FAIL}, m.name, m.req, '']));
+    if(!ms.length) mx.rows.push([T('noMissing')]);
+    mx.rows.push([], [{v:T('extraTitle',ex.length), s:XS.BOLD}], hrow([T('xsTagName'),T('xsType'),T('thNote'),T('xsAreaCol')]));
+    ex.forEach(x=>mx.rows.push([{v:x.name, s:XS.WARN}, x.type, x.why, x.area!=null?x.area:'—']));
+    if(!ex.length) mx.rows.push([T('noExtra')]);
+    sheets.push(mx);
+  }
 
   const meas={ name:T('xsMeasures'), cols:[34,18,18,14],
     rows:[hrow([T('thRoomArea'),T('xsMeasuredM2'),T('xsPerimM'),T('thPts')])] };
@@ -3214,11 +3713,28 @@ function exportXlsx(){
   });
 
   try{
-    dlBlob(exportBase()+'-review.xlsx', buildXlsx([sum,notes,prog,rooms,meas,open]));
+    dlBlob(exportBase()+'-review.xlsx', buildXlsx(sheets.concat([meas,open])));
   }catch(err){
     toast(T('tXlsxErr'));
     showError(T('errXlsx', esc(err.message)));
   }
+}
+
+/* The schedule as the architect types it into Revit: Number, Name,
+   Department — copy a column, paste into the room schedule. */
+function exportRevitCodes(){
+  closeExportMenu();
+  if(!hasSchedule()){ toast(T('progNoJson')); return; }
+  const P=STATE.program;
+  const sh={ name:T('revitCodesSheet'), cols:[16,34,26,34,40],
+    rows:[hrow([T('rcNumber'),T('rcName'),T('rcDept'),T('rcReq'),T('rcFrom')])] };
+  P.schedule.filter(e=>e&&e.code).forEach(e=>sh.rows.push([
+    {v:e.code, s:XS.BOLD}, e.name||L(e.fn)||e.key, e.dept||'', schedReq(e), L(e.from)||''
+  ]));
+  const m=P.meta||{};
+  const stem=[m.project,m.floor].filter(Boolean).join('-').replace(/[\\/:*?"<>|]/g,'-').trim()||exportBase();
+  try{ dlBlob(stem+'-revit-codes.xlsx', buildXlsx([sh])); }
+  catch(err){ toast(T('tXlsxErr')); showError(T('errXlsx', esc(err.message))); }
 }
 
 /* =====================================================================
@@ -3548,6 +4064,7 @@ function restoreReview(rv){
   if(rv.manual)  STATE.manual=rv.manual;
   if(rv.iron)    STATE.iron=rv.iron;
   if(rv.calib)   STATE.calib=rv.calib;
+  if(rv.assign && typeof rv.assign==='object'){ STATE.assign=Object.assign({}, rv.assign); recheck(); }
   /* hand-made markup only — the rule-derived notes are rebuilt from the plan */
   (rv.notes||[]).filter(n=>n.src==='custom'||n.src==='cloud').forEach(n=>{
     if(!STATE.notes.some(x=>x.id===n.id)) STATE.notes.push(Object.assign({edited:true}, n));
@@ -3607,7 +4124,50 @@ const VARHEX={'--s-el':'#7C3AED','--s-it':'#0EA5E9','--s-mep':'#0891B2','--s-mov
   '--s-fire':'#E1504B','--s-prog':'#D6009A','--black':'#1B1B1B'};
 function hex(c){ const m=/var\((--[a-z-]+)\)/.exec(c); return m?(VARHEX[m[1]]||'#8A8A8A'):c; }
 
+/* one requirement line for a schedule entry, shared by the table and the Revit sheet */
+function schedReq(e){
+  return [numN(e.minArea)!=null?T('reqMin',e.minArea):null,
+    numN(e.desks)!=null?T('reqDesks',e.desks):null,
+    numN(e.area)!=null&&e.key==='openspace'?T('reqArea',e.area):null,
+    numN(e.seats)!=null?T('reqSeats',e.seats):null,
+    e.dept||null].filter(Boolean).join(' · ')||'—';
+}
+/* With a schedule: one row per programme code. The row shape is the same
+   as the per-type rows, so every table, sheet and export takes it as is. */
+function schedRows(){
+  const S=STATE.sched;
+  return S.entries.map(x=>{
+    const e=x.e;
+    let cls, found, delta;
+    if(!x.rooms.length){ cls='f'; found=T('stMissing'); delta='✗'; }
+    else {
+      const lv=x.rooms.map(c=>c.r.check.level);
+      cls=lv.includes('fail')?'f':lv.includes('warn')?'w':'o';
+      const t=x.rooms.map(c=>c.r.tag);
+      const os=e.key==='openspace';
+      const a=os?x.area:t[0].area, cap=os?x.cap:t[0].ppl;
+      found=[t.map(v=>v.name||'—').join(' + '),
+        a!=null?a+' '+T('uM2'):null,
+        cap!=null?(os?T('reqDesks',cap):T('reqSeats',cap)):null,
+        x.rooms.some(c=>c.how==='type')?T('byType'):x.rooms.some(c=>c.how==='manual')?T('byManual'):null
+      ].filter(Boolean).join(' · ');
+      delta=cls==='o'?'✓':cls==='w'?'!':'✗';
+    }
+    return { code:e.code, fn:e.code+' · '+(L(e.fn)||e.name||e.key), goal:schedReq(e), found, delta, cls };
+  });
+}
+function missingList(){
+  return STATE.sched ? STATE.sched.missing.map(x=>({ code:x.e.code, name:L(x.e.fn)||x.e.name||x.e.key, req:schedReq(x.e) })) : [];
+}
+function extraList(){
+  return STATE.sched ? STATE.sched.extra.concat(STATE.sched.unassigned).map(c=>({
+    name:c.r.tag.name||('#'+c.r.i), type:typeName(c.r.check.type),
+    area:c.r.tag.area, why:c.how==='extra'?c.extraWhy:c.how==='extra-manual'?T('sMarkedExtra'):c.how==='os-nodept'?T('sOsNoDept'):T('sUnassigned')
+  })) : [];
+}
+
 function progRows(){
+  if(STATE.sched) return schedRows();
   const P=STATE.program;
   const rows=(P&&P.program&&P.program.length)?P.program:PROGRAM_REF;
   return rows.map(p=>{
@@ -3817,6 +4377,17 @@ function buildReport(){
   chunk(prog,16).forEach((c,i,all)=>sheets.push({
     title:(STATE.program&&STATE.program.program&&STATE.program.program.length)?T('progProject'):T('progOffice'),
     kicker:all.length>1?T('rptOf',i+1,all.length):T('rptVsGoal'), html:progTable(c) }));
+
+  if(STATE.sched){
+    const ms=missingList(), ex=extraList();
+    const tbl=(head,rows)=>`<table class="rt"><thead><tr>${head.map(x=>`<th>${esc(x)}</th>`).join('')}</tr></thead><tbody>${rows}</tbody></table>`;
+    sheets.push({ title:T('rptMissExtra'), kicker:T('missTitle',ms.length)+' · '+T('extraTitle',ex.length), html:
+      `<div class="sh-sub" style="font-weight:500;margin:0 0 4mm">${esc(T('missTitle',ms.length))}</div>`+
+      (ms.length?tbl([T('thCode'),T('thFn'),T('thReq')], ms.map(m=>`<tr class="f"><td class="b">${esc(m.code)}</td><td>${esc(m.name)}</td><td>${esc(m.req)}</td></tr>`).join('')):`<div class="rempty">${T('noMissing')}</div>`)+
+      `<div class="sh-sub" style="font-weight:500;margin:8mm 0 4mm">${esc(T('extraTitle',ex.length))}</div>`+
+      (ex.length?tbl([T('xsTagName'),T('xsType'),T('thNote')], ex.map(x=>`<tr class="w"><td class="b">${esc(x.name)}</td><td>${esc(x.type)}</td><td>${esc(x.why)}</td></tr>`).join('')):`<div class="rempty">${T('noExtra')}</div>`)
+    });
+  }
 
   if(STATE.areas.length||STATE.dims.length)
     sheets.push({title:T('rptMeasures'), kicker:T('rptMeasuresSub'), html:measureTable()});
