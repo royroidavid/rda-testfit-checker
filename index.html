@@ -167,6 +167,8 @@
   .tb:hover{background:var(--gray);}
   .tb.on{background:var(--black); color:var(--white);}
   .tb.armed{background:var(--s-prog); color:#fff;}
+  .tbsel{font:inherit; font-size:10px; border:1px solid var(--border); background:var(--white); color:var(--black); padding:3px 4px; max-width:150px;}
+  .spr{display:flex; align-items:center; gap:6px; font-size:11px; margin-top:8px; cursor:pointer;}
   .tbsep{width:1px; height:18px; background:var(--border); margin:0 5px;}
   .zlabel{font-size:10px; opacity:.5; min-width:38px; text-align:center;}
   /* Centering via the flex parent's align-items/justify-content clips the
@@ -567,6 +569,8 @@
       <button class="tb on" id="lyAreas" onclick="toggleLayer('areas')" data-t="lyAreas"></button>
       <span class="tbsep"></span>
       <button class="tb" id="tDim"   onclick="armTool('dim')"   data-t="tDim"></button>
+      <button class="tb" id="tSmart" onclick="armTool('smart')" data-t="tSmart"></button>
+      <select class="tbsel" id="normSel" onchange="STATE.normArm=this.value"></select>
       <button class="tb" id="tArea"  onclick="armTool('area')"  data-t="tArea"></button>
       <button class="tb" id="tCalib" onclick="armTool('calib')" data-t="tCalib"></button>
       <span class="tbsep"></span>
@@ -668,7 +672,23 @@ he:{
   tManualMode:'לא זוהתה שכבת טקסט — מצב סימון ידני', tImgLoaded:'תמונה נטענה — מצב סימון ידני',
   confirmClear:'למחוק את כל הסימבולים, קווי המידה, מדידות השטח, העננים וההערות הידניות?',
   /* --- tabs, tiles --- */
-  tabIron:'ברזל', tabNotes:'הערות', tabProg:'פרוגרמה', tabOpen:'לא נראה', tabMarks:'סימונים',
+  tabIron:'ברזל', tabNotes:'הערות', tabProg:'פרוגרמה', tabOpen:'לא נראה', tabMarks:'סימונים', tabNorms:'תקנים',
+  tSmart:'מידה חכמה', hintSmart:'לחץ בתוך חלל — המידה נמדדת אוטומטית מקיר לקיר (Shift = שני הכיוונים)',
+  normSelTitle:'התקן שיוצמד לקווי המידה הבאים', nNone:'ללא תקן', nLbl:'תקן',
+  tSmartNone:'לא נמצאו קירות משני הצדדים — לחץ בתוך חלל סגור', tSmartNoCalib:'המידה נוצרה — כייל קו אחד כדי לקבל אורך',
+  nNoValue:'אין אורך — כייל קו מידה אחד', nOk:(v,m)=>v+' ס״מ ≥ '+m+' ס״מ',
+  nShort:(v,m,g)=>v+' ס״מ — חסרים '+g+' ס״מ מול '+m+' ס״מ', nEdge:(v,m)=>v+' ס״מ — על הגבול מול '+m+' ס״מ (דיוק מדידה ±2 ס״מ)',
+  nAlt:(v,m,g,w)=>v+' ס״מ — חסרים '+g+' ס״מ מול '+m+'; מותר '+w,
+  nOkMax:(v,m)=>v+' מ׳ ≤ '+m+' מ׳', nOver:(v,m,g)=>v+' מ׳ — חורג ב-'+g+' מ׳ מעל '+m+' מ׳',
+  nWcLen:(b,g)=>'אורך התא '+b+' ס״מ — חסרים '+g+' ס״מ מול 200 ס״מ',
+  kLaw:'חוק', kStd:'תקן', kPractice:'נוהג משרדי',
+  normsTitle:'תקנים ודרישות', normsIntro:'כל דרישה עם המקור שלה. מדידה: בחר "מדוד", ולחץ בתוך החלל על התכנית — המערכת מודדת מקיר לקיר ורושמת הערה עם הפער. דרישה שלא נמדדה נשארת פתוחה.',
+  nSpr:'הבניין מוגן במתזים ובשליטה בעשן', nNeedCalib:'אין כיול — מדידות לא יקבלו אורך. כייל קו מידה אחד שאורכו ידוע.',
+  nOpen:'לא נמדד', nCheck:'לבדוק', nFail:'חסר', nReads:n=>n+' מדידות', nMeasure:'מדוד',
+  normsManual:'דרישות שלא נראות בתכנית 2D', normsDisc:'הערכים נקראו מנוסח התקנות (ויקיטקסט) ומת״י 1918 חלק 3.1 (2023, gov.il). הם אינם תחליף ליועץ נגישות, ליועץ בטיחות או לבדיקת הנוסח המחייב.',
+  fOcc:'תפוסה ודרכי מוצא', fOccMsg:(o,a,n,e)=>'תפוסה לפי התקנות: '+o+' איש ('+a+' מ״ר ÷ 10) — נדרשות '+n+' דרכי מוצא; סומנו '+e+' (IN/EX)',
+  fBigRoom:'חדרים ל-50 איש ומעלה', fBigRoomMsg:l=>'נדרשים 2 פתחי יציאה לפחות (פרט 3.2.13.2): '+l,
+  xsNorms:'תקנים', thNorm:'דרישה', thReq2:'סף', thKind:'סוג', thRead:'מדידה', rptNorms:'תקנים ודרישות',
   tlFail:'שגוי', tlWarn:'תיקון קל', tlIron:'כללי ברזל', tlTags:'תגיות',
   tlStations:'עמדות', tlSeats:'מקומות', tlArea:'מ״ר', tlSyms:'סימבולים',
   /* --- panel: iron --- */
@@ -920,7 +940,23 @@ en:{
   tManualMode:'No text layer found — manual markup mode', tImgLoaded:'Image loaded — manual markup mode',
   confirmClear:'Delete all symbols, dimension lines, area measurements, clouds and manual notes?',
   /* --- tabs, tiles --- */
-  tabIron:'Core', tabNotes:'Notes', tabProg:'Program', tabOpen:'Unseen', tabMarks:'Markup',
+  tabIron:'Core', tabNotes:'Notes', tabProg:'Program', tabOpen:'Unseen', tabMarks:'Markup', tabNorms:'Norms',
+  tSmart:'Smart dimension', hintSmart:'Click inside a space — it is measured wall to wall automatically (Shift = both directions)',
+  normSelTitle:'Norm attached to the next dimension lines', nNone:'No norm', nLbl:'Norm',
+  tSmartNone:'No walls found on both sides — click inside an enclosed space', tSmartNoCalib:'Dimension added — calibrate one line to get its length',
+  nNoValue:'No length — calibrate one dimension line', nOk:(v,m)=>v+' cm ≥ '+m+' cm',
+  nShort:(v,m,g)=>v+' cm — '+g+' cm short of '+m+' cm', nEdge:(v,m)=>v+' cm — borderline against '+m+' cm (measuring accuracy ±2 cm)',
+  nAlt:(v,m,g,w)=>v+' cm — '+g+' cm short of '+m+'; allowed '+w,
+  nOkMax:(v,m)=>v+' m ≤ '+m+' m', nOver:(v,m,g)=>v+' m — '+g+' m over '+m+' m',
+  nWcLen:(b,g)=>'Stall length '+b+' cm — '+g+' cm short of 200 cm',
+  kLaw:'Law', kStd:'Standard', kPractice:'Office practice',
+  normsTitle:'Norms and requirements', normsIntro:'Every requirement with its source. To measure: press "Measure", then click inside the space on the plan — it is measured wall to wall and a note records the gap. A requirement that was not measured stays open.',
+  nSpr:'The building has sprinklers and smoke control', nNeedCalib:'Not calibrated — measurements get no length. Calibrate one dimension line of known length.',
+  nOpen:'Not measured', nCheck:'Check', nFail:'Short', nReads:n=>n+' readings', nMeasure:'Measure',
+  normsManual:'Requirements a 2D plan cannot show', normsDisc:'Values were read from the regulations (Wikisource text) and SI 1918 part 3.1 (2023, gov.il). They do not replace an accessibility or fire-safety consultant, or a check of the binding text.',
+  fOcc:'Occupancy and exits', fOccMsg:(o,a,n,e)=>'Occupancy by the regulations: '+o+' people ('+a+' m² ÷ 10) — '+n+' exits required; '+e+' marked (IN/EX)',
+  fBigRoom:'Rooms for 50 people or more', fBigRoomMsg:l=>'At least 2 exit openings required (3.2.13.2): '+l,
+  xsNorms:'Norms', thNorm:'Requirement', thReq2:'Threshold', thKind:'Kind', thRead:'Reading', rptNorms:'Norms and requirements',
   tlFail:'Fail', tlWarn:'Minor fix', tlIron:'Core rules', tlTags:'Tags',
   tlStations:'Stations', tlSeats:'Seats', tlArea:'m²', tlSyms:'Symbols',
   /* --- panel: iron --- */
@@ -1238,22 +1274,94 @@ const SYMBOLS = [
 ];
 const SYMMAP = {}; SYMBOLS.forEach(g => g.items.forEach(s => SYMMAP[s.id] = s));
 
+/* =====================================================================
+   1a. NORMS — planning regulations, the Israeli accessibility standard and
+   office practice, each with the clause it comes from. Every number here
+   was read from the source text (Oct 2026):
+   · תקנות התכנון והבנייה (בקשה להיתר, תנאיו ואגרות), תש״ל-1970, תוספת שנייה
+     — nusach on Wikisource, to be checked against the binding text (Nevo).
+   · ת״י 1918 חלק 3.1 (2023) — as published by the Commission for Equal
+     Rights of Persons with Disabilities on gov.il.
+   kind: law = the regulations · std = SI 1918 (binding through the
+   regulations) · practice = office practice, NOT law — editable through
+   the programme's rules.norms. A value of ours never poses as a statute.
+   ===================================================================== */
+const SRC={
+  r3_2_12_8:{he:'תקנות התכנון והבנייה, תוספת 2, פרט 3.2.12.8', en:'Planning & Building Regs, 2nd Schedule, 3.2.12.8'},
+  r3_2_1_3: {he:'תקנות התכנון והבנייה, תוספת 2, פרט 3.2.1.3 (טבלה)', en:'Planning & Building Regs, 2nd Schedule, 3.2.1.3 (table)'},
+  r3_2_15_5:{he:'תקנות התכנון והבנייה, תוספת 2, טבלה 3.2.15.5 (תעסוקה ומשרדים)', en:'Planning & Building Regs, table 3.2.15.5 (offices)'},
+  r3_2_13:  {he:'תקנות התכנון והבנייה, תוספת 2, פרטים 3.2.13.2–3.2.13.3', en:'Planning & Building Regs, 3.2.13.2–3.2.13.3'},
+  r3_2_12_2:{he:'תקנות התכנון והבנייה, תוספת 2, טבלה 3.2.12.2 (משרדים: 10 מ״ר לנפש)', en:'Planning & Building Regs, table 3.2.12.2 (offices: 10 m² per person)'},
+  r2_03:    {he:'תקנות התכנון והבנייה, תוספת 2, פרט 2.03', en:'Planning & Building Regs, 2nd Schedule, 2.03'},
+  r3_2_12_9:{he:'תקנות התכנון והבנייה, תוספת 2, פרט 3.2.12.9', en:'Planning & Building Regs, 2nd Schedule, 3.2.12.9'},
+  si_2_5_2: {he:'ת״י 1918 חלק 3.1 (2023), סעיף 2.5.2', en:'SI 1918 part 3.1 (2023), 2.5.2'},
+  si_2_5_3: {he:'ת״י 1918 חלק 3.1 (2023), סעיף 2.5.3', en:'SI 1918 part 3.1 (2023), 2.5.3'},
+  si_2_5_4: {he:'ת״י 1918 חלק 3.1 (2023), סעיף 2.5.4', en:'SI 1918 part 3.1 (2023), 2.5.4'},
+  si_2_6_2: {he:'ת״י 1918 חלק 3.1 (2023), סעיף 2.6', en:'SI 1918 part 3.1 (2023), 2.6'},
+  si_2_7_2: {he:'ת״י 1918 חלק 3.1 (2023), סעיף 2.7.2', en:'SI 1918 part 3.1 (2023), 2.7.2'},
+  si_2_13:  {he:'ת״י 1918 חלק 3.1 (2023), סעיף 2.13', en:'SI 1918 part 3.1 (2023), 2.13'},
+  practice: {he:'נוהג משרדי RD&A — לא חוק, ניתן לעריכה', en:'RD&A office practice — not law, editable'}
+};
+/* min/max in metres. `alt` is the relaxed figure the same clause allows
+   under a stated condition; a reading between alt and the main figure is
+   amber, with the condition spelled out. `spr` = value with sprinklers. */
+const NORMS=[
+  { id:'egress', kind:'law', min:1.10, alt:{min:0.90, when:{he:'רק אם המעבר משרת עד 10 איש ואורכו עד 15 מ׳', en:'only if it serves up to 10 people and is at most 15 m long'}},
+    n:{he:'רוחב מעבר בדרך מוצא', en:'Exit-route passage width'}, src:'r3_2_12_8',
+    how:{he:'נמדד בגובה 1.20 מ׳ בין ציפויי הקיר; לא חל על דלתות', en:'measured at 1.20 m between wall finishes; not for doors'} },
+  { id:'access', kind:'std', min:1.30, alt:{min:0.90, when:{he:'רק בפרוזדור שהתקנות מתירות צר מ-130, עם שטחי סיבוב בפניות והרחבות כל 15 מ׳', en:'only where the regulations allow a corridor under 130, with turning spaces at turns and widenings every 15 m'}},
+    n:{he:'רוחב דרך נגישה / פרוזדור', en:'Accessible route / corridor width'}, src:'si_2_5_2' },
+  { id:'door', kind:'law', min:0.80,
+    n:{he:'רוחב פתח פנוי בדלת', en:'Clear door opening'}, src:'r3_2_1_3',
+    how:{he:'פנוי למעבר, בין רכיבי הבניין; גם ת״י 1918-3.1 סעיף 2.5.3', en:'clear passage between building elements; also SI 1918-3.1 2.5.3'} },
+  { id:'latch', kind:'std', min:0.30,
+    n:{he:'קיר חופשי בצד המנעול', en:'Free wall on the latch side'}, src:'si_2_5_4' },
+  { id:'push', kind:'std', min:1.50,
+    n:{he:'משטח תפקוד לפני דלת (צד דחיפה / הזזה)', en:'Clear floor space at a door (push / sliding side)'}, src:'si_2_5_4',
+    how:{he:'150×150 או 130×170 ס״מ', en:'150×150 or 130×170 cm'} },
+  { id:'turn', kind:'std', min:1.50,
+    n:{he:'שטח סיבוב לכיסא גלגלים (Ø150)', en:'Wheelchair turning space (Ø150)'}, src:'si_2_13' },
+  { id:'wc1', kind:'std', min:1.50,
+    n:{he:'תא שירותים נגיש — רוחב (טיפוס 1)', en:'Accessible WC stall — width (type 1)'}, src:'si_2_13',
+    how:{he:'תא טיפוס 1 לא קטן מ-150×200 ס״מ, נמדד בין חיפויי הקירות', en:'a type-1 stall is at least 150×200 cm, between finished walls'} },
+  { id:'ramp', kind:'std', min:1.30,
+    n:{he:'רוחב כבש', en:'Ramp width'}, src:'si_2_6_2', how:{he:'שיפוע עד 8%', en:'slope up to 8%'} },
+  { id:'travel', kind:'law', max:30, spr:90,
+    n:{he:'מרחק הליכה למוצא — משרדים', en:'Travel distance to an exit — offices'}, src:'r3_2_15_5',
+    how:{he:'30 מ׳ בלי מתזים · 90 מ׳ עם מתזים ושליטה בעשן. קו ישר הוא חסם תחתון למסלול האמיתי', en:'30 m without sprinklers · 90 m with sprinklers and smoke control. A straight line is a lower bound of the real path'} },
+  { id:'deadend', kind:'law', max:6, spr:15,
+    n:{he:'פרוזדור ללא מוצא — משרדים', en:'Dead-end corridor — offices'}, src:'r3_2_15_5',
+    how:{he:'6 מ׳ בלי מתזים · 15 מ׳ עם מתזים', en:'6 m without sprinklers · 15 m with sprinklers'} },
+  { id:'chair', kind:'practice', min:1.00,
+    n:{he:'כיסא עמדה — קיר / מכשול', en:'Desk chair to wall / obstacle'}, src:'practice',
+    how:{he:'מקצה השולחן עד הקיר שמאחורי הכיסא', en:'from the desk edge to the wall behind the chair'} }
+];
+/* can't be read from a 2D plan — checked by hand, but with the real number */
+const NORM_MANUAL=[
+  { id:'h_room', kind:'law', n:{he:'גובה חדר לשהיית אדם ≥ 2.50 מ׳', en:'Height of an occupied room ≥ 2.50 m'}, src:'r2_03' },
+  { id:'h_corr', kind:'law', n:{he:'גובה מזקף ראש במעבר ≥ 2.20 מ׳ (הנמכות מקומיות ≥ 2.00)', en:'Corridor headroom ≥ 2.20 m (local drops ≥ 2.00)'}, src:'r3_2_12_9' },
+  { id:'stairs', kind:'std', n:{he:'מדרגות: שלח ≥ 26 ס״מ · רום 10–17.5 ס״מ', en:'Stairs: tread ≥ 26 cm · riser 10–17.5 cm'}, src:'si_2_7_2' },
+  { id:'ramp_s', kind:'std', n:{he:'שיפוע כבש ≤ 8%', en:'Ramp slope ≤ 8%'}, src:'si_2_6_2' }
+];
+const NORMMAP={}; NORMS.forEach(n=>NORMMAP[n.id]=n);
+const OFFICE_M2_PER_PERSON=10;   /* table 3.2.12.2 */
+
 /* ---- manual checks (plan cannot reveal) ---- */
 const MANUAL_CHECKS = [
   { id:'corridor',  n:{he:'רוחב מסדרון ראשי', en:'Main corridor width'},
-    note:{he:'נהוג במשרד 126–197 ס״מ. מינימום נגישות — אימות יועץ.', en:'Common office range 126–197 cm. Accessibility minimum — consultant to verify.'} },
+    note:{he:'דרך מוצא ≥ 110 ס״מ (פרט 3.2.12.8) · דרך נגישה ≥ 130 ס״מ (ת״י 1918-3.1 סעיף 2.5.2). למדידה: טאב תקנים.', en:'Exit route ≥ 110 cm (3.2.12.8) · accessible route ≥ 130 cm (SI 1918-3.1 2.5.2). Measure from the Norms tab.'} },
   { id:'aisle',     n:{he:'מעברים בין עמדות', en:'Aisles between workstations'},
-    note:{he:'מעבר חופשי בין גבי כיסאות ושולחנות.', en:'Clear passage between chair backs and desks.'} },
+    note:{he:'מעבר שהוא חלק מדרך מוצא ≥ 110 ס״מ (פרט 3.2.12.8). כיסא–קיר: נוהג משרדי, לא חוק.', en:'A passage that is part of an exit route ≥ 110 cm (3.2.12.8). Chair to wall: office practice, not law.'} },
   { id:'doors',     n:{he:'רוחב פתח דלת חופשי', en:'Clear door opening width'},
-    note:{he:'נהוג 90–110 ס״מ. מינימום נטו — אימות יועץ.', en:'Common range 90–110 cm. Net minimum — consultant to verify.'} },
+    note:{he:'≥ 80 ס״מ פנוי למעבר (פרט 3.2.1.3; ת״י 1918-3.1 סעיף 2.5.3) · קיר חופשי 30 ס״מ בצד המנעול.', en:'≥ 80 cm clear (3.2.1.3; SI 1918-3.1 2.5.3) · 30 cm free wall on the latch side.'} },
   { id:'partitions',n:{he:'גובה מחיצות ופרטי קיר', en:'Partition heights and wall details'},
     note:{he:'סטנדרט משרדי: רצפה-תקרה H=305 · חיזוקי TV H=150.', en:'Office standard: floor-to-ceiling H=305 · TV backing H=150.'} },
   { id:'accwc',     n:{he:'תא שירותים נגיש בקומה', en:'Accessible toilet stall on the floor'},
-    note:{he:'דרישה רגולטורית — אימות יועץ נגישות.', en:'Regulatory requirement — accessibility consultant to verify.'} },
+    note:{he:'טיפוס 1 ≥ 150×200 ס״מ, שטח סיבוב Ø150 (ת״י 1918-3.1 סעיף 2.13).', en:'Type 1 ≥ 150×200 cm, turning space Ø150 (SI 1918-3.1 2.13).'} },
   { id:'egress',    n:{he:'שני מוצאי מילוט ומרחקים', en:'Two means of egress and travel distances'},
-    note:{he:'בדיקת יועץ בטיחות.', en:'Safety consultant to review.'} },
+    note:{he:'מעל 30 איש בקומה — לפחות 2 דרכי מוצא (פרט 3.2.13.3). מרחק הליכה במשרדים ≤ 30 מ׳ בלי מתזים / ≤ 90 עם (טבלה 3.2.15.5).', en:'Over 30 people on the floor — at least 2 exits (3.2.13.3). Office travel distance ≤ 30 m without sprinklers / ≤ 90 with (table 3.2.15.5).'} },
   { id:'heights',   n:{he:'גבהים ותקרות מונמכות', en:'Heights and dropped ceilings'},
-    note:{he:'לא ניתן לבדיקה מתוכנית 2D.', en:'Cannot be checked from a 2D plan.'} },
+    note:{he:'חדר לשהיית אדם ≥ 2.50 מ׳ (פרט 2.03) · מעבר ≥ 2.20 מ׳ (פרט 3.2.12.9). לא ניתן לבדיקה מתוכנית 2D.', en:'Occupied room ≥ 2.50 m (2.03) · corridor ≥ 2.20 m (3.2.12.9). Cannot be checked from a 2D plan.'} },
   { id:'hvac',      n:{he:'מיזוג לחדרים פנימיים', en:'HVAC for internal rooms'},
     note:{he:'חדרים ללא חזית — תיאום יועץ מיזוג.', en:'Rooms with no façade — coordinate with the HVAC consultant.'} },
   { id:'sym_doors', n:{he:'דלתות — כיווני פתיחה', en:'Doors — swing directions'},
@@ -1288,7 +1396,8 @@ const TYPE_OPEN_ITEMS = {
 const STATE = {
   mode:'auto', fileName:'', meta:{}, rooms:[], notes:[], symbols:[], dims:[], areas:[],
   manual:{}, open:{}, program:null, calib:null, iron:{}, seq:1,
-  assign:{}, sched:null, adj:[]
+  assign:{}, sched:null, adj:[],
+  spr:false, normArm:'', geo:[]
 };
 let PDFPAGE=null, BASE=null, VP1=null, ZOOM=1, TOOL=null, SEL=null, PENDING=null;
 const LAYERS = { notes:true, syms:true, dims:true, areas:true };
@@ -1862,6 +1971,7 @@ function floorChecks(parse, rooms){
   const dq=rooms.length?Math.round(100*rooms.filter(r=>r.tag.name).length/rooms.length):0;
   out.push({level:dq>=95?'ok':dq>=80?'warn':'fail', n:T('fDataQ'), m:T('fDataQMsg',dq)});
   if(STATE.sched) out.push(...scheduleFloorChecks(rooms));
+  out.push(...egressFloorChecks(rooms));
   return out;
 }
 
@@ -2364,6 +2474,221 @@ function relabelMeasures(){
   });
 }
 
+/* =====================================================================
+   9a. SMART DIMENSION + NORMS ON DIMENSIONS
+   One click inside a space: rays run left/right and up/down through the
+   base drawing until they hit ink (a wall, a desk, a partition line), and
+   the shorter clear span becomes a dimension. With a calibration — or a
+   Revit plan, which is exact — it is labelled straight away. Any
+   dimension can carry a norm; its reading against that norm becomes a
+   note on the plan that states the gap.
+   ===================================================================== */
+let INK=null;
+function inkData(){
+  if(INK && INK.src===BASE) return INK;
+  const c=BASE.getContext('2d',{willReadFrequently:true});
+  INK={ src:BASE, w:BASE.width, h:BASE.height, d:c.getImageData(0,0,BASE.width,BASE.height).data };
+  return INK;
+}
+function isInk(I,x,y){
+  if(x<0||y<0||x>=I.w||y>=I.h) return true;
+  const i=(y*I.w+x)*4, d=I.d;
+  return d[i+3]>40 && (0.299*d[i]+0.587*d[i+1]+0.114*d[i+2])<170;
+}
+/* first ink pixel from (x,y) in direction (dx,dy); starts by leaving any
+   line the click landed on */
+function castRay(I,x,y,dx,dy){
+  let s=0;
+  while(isInk(I,x+dx*s,y+dy*s) && s<6) s++;
+  while(!isInk(I,x+dx*s,y+dy*s)) s++;
+  /* A Revit plan is drawn from room boundaries, which ARE the finished wall
+     faces — measure to the centre of that line. A PDF wall has thickness,
+     and the clear width runs to its inner face, where the ink starts. */
+  if(!vectorBase()) return s;
+  let t=0; while(t<12 && isInk(I,x+dx*(s+t),y+dy*(s+t)) && !(x+dx*(s+t)<0||y+dy*(s+t)<0||x+dx*(s+t)>=I.w||y+dy*(s+t)>=I.h)) t++;
+  return s+(t-1)/2;
+}
+const vectorBase = () => !!(STATE.parse && !STATE.parse.page && STATE.rooms.some(r=>r.tag.poly));
+function smartDim(p, both){
+  const I=inkData();
+  const x=Math.round(p.nx*I.w), y=Math.round(p.ny*I.h);
+  if(isInk(I,x,y) && isInk(I,x+3,y) && isInk(I,x,y+3)) return [];
+  const l=castRay(I,x,y,-1,0), r=castRay(I,x,y,1,0), u=castRay(I,x,y,0,-1), d=castRay(I,x,y,0,1);
+  /* pixel i covers [i, i+1): the clear span runs from the near edge of the
+     first free pixel to the far edge of the last one (raster), or between
+     the two line centres (vector) */
+  const c=vectorBase()?0.5:0;
+  const H={ x1:(x-l+1-c)/I.w, y1:(y+0.5)/I.h, x2:(x+r+c)/I.w, y2:(y+0.5)/I.h, len:l+r-1 };
+  const V={ x1:(x+0.5)/I.w, y1:(y-u+1-c)/I.h, x2:(x+0.5)/I.w, y2:(y+d+c)/I.h, len:u+d-1 };
+  const okH=x-l>0 && x+r<I.w-1, okV=y-u>0 && y+d<I.h-1;   /* a ray that ran off the sheet found no wall */
+  const cand=[okH&&H, okV&&V].filter(Boolean).sort((a,b)=>a.len-b.len);
+  return both?cand:cand.slice(0,1);
+}
+
+function dimMeters(d){
+  if(d.manualM!=null) return d.manualM;
+  return STATE.calib ? dimPx(d)*STATE.calib.mPerPx : null;
+}
+const normName = n => L(n.n);
+function normReq(n){
+  if(n.min!=null) return '≥ '+Math.round(n.min*100)+' '+T('uCm');
+  const mx=STATE.spr&&n.spr!=null?n.spr:n.max;
+  return '≤ '+mx+' '+T('uM');
+}
+/* {lv, msg} for one reading against one norm — the gap is always spelled out */
+function evalNorm(n, v){
+  if(v==null) return { lv:'i', msg:T('nNoValue') };
+  const cm=x=>Math.round(x*100);
+  if(n.min!=null){
+    if(v>=n.min) return { lv:'o', msg:T('nOk', cm(v), cm(n.min)) };
+    if(n.alt && v>=n.alt.min) return { lv:'w', msg:T('nAlt', cm(v), cm(n.min), cm(n.min-v), L(n.alt.when)) };
+    if(v>=n.min-0.02) return { lv:'w', msg:T('nEdge', cm(v), cm(n.min)) };
+    return { lv:'f', msg:T('nShort', cm(v), cm(n.min), cm(n.min-v)) };
+  }
+  const mx=STATE.spr&&n.spr!=null?n.spr:n.max;
+  if(v<=mx) return { lv:'o', msg:T('nOkMax', v.toFixed(1), mx) };
+  return { lv:'f', msg:T('nOver', v.toFixed(1), mx, (v-mx).toFixed(1)) };
+}
+const KIND_LBL = k => T(k==='law'?'kLaw':k==='std'?'kStd':'kPractice');
+
+/* the programme can override a norm's figure (office practice above all) */
+function applyNormRules(){
+  const o=STATE.program&&STATE.program.rules&&STATE.program.rules.norms;
+  if(!o||typeof o!=='object') return;
+  Object.keys(o).forEach(id=>{ const n=NORMMAP[id]; if(n&&o[id]&&typeof o[id]==='object'){
+    ['min','max','spr'].forEach(k=>{ const v=numN(o[id][k]); if(v!=null) n[k]=v; }); } });
+}
+
+/* Norm notes are derived from the dimensions and the room geometry on
+   every refresh; a note the user rewrote keeps their words. */
+function syncNormNotes(){
+  const edits={}; STATE.notes.forEach(n=>{ if(n.src==='norm'&&n.edited) edits[n.id]=n.body; });
+  STATE.notes=STATE.notes.filter(n=>n.src!=='norm');
+  STATE.dims.forEach(d=>{
+    const n=d.norm&&NORMMAP[d.norm]; if(!n) return;
+    const r=evalNorm(n, dimMeters(d));
+    const id='n'+d.id;
+    STATE.notes.push({ id, lv:r.lv, src:'norm', title:normName(n), sub:KIND_LBL(n.kind),
+      body: edits[id] || (r.msg+' · '+L(SRC[n.src])), edited:!!edits[id],
+      nx:(d.x1+d.x2)/2, ny:(d.y1+d.y2)/2 });
+  });
+}
+function setDimNorm(id, v){
+  const d=STATE.dims.find(x=>x.id===id); if(!d) return;
+  d.norm=v||''; refresh();
+}
+function armNorm(id){
+  STATE.normArm=id||'';
+  const s=$('#normSel'); if(s) s.value=STATE.normArm;
+  if(id) armTool('smart');
+}
+function normOptions(cur){
+  return `<option value="">${T('nNone')}</option>`+
+    NORMS.map(n=>`<option value="${n.id}" ${cur===n.id?'selected':''}>${esc(normName(n))} (${esc(normReq(n))})</option>`).join('');
+}
+function fillNormSel(){
+  const s=$('#normSel'); if(!s) return;
+  s.innerHTML=normOptions(STATE.normArm);
+  s.title=T('normSelTitle');
+}
+
+/* =====================================================================
+   9b. GEOMETRY CHECKS — Revit outlines are exact, so a corridor's clear
+   width and an accessible WC's turning circle can be read off directly:
+   rasterise the room at 5 cm, take the Euclidean distance transform; the
+   largest inscribed circle has radius max(DT), and a corridor's clear
+   width is twice that.
+   ===================================================================== */
+function edt1(f,n){ /* Felzenszwalb–Huttenlocher squared EDT, one row */
+  const d=new Float64Array(n), v=new Int32Array(n), z=new Float64Array(n+1);
+  let k=0; v[0]=0; z[0]=-Infinity; z[1]=Infinity;
+  for(let q=1;q<n;q++){
+    let s;
+    do{ const p=v[k]; s=((f[q]+q*q)-(f[p]+p*p))/(2*q-2*p); if(s<=z[k]) k--; else break; }while(k>=0);
+    k++; v[k]=q; z[k]=s; z[k+1]=Infinity;
+  }
+  k=0;
+  for(let q=0;q<n;q++){ while(z[k+1]<q) k++; const p=v[k]; d[q]=(q-p)*(q-p)+f[p]; }
+  return d;
+}
+function maxInscribed(outer, holes, cell){
+  cell=cell||0.05;
+  let x0=Infinity,y0=Infinity,x1=-Infinity,y1=-Infinity;
+  outer.forEach(p=>{ x0=Math.min(x0,p.x); y0=Math.min(y0,p.y); x1=Math.max(x1,p.x); y1=Math.max(y1,p.y); });
+  const W=Math.ceil((x1-x0)/cell)+2, H=Math.ceil((y1-y0)/cell)+2;
+  if(W*H>4e6) return null;
+  const inside=(px,py)=>{ const P={nx:px,ny:py};
+    const conv=pts=>pts.map(q=>({x:q.x,y:q.y}));
+    if(!pointInPoly(P,conv(outer))) return false;
+    return !(holes||[]).some(h=>pointInPoly(P,conv(h)));
+  };
+  const BIG=1e12, g=new Float64Array(W*H);
+  for(let j=0;j<H;j++) for(let i=0;i<W;i++){
+    g[j*W+i]=inside(x0+(i-0.5)*cell, y0+(j-0.5)*cell)?BIG:0;
+  }
+  const col=new Float64Array(H);
+  for(let i=0;i<W;i++){ for(let j=0;j<H;j++) col[j]=g[j*W+i]; const r=edt1(col,H); for(let j=0;j<H;j++) g[j*W+i]=r[j]; }
+  const row=new Float64Array(W); let best=0;
+  for(let j=0;j<H;j++){ for(let i=0;i<W;i++) row[i]=g[j*W+i]; const r=edt1(row,W); for(let i=0;i<W;i++) if(r[i]>best) best=r[i]; }
+  return Math.sqrt(best)*cell;   /* metres from the deepest point to the nearest wall */
+}
+const CORRIDOR_RE=/corridor|circulation|passage|מסדרון|מעבר|פרוזדור/i;
+const ACC_WC_RE=/accessible|disabled|נכים|נגיש/i;
+function geoChecks(rooms){
+  const out=[];
+  rooms.forEach(r=>{
+    const t=r.tag; if(!t.poly) return;
+    const nm=(t.rname!=null?t.rname:t.name)||'';
+    const corridor=CORRIDOR_RE.test(nm) && !/stair|מדרגות|פיר|shaft/i.test(nm);
+    const accwc=ACC_WC_RE.test(nm) && (r.check.type==='wc' || /wc|toilet|שירותים/i.test(nm));
+    if(!corridor && !accwc) return;
+    const lp=outerLoop({boundary:[t.poly.map(p=>[p.x,p.y])]});
+    const rad=maxInscribed(lp.outer||t.poly, []);
+    if(rad==null) return;
+    if(corridor){
+      const w=2*rad;
+      [NORMMAP.egress, NORMMAP.access].forEach(n=>out.push({ r, norm:n, v:w, ...evalNorm(n,w) }));
+    }
+    if(accwc){
+      out.push({ r, norm:NORMMAP.turn, v:2*rad, ...evalNorm(NORMMAP.turn, 2*rad) });
+      let bx0=Infinity,by0=Infinity,bx1=-Infinity,by1=-Infinity;
+      t.poly.forEach(p=>{ bx0=Math.min(bx0,p.x); by0=Math.min(by0,p.y); bx1=Math.max(bx1,p.x); by1=Math.max(by1,p.y); });
+      const a=Math.min(bx1-bx0,by1-by0), b=Math.max(bx1-bx0,by1-by0);
+      const e=evalNorm(NORMMAP.wc1, a);
+      if(e.lv==='o' && b<2.00) out.push({ r, norm:NORMMAP.wc1, v:b, lv:'f', msg:T('nWcLen', Math.round(b*100), Math.round((2-b)*100)) });
+      else out.push({ r, norm:NORMMAP.wc1, v:a, ...e });
+    }
+  });
+  return out;
+}
+/* geometry findings fold into the room's own result, so they reach the
+   note, the table and every export without a second channel */
+function applyGeo(rooms){
+  STATE.geo=geoChecks(rooms);
+  const rank={o:0,i:0,w:1,f:2}, back=['ok','warn','fail'], from={ok:0,info:0,warn:1,fail:2};
+  STATE.geo.forEach(g=>{
+    const c=g.r.check;
+    c.msgs.push({ l:{o:'ok',i:'info',w:'warn',f:'fail'}[g.lv], m:normName(g.norm)+': '+g.msg+' · '+L(SRC[g.norm.src]) });
+    c.level=back[Math.max(from[c.level]||0, rank[g.lv]||0)];
+  });
+}
+
+/* occupancy by the regulations' own factor, and what it implies for exits */
+function egressFloorChecks(rooms){
+  const out=[];
+  const use=rooms.filter(r=>r.tag.area!=null && !NEUTRAL_KEYS.includes(r.check.type) && r.check.type!=='it');
+  const net=use.reduce((s,r)=>s+r.tag.area,0);
+  if(!net) return out;
+  const occ=Math.ceil(net/OFFICE_M2_PER_PERSON);
+  const exits=STATE.symbols.filter(s=>s.k==='exit'||s.k==='entry').length;
+  const need=occ>1000?4:occ>500?3:occ>30?2:1;
+  out.push({ level: exits>=need ? 'ok' : 'warn', n:T('fOcc'),
+    m:T('fOccMsg', occ, Math.round(net), need, exits) });
+  const big=use.filter(r=>Math.max(r.tag.ppl||0, Math.ceil(r.tag.area/OFFICE_M2_PER_PERSON))>=50);
+  if(big.length) out.push({ level:'warn', n:T('fBigRoom'), m:T('fBigRoomMsg', big.map(r=>r.tag.name||'#'+r.i).join(' · ')) });
+  return out;
+}
+
 function placeSymbols(){
   const host=$('#symLayer');   /* not `L` — that is the bilingual value picker */
   host.style.display=LAYERS.syms?'block':'none';
@@ -2406,8 +2731,8 @@ function planPoint(e){
   return { nx:(e.clientX-b.left)/b.width, ny:(e.clientY-b.top)/b.height };
 }
 
-const TOOLBTN={dim:'tDim', area:'tArea', calib:'tCalib', pin:'tPin', cloud:'tCloud'};
-const TOOLHINTKEY={dim:'hintDim', area:'hintArea', calib:'hintCalib', pin:'hintPin', cloud:'hintCloud'};
+const TOOLBTN={dim:'tDim', smart:'tSmart', area:'tArea', calib:'tCalib', pin:'tPin', cloud:'tCloud'};
+const TOOLHINTKEY={dim:'hintDim', smart:'hintSmart', area:'hintArea', calib:'hintCalib', pin:'hintPin', cloud:'hintCloud'};
 function clearArmed(){ Object.keys(TOOLBTN).forEach(k=>{ const b=$('#'+TOOLBTN[k]); if(b) b.classList.remove('armed'); }); }
 
 function armTool(t){
@@ -2472,9 +2797,18 @@ $('#planBox').addEventListener('click', e=>{
     PENDING.pts.push({x:p.nx,y:p.ny}); drawOverlay();
     return;
   }
+  if(TOOL==='smart'){
+    const segs=smartDim(p, e.shiftKey);
+    if(!segs.length){ toast(T('tSmartNone')); return; }
+    segs.forEach(sg=>STATE.dims.push({ id:'d'+(STATE.seq++), x1:sg.x1, y1:sg.y1, x2:sg.x2, y2:sg.y2, norm:STATE.normArm, auto:true }));
+    if(!STATE.calib) toast(T('tSmartNoCalib'));
+    relabelMeasures(); refresh();
+    return;   /* stays armed — click the next space */
+  }
   if(TOOL==='dim'||TOOL==='calib'){
     if(!PENDING){ PENDING={kind:'dim', x1:p.nx,y1:p.ny,mx:p.nx,my:p.ny}; drawOverlay(); return; }
-    const d={ id:'d'+(STATE.seq++), x1:PENDING.x1, y1:PENDING.y1, x2:p.nx, y2:p.ny, calib:TOOL==='calib' };
+    const d={ id:'d'+(STATE.seq++), x1:PENDING.x1, y1:PENDING.y1, x2:p.nx, y2:p.ny, calib:TOOL==='calib',
+      norm:TOOL==='calib'?'':STATE.normArm };
     const px=dimPx(d);
     if(TOOL==='calib'){
       const v=prompt(T('askCalib'),'');
@@ -2612,7 +2946,7 @@ let RT; window.addEventListener('resize',()=>{ clearTimeout(RT); RT=setTimeout(l
    11. PANEL
    ===================================================================== */
 let TAB='iron';
-const TABKEYS=[['iron','tabIron'],['notes','tabNotes'],['prog','tabProg'],['open','tabOpen'],['sym','tabMarks']];
+const TABKEYS=[['iron','tabIron'],['notes','tabNotes'],['prog','tabProg'],['norms','tabNorms'],['open','tabOpen'],['sym','tabMarks']];
 function setTab(k){ TAB=k; renderPanel(); }
 
 function renderPanel(){
@@ -2644,6 +2978,7 @@ function renderPanel(){
   if(TAB==='iron') B.innerHTML=viewIron();
   else if(TAB==='notes'){ B.innerHTML=viewNotes(); bindNotes(); }
   else if(TAB==='prog') B.innerHTML=viewProgram();
+  else if(TAB==='norms') B.innerHTML=viewNorms();
   else if(TAB==='open'){ B.innerHTML=viewOpen(); }
   else if(TAB==='sym'){ B.innerHTML=viewSymbols(); bindSymCards(); }
 }
@@ -2802,6 +3137,49 @@ function viewProgram(){
   return h;
 }
 
+/* Every norm, its status on this plan and how to close it. Nothing is
+   "passed" because it was not looked at: an unmeasured norm stays open. */
+function normStatus(){
+  return NORMS.map(n=>{
+    const reads=STATE.dims.filter(d=>d.norm===n.id).map(d=>({src:'dim', v:dimMeters(d), ...evalNorm(n,dimMeters(d))}))
+      .concat((STATE.geo||[]).filter(g=>g.norm===n).map(g=>({src:'geo', v:g.v, lv:g.lv, msg:(g.r.tag.name||'')+': '+g.msg})));
+    const rank={f:3,w:2,i:1,o:0};
+    const worst=reads.slice().sort((a,b)=>rank[b.lv]-rank[a.lv])[0];
+    return { n, reads, lv: worst?worst.lv:'n', worst };
+  });
+}
+function viewNorms(){
+  let h=`<div class="grp-title">${T('normsTitle')}</div>
+    <div class="iron i" style="margin-bottom:10px"><div class="ib">${T('normsIntro')}</div>
+      <label class="spr"><input type="checkbox" ${STATE.spr?'checked':''} onchange="STATE.spr=this.checked;recheck();refresh()"> ${T('nSpr')}</label></div>`;
+  if(!STATE.calib) h+=`<div class="iron w" style="margin-bottom:10px"><div class="ib">${T('nNeedCalib')}</div>
+    <div class="cact"><button class="xb" onclick="armTool('calib')">${T('calibNow')}</button></div></div>`;
+  normStatus().forEach(s=>{
+    const n=s.n, cls=s.lv==='n'?'w':s.lv;
+    h+=`<div class="iron ${cls}">
+      <div class="ih"><span class="chip ${cls}">${s.lv==='n'?T('nOpen'):s.lv==='o'?T('ironOkWord'):s.lv==='w'?T('nCheck'):T('nFail')}</span>
+        <span class="it">${esc(normName(n))} · ${esc(normReq(n))}</span>
+        <span class="cs" style="font-size:9px;opacity:.55">${esc(KIND_LBL(n.kind))}</span></div>
+      <div class="ib">${esc(L(SRC[n.src]))}${n.how?' · '+esc(L(n.how)):''}</div>
+      ${s.reads.length?`<div class="ib" style="color:${lvColor(s.worst.lv)};opacity:1">${esc(T('nReads',s.reads.length))} — ${esc(s.worst.msg)}</div>`:''}
+      <div class="cact"><button class="xb" onclick="armNorm('${n.id}')">${T('nMeasure')}</button></div>
+    </div>`;
+  });
+  h+=`<div class="grp-title">${T('normsManual')}</div>`;
+  NORM_MANUAL.forEach(m=>{
+    const id='norm_'+m.id, cur=STATE.manual[id]||'na';
+    h+=`<div class="iron ${cur==='ok'?'o':cur==='fail'?'f':'w'}">
+      <div class="ih"><span class="it">${esc(L(m.n))}</span>
+        <span class="tri">
+          <button class="${cur==='ok'?'a-ok':''}" onclick="setManual('${id}','ok')">${T('stOk')}</button>
+          <button class="${cur==='fail'?'a-fail':''}" onclick="setManual('${id}','fail')">${T('stFail')}</button>
+          <button class="${cur==='na'?'a-na':''}" onclick="setManual('${id}','na')">${T('stNa')}</button>
+        </span></div>
+      <div class="ib">${esc(L(SRC[m.src]))} · ${esc(KIND_LBL(m.kind))}</div></div>`;
+  });
+  return h+`<div class="ib" style="font-size:10px;opacity:.5;margin-top:10px">${T('normsDisc')}</div>`;
+}
+
 function viewOpen(){
   const items=STATE.openItems;
   let h=`<div class="grp-title">${T('openTitle')}</div>`;
@@ -2854,7 +3232,10 @@ function viewSymbols(){
       <span class="num" style="background:${d.calib?'#0000FF':DIM_CLR}">↔</span>
       <span class="ct">${esc(d.label||'—')}${d.calib?esc(T('calibLine')):''}</span>
       <button class="xb" onclick="STATE.dims=STATE.dims.filter(x=>x.id!=='${d.id}');refresh()">${T('del')}</button>
-    </div></div>`).join('') : `<div class="empty">${T('noDims')}</div>`;
+    </div>${d.calib?'':`<div class="asg"><label>${T('nLbl')}</label>
+      <select onchange="setDimNorm('${d.id}',this.value)">${normOptions(d.norm||'')}</select></div>`}
+    ${d.norm&&NORMMAP[d.norm]?(()=>{ const r=evalNorm(NORMMAP[d.norm],dimMeters(d)); return `<div class="cb" style="color:${lvColor(r.lv)}">${esc(r.msg)}</div>`; })():''}
+    </div>`).join('') : `<div class="empty">${T('noDims')}</div>`;
 
   const tot=STATE.areas.reduce((s,a)=>s+(a.m2||0),0);
   h+=`<div class="grp-title">${T('areasTitle')} · ${STATE.areas.length}${tot?' · '+T('totalArea')+' '+fmtM2(tot):''}</div>`;
@@ -2904,8 +3285,9 @@ $('#planBox').addEventListener('click', e=>{
    12. PIPELINE
    ===================================================================== */
 function refresh(){
-  buildOrder();
   if(BASE) relabelMeasures();
+  syncNormNotes();
+  buildOrder();
   STATE.ironR=ironChecks(STATE.parse, STATE.rooms);
   STATE.openItems=openItems(STATE.rooms);
   renderPanel(); drawOverlay(); placeSymbols();
@@ -2943,6 +3325,7 @@ function recheck(){
   STATE.rooms=STATE.parse.tags.map((tag,i)=>({tag, i:i+1}));
   STATE.sched = hasSchedule() ? matchSchedule(STATE.rooms) : null;
   STATE.rooms.forEach(r=>{ r.check=checkRoom(r.tag, STATE.sched?r.sched:null); });
+  applyGeo(STATE.rooms);
   STATE.adj = adjacency(STATE.rooms);
   const fc=floorChecks(STATE.parse, STATE.rooms);
   STATE.floor=fc;
@@ -3335,6 +3718,7 @@ function applyStatic(){
     else hd.insertBefore(lb, hd.firstChild);
   }
   document.title = 'RDA — Test Fit Checker';
+  fillNormSel();
 }
 function setLang(l){
   if(l!=='he'&&l!=='en') return;
@@ -3373,7 +3757,8 @@ document.addEventListener('click', e=>{ if(!e.target.closest('#hmenu')) closeExp
 
 function applyProgram(p){
   STATE.program=p;
-  if(p.rules) Object.keys(p.rules).forEach(k=>{ RULES[k]=Object.assign({}, RULES[k]||{}, p.rules[k]); });
+  if(p.rules) Object.keys(p.rules).forEach(k=>{ if(k!=='norms') RULES[k]=Object.assign({}, RULES[k]||{}, p.rules[k]); });
+  applyNormRules();
   const b=$('#progBanner');
   b.className='prog-banner loaded';
   b.innerHTML=T('progBanner',
@@ -3401,7 +3786,7 @@ function saveJson(){
         title:n.title,sub:n.sub,body:n.body,nx:n.nx,ny:n.ny,pts:n.pts})),
       symbols:STATE.symbols, dims:STATE.dims, areas:STATE.areas,
       manual:STATE.manual, iron:STATE.iron, calib:STATE.calib,
-      assign:STATE.assign,
+      assign:STATE.assign, spr:STATE.spr,
       /* a read-only snapshot of the programme check, for whoever reads the
          file next (the site, Roy) — it is recomputed on load, never restored */
       schedule: STATE.sched ? {
@@ -3713,7 +4098,18 @@ function exportXlsx(){
   });
 
   try{
-    dlBlob(exportBase()+'-review.xlsx', buildXlsx(sheets.concat([meas,open])));
+    const nm={ name:T('xsNorms'), cols:[40,14,14,60,46],
+      rows:[hrow([T('thNorm'),T('thReq2'),T('thKind'),T('thRead'),T('thSource')])] };
+    normStatus().forEach(st=>nm.rows.push([
+      {v:normName(st.n), s:XS.BOLD}, normReq(st.n), KIND_LBL(st.n.kind),
+      {v:st.reads.length?T('nReads',st.reads.length)+' — '+st.worst.msg:T('nOpen'), s:st.lv==='n'?XS.WARN:LVSTYLE[st.lv]},
+      L(SRC[st.n.src])
+    ]));
+    NORM_MANUAL.forEach(m=>{ const cur=STATE.manual['norm_'+m.id]||'na';
+      nm.rows.push([{v:L(m.n), s:XS.BOLD}, '', KIND_LBL(m.kind),
+        {v:{ok:T('stOk'),fail:T('stFail'),na:T('stNa')}[cur], s:cur==='ok'?XS.OK:cur==='fail'?XS.FAIL:XS.WARN}, L(SRC[m.src])]); });
+    nm.rows.push([], [{v:T('normsDisc')}]);
+    dlBlob(exportBase()+'-review.xlsx', buildXlsx(sheets.concat([nm,meas,open])));
   }catch(err){
     toast(T('tXlsxErr'));
     showError(T('errXlsx', esc(err.message)));
@@ -4064,7 +4460,9 @@ function restoreReview(rv){
   if(rv.manual)  STATE.manual=rv.manual;
   if(rv.iron)    STATE.iron=rv.iron;
   if(rv.calib)   STATE.calib=rv.calib;
-  if(rv.assign && typeof rv.assign==='object'){ STATE.assign=Object.assign({}, rv.assign); recheck(); }
+  if(typeof rv.spr==='boolean') STATE.spr=rv.spr;
+  if(rv.assign && typeof rv.assign==='object') STATE.assign=Object.assign({}, rv.assign);
+  if(rv.assign || typeof rv.spr==='boolean') recheck();
   /* hand-made markup only — the rule-derived notes are rebuilt from the plan */
   (rv.notes||[]).filter(n=>n.src==='custom'||n.src==='cloud').forEach(n=>{
     if(!STATE.notes.some(x=>x.id===n.id)) STATE.notes.push(Object.assign({edited:true}, n));
@@ -4399,6 +4797,15 @@ function buildReport(){
     iron.map(r=>`<tr class="${r.level==='o'?'o':'f'}"><td class="b">${esc(r.n)}</td>
       <td><span class="rchip" style="background:${r.level==='o'?'#16A34A':'#E1504B'}">${r.level==='o'?T('ironOkWord'):T('ironMissing')}</span></td>
       <td>${esc(r.src)}</td><td>${esc(r.msg)}</td></tr>`).join('')+'</tbody></table>' });
+
+  const ns=normStatus();
+  sheets.push({ title:T('rptNorms'), kicker:T('nSpr')+': '+(STATE.spr?T('stOk'):'—'), html:
+    `<table class="rt"><thead><tr><th style="width:62mm">${T('thNorm')}</th><th style="width:22mm">${T('thReq2')}</th>
+      <th style="width:20mm">${T('thKind')}</th><th>${T('thRead')}</th><th style="width:58mm">${T('thSource')}</th></tr></thead><tbody>`+
+    ns.map(st=>`<tr class="${st.lv==='n'?'w':st.lv}"><td class="b">${esc(normName(st.n))}</td><td>${esc(normReq(st.n))}</td>
+      <td>${esc(KIND_LBL(st.n.kind))}</td><td>${esc(st.reads.length?T('nReads',st.reads.length)+' — '+st.worst.msg:T('nOpen'))}</td>
+      <td>${esc(L(SRC[st.n.src]))}</td></tr>`).join('')+'</tbody></table>'+
+    `<div class="rempty" style="text-align:start;margin-top:4mm">${esc(T('normsDisc'))}</div>` });
 
   chunk(openList(),14).forEach((c,i,all)=>sheets.push({
     title:T('rptOpen'), kicker:all.length>1?T('rptOf',i+1,all.length):T('rptOpenSub'),
