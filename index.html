@@ -41,6 +41,8 @@
   }
   .hb:hover{background:rgba(255,255,255,.12);}
   .hb.on{background:var(--accent); color:var(--black); border-color:var(--accent);}
+  #planPick{max-width:240px; text-transform:none; letter-spacing:.02em;}
+  #planPick option{background:var(--black); color:var(--white);}
   .accent-bar{height:3px; background:var(--accent); flex:0 0 auto;}
 
   /* language switch — pinned to the visual left corner in both directions.
@@ -155,7 +157,22 @@
   /* ---------- workspace ---------- */
   #workView{display:none; height:calc(100vh - 49px);}
   #workView.on{display:flex;}
-  #stage{flex:1; display:flex; flex-direction:column; min-width:0; background:var(--gray);}
+  #stage{flex:1; display:flex; flex-direction:column; min-width:0; background:var(--gray); position:relative;}
+  .lpop{display:none; position:absolute; top:42px; inset-inline-start:10px; z-index:40; background:var(--white);
+    border:1px solid var(--border); box-shadow:0 8px 24px rgba(0,0,0,.12); padding:8px 12px 10px; min-width:250px; max-height:70vh; overflow:auto; font-size:11px;}
+  .lpop.on{display:block;}
+  .lph{font-size:9px; letter-spacing:.08em; text-transform:uppercase; opacity:.5; margin:8px 0 4px;}
+  .lrow{display:flex; align-items:center; gap:8px; padding:4px 0; cursor:pointer;}
+  .lrow span{flex:1;}
+  .lrow input[type=range]{flex:1; accent-color:var(--black);}
+  .lcnt{font-style:normal; opacity:.45; font-size:10px; min-width:24px; text-align:end;}
+  .lnote{font-size:10px; opacity:.55; padding:4px 0; line-height:1.4;}
+  #cadbar{flex:0 0 auto; background:var(--white); border-top:1px solid var(--border); display:flex; align-items:center; gap:6px;
+    padding:4px 10px; font-size:10px; white-space:nowrap; overflow-x:auto; direction:ltr; font-variant-numeric:tabular-nums;}
+  .cadt{font:inherit; font-size:9px; letter-spacing:.06em; border:1px solid var(--border); background:var(--white); color:var(--black); padding:2px 7px; cursor:pointer; opacity:.55;}
+  .cadt.on{background:var(--black); color:var(--white); opacity:1;}
+  #cadRead{min-width:220px; padding:0 6px;}
+  #cadKeys{margin-inline-start:auto; opacity:.45;}
   #stagebar{
     height:38px; flex:0 0 auto; background:var(--white); border-bottom:1px solid var(--border);
     display:flex; align-items:center; gap:4px; padding:0 10px; overflow-x:auto; white-space:nowrap;
@@ -167,6 +184,8 @@
   .tb:hover{background:var(--gray);}
   .tb.on{background:var(--black); color:var(--white);}
   .tb.armed{background:var(--s-prog); color:#fff;}
+  .tbsel{font:inherit; font-size:10px; border:1px solid var(--border); background:var(--white); color:var(--black); padding:3px 4px; max-width:150px;}
+  .spr{display:flex; align-items:center; gap:6px; font-size:11px; margin-top:8px; cursor:pointer;}
   .tbsep{width:1px; height:18px; background:var(--border); margin:0 5px;}
   .zlabel{font-size:10px; opacity:.5; min-width:38px; text-align:center;}
   /* Centering via the flex parent's align-items/justify-content clips the
@@ -249,6 +268,15 @@
   .card .cb{font-size:11px; font-weight:300; opacity:.85; line-height:1.5;}
   .card .cb[contenteditable="true"]:focus{outline:1px solid var(--accent); background:#fff;}
   .card .cact{display:flex; gap:5px; margin-top:6px;}
+  .card .asg{display:flex; align-items:center; gap:6px; margin-top:6px;}
+  .card .asg label{font-size:9px; letter-spacing:.1em; text-transform:uppercase; opacity:.5; white-space:nowrap;}
+  .card .asg select{flex:1; min-width:0; font:inherit; font-size:11px; border:1px solid var(--border); background:var(--white); color:var(--black); padding:3px 4px;}
+  .card .asg select:focus{outline:none; border-color:var(--black); box-shadow:inset 0 -2px 0 var(--accent);}
+  .msx{margin-top:12px;}
+  .msx .grp-title{margin-top:10px;}
+  .msx ul{list-style:none; font-size:11px; font-weight:300;}
+  .msx li{padding:4px 0; border-bottom:1px solid var(--border);}
+  .msx li b{font-weight:500;}
   .xb{
     font-size:9px; padding:3px 7px; border:1px solid var(--border); background:var(--white);
     cursor:pointer; letter-spacing:.05em; opacity:.7;
@@ -480,6 +508,7 @@
   <div class="tool">Test Fit Checker</div>
   <div class="fname" id="fname"></div>
   <div class="hbtns" id="hbtns" style="display:none">
+    <select class="hb" id="planPick" style="display:none" onchange="pickPlan(this.value)"></select>
     <button class="hb" id="btnPanel" onclick="togglePanel()" data-t="panel">פאנל</button>
     <button class="hb" onclick="projectModal()" data-t="projectDetails">פרטי פרויקט</button>
     <div class="hmenu" id="hmenu">
@@ -506,7 +535,7 @@
       <div class="dz-big" data-t="dzBig">גרור תוכנית לכאן</div>
       <div class="dz-small" data-t="dzSmall"></div>
     </div>
-    <input type="file" id="fileInput" accept=".pdf,.rvt,.rfa,.png,.jpg,.jpeg">
+    <input type="file" id="fileInput" accept=".pdf,.rvt,.rfa,.json,.png,.jpg,.jpeg" multiple>
     <input type="file" id="jsonInput" accept=".json,application/json">
 
     <div class="fmt">
@@ -535,8 +564,8 @@
           <li data-t="rvtHow4"></li>
         </ol>
         <div class="rv-actions">
-          <a class="mini pri" href="RDA_TestFit_Export_Macro.cs" download data-t="rvtDlMacro"></a>
-          <button class="mini" id="rvtUploadBtn" data-t="rvtUploadJson"></button>
+          <button class="mini pri" id="rvtUploadBtn" data-t="rvtUploadJson"></button>
+          <a class="mini" href="RDA_TestFit_Export_Macro.cs" download data-t="rvtDlMacro"></a>
         </div>
       </div>
     </div>
@@ -556,8 +585,11 @@
       <button class="tb on" id="lySyms"  onclick="toggleLayer('syms')"  data-t="lySyms"></button>
       <button class="tb on" id="lyDims"  onclick="toggleLayer('dims')"  data-t="lyDims"></button>
       <button class="tb on" id="lyAreas" onclick="toggleLayer('areas')" data-t="lyAreas"></button>
+      <button class="tb" id="lyMgr" onclick="toggleLayerPop(event)" data-t="lyMgr"></button>
       <span class="tbsep"></span>
       <button class="tb" id="tDim"   onclick="armTool('dim')"   data-t="tDim"></button>
+      <button class="tb" id="tSmart" onclick="armTool('smart')" data-t="tSmart"></button>
+      <select class="tbsel" id="normSel" onchange="STATE.normArm=this.value"></select>
       <button class="tb" id="tArea"  onclick="armTool('area')"  data-t="tArea"></button>
       <button class="tb" id="tCalib" onclick="armTool('calib')" data-t="tCalib"></button>
       <span class="tbsep"></span>
@@ -567,12 +599,19 @@
       <button class="tb" onclick="clearMarkup()" data-t="clearMarkupBtn"></button>
       <span class="zlabel" id="toolHint" style="min-width:auto; opacity:.6"></span>
     </div>
+    <div id="layerPop" class="lpop"></div>
     <div id="planHost">
       <div id="planBox">
         <canvas id="planCanvas"></canvas>
         <canvas id="ovl"></canvas>
         <div id="symLayer"></div>
       </div>
+    </div>
+    <div id="cadbar">
+      <button class="cadt on" id="cadSnap" onclick="cadToggle('snap')" title="F3">SNAP</button>
+      <button class="cadt on" id="cadOrtho" onclick="cadToggle('ortho')" title="F8 / Shift">ORTHO</button>
+      <span id="cadRead"></span>
+      <span id="cadKeys" data-t="cadKeys"></span>
     </div>
     <div id="legend">
       <span class="lg"><i style="background:#E1504B"></i><b data-t="lgFail"></b></span>
@@ -581,7 +620,7 @@
       <span class="lg"><i style="background:#7C3AED"></i><b data-t="lgEl"></b></span>
       <span class="lg"><i style="background:#0EA5E9"></i><b data-t="lgIt"></b></span>
       <span class="lg"><i style="background:#16A34A"></i><b data-t="lgMove"></b></span>
-      <span class="lg"><i style="background:#D6009A"></i><b data-t="lgDim"></b></span>
+      <span class="lg"><i style="background:#808080"></i><b data-t="lgDim"></b></span>
       <span class="lg"><i style="background:#0000FF"></i><b data-t="lgArea"></b></span>
       <span class="lg" id="calibNote" style="opacity:.5"></span>
     </div>
@@ -626,19 +665,25 @@ he:{
   expHtmT:'HTML — דוח אינטראקטיבי', expHtmS:'עצמאי, ניתן לעריכה אצל הלקוח',
   expJsnT:'JSON — שמירת מצב', expJsnS:'לטעינה חוזרת בפלטפורמה',
   heroH1:'בדוק <em>Test Fit</em><br>בשניות.',
-  dzBig:'גרור תוכנית לכאן', dzSmall:'PDF מיוצא מ-Revit · או לחץ לבחירת קובץ',
+  dzBig:'גרור תוכנית לכאן', dzSmall:'PDF מיוצא מ-Revit · אפשר כמה קבצים יחד · או לחץ לבחירה',
   rvtSoon:'RVT', loadingPlan:'מנתח תוכנית…',
   scopeNote:'כלי פנימי של Roy David Architects — עובד לגמרי בדפדפן, בלי שרת ובלי העלאת קבצים לשום מקום. '+
     'אין להעלות אליו קבצים ללקוחות חוץ ואין לשתף את הקישור מחוץ למשרד. '+
     'הבדיקה היא תצפית אינפורמטיבית שנגזרת מבנצ׳מרקים — לא חוות דעת רגולטורית; נגישות, מילוט, בטיחות אש ותקינה מחייבים בדיקה של יועץ מוסמך.',
   /* --- layers, tools, legend --- */
   lyNotes:'הערות', lySyms:'סימבולים', lyDims:'מידות', lyAreas:'שטחים',
+  lyMgr:'שכבות ▾', lyPlanTitle:'שכבות התכנית', lyMarkTitle:'שכבות סימון', lyFills:'צבעי חדרים (מילוי)', lyFade:'דהיית התכנית',
+  lyNoOcg:'בקובץ הזה אין שכבות PDF. בקובץ AutoCAD / Revit שיוצא עם שכבות, הן יופיעו כאן אחת-אחת.',
+  dsPlan:n=>'סגנון המידות נלקח מהתכנית עצמה ('+n+' מידות זוהו): גובה טקסט, צבע, עובי קו, מרווח.',
+  dsRef:'בתכנית אין מידות לקריאה — גובה הטקסט נלקח מטקסט התכנית, והמראה לפי רפרנס המידות של RD&A.',
+  cadLen:'אורך', cadKeys:'D מידה · A שטח · S מידה חכמה · F3 Snap · F8 Ortho · גלגלת = זום · כפתור אמצעי = הזזה',
+  tTypedNoCalib:'כדי להקליד אורך צריך קנה מידה',
   tDim:'קו מידה', tArea:'מדידת שטח', tCalib:'כיול', tPin:'הערה ממוספרת', tCloud:'ענן הערה',
   clearMarkupBtn:'נקה סימונים',
   lgFail:'שגוי', lgWarn:'תיקון קל', lgInfo:'מידע / לבדיקה', lgEl:'חשמל', lgIt:'תקשורת',
   lgMove:'תנועה', lgDim:'קווי מידה', lgArea:'מדידת שטח', calibratedNote:'קנה מידה מכויל',
   /* --- tool hints + prompts + toasts --- */
-  hintDim:'לחץ נקודת התחלה ואז נקודת סיום',
+  hintDim:'נקודת התחלה ואז נקודת סיום · אפשר להקליד אורך ו-Enter · Esc לסיום',
   hintArea:'לחץ נקודה-נקודה על קונטור החדר · Enter או לחיצה על הנקודה הראשונה לסגירה',
   hintCalib:'שרטט קו על מידה ידועה בתוכנית',
   hintPin:'לחץ על התכנית למיקום הערה ממוספרת',
@@ -657,9 +702,26 @@ he:{
   tExportMade:'Export נוצר — ניתן לערוך ולשמור מחדש', tXlsxErr:'שגיאה ביצירת Excel',
   tPages:n=>n+' עמודים — בחר "שמור כ-PDF" בתיבת ההדפסה',
   tManualMode:'לא זוהתה שכבת טקסט — מצב סימון ידני', tImgLoaded:'תמונה נטענה — מצב סימון ידני',
+  planAdd:'+ הוסף תוכניות', tPlansAdded:n=>n+' תוכניות נוספו לרשימה',
   confirmClear:'למחוק את כל הסימבולים, קווי המידה, מדידות השטח, העננים וההערות הידניות?',
   /* --- tabs, tiles --- */
-  tabIron:'ברזל', tabNotes:'הערות', tabProg:'פרוגרמה', tabOpen:'לא נראה', tabMarks:'סימונים',
+  tabIron:'ברזל', tabNotes:'הערות', tabProg:'פרוגרמה', tabOpen:'לא נראה', tabMarks:'סימונים', tabNorms:'תקנים',
+  tSmart:'מידה חכמה', hintSmart:'לחץ בתוך חלל — המידה נמדדת אוטומטית מקיר לקיר (Shift = שני הכיוונים)',
+  normSelTitle:'התקן שיוצמד לקווי המידה הבאים', nNone:'ללא תקן', nLbl:'תקן',
+  tSmartNone:'לא נמצאו קירות משני הצדדים — לחץ בתוך חלל סגור', tSmartNoCalib:'המידה נוצרה — כייל קו אחד כדי לקבל אורך',
+  nNoValue:'אין אורך — כייל קו מידה אחד', nOk:(v,m)=>v+' ס״מ ≥ '+m+' ס״מ',
+  nShort:(v,m,g)=>v+' ס״מ — חסרים '+g+' ס״מ מול '+m+' ס״מ', nEdge:(v,m)=>v+' ס״מ — על הגבול מול '+m+' ס״מ (דיוק מדידה ±2 ס״מ)',
+  nAlt:(v,m,g,w)=>v+' ס״מ — חסרים '+g+' ס״מ מול '+m+'; מותר '+w,
+  nOkMax:(v,m)=>v+' מ׳ ≤ '+m+' מ׳', nOver:(v,m,g)=>v+' מ׳ — חורג ב-'+g+' מ׳ מעל '+m+' מ׳',
+  nWcLen:(b,g)=>'אורך התא '+b+' ס״מ — חסרים '+g+' ס״מ מול 200 ס״מ',
+  kLaw:'חוק', kStd:'תקן', kPractice:'נוהג משרדי',
+  normsTitle:'תקנים ודרישות', normsIntro:'כל דרישה עם המקור שלה. מדידה: בחר "מדוד", ולחץ בתוך החלל על התכנית — המערכת מודדת מקיר לקיר ורושמת הערה עם הפער. דרישה שלא נמדדה נשארת פתוחה.',
+  nSpr:'הבניין מוגן במתזים ובשליטה בעשן', nNeedCalib:'אין כיול — מדידות לא יקבלו אורך. כייל קו מידה אחד שאורכו ידוע.',
+  nOpen:'לא נמדד', nCheck:'לבדוק', nFail:'חסר', nReads:n=>n+' מדידות', nMeasure:'מדוד',
+  normsManual:'דרישות שלא נראות בתכנית 2D', normsDisc:'הערכים נקראו מנוסח התקנות (ויקיטקסט) ומת״י 1918 חלק 3.1 (2023, gov.il). הם אינם תחליף ליועץ נגישות, ליועץ בטיחות או לבדיקת הנוסח המחייב.',
+  fOcc:'תפוסה ודרכי מוצא', fOccMsg:(o,a,n,e)=>'תפוסה לפי התקנות: '+o+' איש ('+a+' מ״ר ÷ 10) — נדרשות '+n+' דרכי מוצא; סומנו '+e+' (IN/EX)',
+  fBigRoom:'חדרים ל-50 איש ומעלה', fBigRoomMsg:l=>'נדרשים 2 פתחי יציאה לפחות (פרט 3.2.13.2): '+l,
+  xsNorms:'תקנים', thNorm:'דרישה', thReq2:'סף', thKind:'סוג', thRead:'מדידה', rptNorms:'תקנים ודרישות',
   tlFail:'שגוי', tlWarn:'תיקון קל', tlIron:'כללי ברזל', tlTags:'תגיות',
   tlStations:'עמדות', tlSeats:'מקומות', tlArea:'מ״ר', tlSyms:'סימבולים',
   /* --- panel: iron --- */
@@ -673,6 +735,15 @@ he:{
   scaleOnMsg:'קווי מידה חדשים יקבלו אורך אוטומטי בסנטימטרים.',
   scaleOffMsg:'כייל פעם אחת על מידה ידועה — לאחר מכן כל קו מידה יחושב אוטומטית.',
   calibNow:'כייל עכשיו',
+  autoDimsBtn:'מידות אוטומטיות לכל החדרים', autoDimsOffBtn:'הסר מידות אוטומטיות',
+  dimsHideBtn:'הסתר קווי מידה', dimsShowBtn:'הצג קווי מידה',
+  autoDimTag:n=>' · אוטומטי'+(n?' · '+n:''),
+  tAutoDims:n=>n+' קווי מידה נוספו אוטומטית', tAutoDimsOff:'המידות האוטומטיות הוסרו',
+  scRevit:'קנה מידה מדויק מגיאומטריית רוויט.',
+  scText:(d,n,c)=>'קנה מידה 1:'+d+' מתוך ה-PDF'+(n?', אומת מול '+n+' חדרים עם שטח (סטייה '+c+'%)':'')+'.',
+  scArea:(n,d)=>'קנה מידה נגזר מ-'+n+' חדרים עם שטח m²'+(d?' (ה-1:'+d+' בגיליון לא תאם)':'')+'.',
+  scHand:'קנה מידה מכיול ידני.',
+  autoSkipped:n=>n+' חדרים לא נמדדו אוטומטית — אין להם מילוי צבע, או שהמידה לא תאמה לשטח בתגית. אפשר לשרטט להם ידנית.',
   /* --- panel: notes --- */
   grpFail:'שגוי — לתיקון', grpWarn:'תיקון קל', grpInfo:'מידע / ידני', grpOk:'תקין',
   noNotes:'אין הערות — התוכנית עברה את כל הבדיקות.',
@@ -763,11 +834,11 @@ he:{
   rvtLinksTitle:'קישורים חיצוניים', rvtLinkOk:'נטען', rvtLinkBad:'לא נמצא', rvtNoLinks:'אין קישורים חיצוניים בקובץ.',
   rvtLevelLabel:'שם התכנית / הקומה שברצונך לבדוק',
   rvtLevelPh:'לדוגמה: FL03, קומה 3',
-  rvtHow1:'Revit 2025 ומעלה: ודא ש-Macros מאופשרים — Options ← Macros ← Enable application macros, ואז סגור ופתח מחדש את Revit (חד-פעמי).',
-  rvtHow2:'ב-Revit 2025+ בלבד: אם זו הפעם הראשונה, ודא ש-.NET SDK 8 ו-Visual Studio Code מותקנים במחשב (נדרש להרצת עורך המאקרו).',
-  rvtHow3:'Manage ← Macros ← Macro Manager ← "My Macros" (Application, לא Document) ← Create, הדבק את קוד המאקרו שהורדת, ולחץ Run.',
-  rvtHow4:'סייר קבצים ייפתח לבד עם קובץ ה-JSON מסומן — גררו אותו לכפתור "העלה JSON מהמאקרו" למטה. השם שהקלדת מעלה יבחר את הקומה הנכונה מתוך הייצוא.',
-  rvtDlMacro:'הורד מאקרו (.cs)', rvtUploadJson:'העלה JSON מהמאקרו',
+  rvtHow1:'חד-פעמי: התקינו את לשונית RDA ב-pyRevit — מעתיקים את התיקייה RDA.extension ל-%APPDATA%\\pyRevit\\Extensions ולוחצים pyRevit ← Reload.',
+  rvtHow2:'פותחים את המודל ב-Revit ← לשונית RDA ← Test Fit ← Export Test Fit. קריאה בלבד — המודל לא משתנה ולא נשמר.',
+  rvtHow3:'סייר קבצים נפתח עם הקובץ testfit-export.json מסומן — גוררים אותו לדף הזה או לכפתור "העלה JSON מרוויט".',
+  rvtHow4:'השם שהקלדתם למעלה בוחר את הקומה מתוך הייצוא. בלי pyRevit אפשר להשתמש במאקרו (.cs), אבל ב-Revit 2025+ הוא דורש .NET SDK 8 ו-VS Code.',
+  rvtDlMacro:'מאקרו חלופי (.cs)', rvtUploadJson:'העלה JSON מרוויט',
   rvtLevelNoMatch:n=>`לא נמצאה קומה בשם "${n}" בקובץ — נבחרה הקומה עם הכי הרבה חדרים במקום.`,
   rvtLevelMatched:n=>`נבחרה הקומה "${n}" לפי מה שהקלדת.`,
   errDwg:(fmt,app,path)=>'<b>'+fmt+' הוא פורמט בינארי סגור — לא ניתן לפענוח בדפדפן.</b>'+
@@ -823,6 +894,7 @@ he:{
   /* --- iron rules --- */
   iRoomDims:'מידות כל חדר במטרים',
   iRoomDimsOk:n=>'זוהו '+n+' מידות במטרים בתוכנית.',
+  iRoomDimsAuto:n=>'נוספו אוטומטית אורך ורוחב ל-'+n+' חדרים.',
   iRoomDimsBad:(n,t)=>'זוהו '+n+' מידות בלבד מול '+t+' תגיות. סמן מידות חסרות בכלי "קו מידה".',
   iOverall:'קווי מידה — אורך ורוחב',
   iOverallOk:'זוהו קווי מידה כלליים בתוכנית.',
@@ -831,7 +903,41 @@ he:{
   iEntryOk:'כניסה ויציאה מסומנות.', iEntryBad:'לא זוהה סימון כניסה/יציאה. גרור IN ו-EX מהמחסן.',
   iPanels:'ארונות חשמל ותקשורת',
   iPanelsOk:'ארונות חשמל ותקשורת מסומנים.', iPanelsBad:'לא זוהה סימון ארונות. גרור EL ו-IT מהמחסן.',
-  srcAuto:'זוהה אוטומטית', srcManual:'הושלם ידנית', srcMissing:'חסר'
+  srcAuto:'זוהה אוטומטית', srcManual:'הושלם ידנית', srcMissing:'חסר',
+  /* --- programme schedule: room codes from the RD&A site --- */
+  circulation:'מעבר / גרעין',
+  sMatchedCode:c=>'מותאם לפי קוד '+c, sMatchedType:c=>'מותאם לפי סוג ל-'+c+' — מומלץ להקליד את הקוד בשדה Number',
+  sMatchedManual:c=>'שויך ידנית ל-'+c, sUnassigned:'לא שויך לפרוגרמה — בחר קוד מהרשימה',
+  sUnknownCode:c=>'הקוד '+c+' לא קיים בפרוגרמה', sOtherFloor:(c,f)=>'הקוד '+c+' שייך לקומה אחרת (הבדיקה היא ל-'+f+')',
+  sDupCode:c=>'הקוד '+c+' מופיע ביותר מחדר אחד',
+  sExtra:'לא נדרש בפרוגרמה — חדר עודף', sExtraType:t=>'יותר חדרי '+t+' ממה שהפרוגרמה מבקשת', sMarkedExtra:'סומן ידנית כעודף',
+  sAreaFail:(a,m)=>a+' מ״ר — מתחת לדרישה '+m+' מ״ר', sAreaEdge:(a,m)=>a+' מ״ר — על הגבול מול '+m+' מ״ר',
+  sAreaOk:(a,m)=>a+' מ״ר ≥ '+m+' מ״ר', sNoArea:'אין שטח בחדר',
+  sSeatsFail:(c,s)=>c+' מקומות — הפרוגרמה מבקשת '+s, sSeatsOk:(c,s)=>c+' מקומות ≥ '+s,
+  sNoCap:n=>'אין Capacity בחדר — לא ניתן לבדוק '+n+' מקומות. מלא Capacity ברוויט',
+  sDesksFail:(c,d)=>c+' עמדות — המחלקה צריכה '+d, sDesksOk:(c,d)=>c+' עמדות ≥ '+d,
+  sOsArea:(a,t)=>'שטח '+a+' מ״ר מול '+t+' מ״ר בפרוגרמה', sOsAreaLow:(a,t)=>'שטח '+a+' מ״ר — פחות מ-90% מ-'+t+' מ״ר בפרוגרמה',
+  sDeptBad:(d,p)=>'Department "'+d+'" — בפרוגרמה "'+p+'"', sDeptMissing:p=>'Department ריק — בפרוגרמה "'+p+'"',
+  sOsSplit:n=>'המחלקה משורטטת ב-'+n+' חדרים — נבדק הסכום',
+  sOsNoDept:'אופן ספייס בלי מחלקה — מלא Department או שייך לקוד',
+  thCode:'קוד', thReq:'דרישה', thDrawn:'בתכנית',
+  stMissing:'חסר', reqMin:m=>'≥ '+m+' מ״ר', reqSeats:s=>s+' מקומות', reqDesks:d=>d+' עמדות', reqArea:a=>'~'+a+' מ״ר',
+  byType:'≈ לפי סוג', byManual:'ידני',
+  missTitle:n=>'חסרים · '+n, extraTitle:n=>'עודפים · '+n, noMissing:'אין חסרים', noExtra:'אין עודפים',
+  fSched:'חדרי הפרוגרמה', fSchedMsg:(m,t,x)=>m+' מתוך '+t+' קודים נמצאו בתכנית'+(x?' · '+x+' חסרים':''),
+  fHead:'עמדות מול כוח אדם', fHeadMsg:(d,o,h)=>d+' עמדות + '+o+' משרדים סגורים = '+(d+o)+' מול '+h+' עובדים',
+  fHeadNoCap:h=>'אין Capacity באופן ספייס — לא ניתן לספור עמדות מול '+h+' עובדים',
+  fNet:'נטו מול ברוטו', fNetMsg:(n,g,p)=>n+' מ״ר נטו משורטט מול '+g+' מ״ר ברוטו ('+p+'%)',
+  fNetOver:(n,g)=>n+' מ״ר נטו גדול מ-'+g+' מ״ר ברוטו — בדוק את השטחים',
+  fExtras:'חדרים עודפים', fExtrasMsg:(n,l)=>n+' חדרים לא בפרוגרמה: '+l,
+  fCodes:'קודים כפולים / לא מוכרים', fCodesMsg:l=>l,
+  fUnassigned:'חדרים בלי שיוך', fUnassignedMsg:n=>n+' חדרים מחכים לשיוך ידני (בטאב הערות)',
+  assignLbl:'שיוך לפרוגרמה', assignAuto:'אוטומטי', assignExtra:'לא בפרוגרמה (עודף)',
+  adjTouch:'צמודים — קיר משותף', adjNear:m=>'קרובים — '+m+' מ׳', adjFar:m=>'רחוקים — '+m+' מ׳ · כדאי לבדוק',
+  adjNoDept:d=>'המחלקה "'+d+'" לא נמצאה בתכנית', adjNoGeo:'אין גיאומטריה — לבדוק בעין',
+  adjScope:'סמיכות', revitCodes:'הורד קודים לרוויט (Excel)', revitCodesSheet:'קודים לרוויט',
+  rcNumber:'Number', rcName:'Name', rcDept:'Department', rcReq:'דרישה', rcFrom:'מקור',
+  xsSched:'חסרים ועודפים', rptMissExtra:'חסרים ועודפים'
 },
 en:{
   /* --- units --- */
@@ -844,19 +950,25 @@ en:{
   expHtmT:'HTML — interactive report', expHtmS:'Self-contained, editable by the client',
   expJsnT:'JSON — save state', expJsnS:'Reload later in the platform',
   heroH1:'Check a <em>Test Fit</em><br>in seconds.',
-  dzBig:'Drop a plan here', dzSmall:'PDF exported from Revit · or click to choose a file',
+  dzBig:'Drop a plan here', dzSmall:'PDF exported from Revit · several files at once · or click to choose',
   rvtSoon:'RVT', loadingPlan:'Analysing plan…',
   scopeNote:'An internal Roy David Architects tool — runs entirely in the browser, no server, nothing uploaded anywhere. '+
     'Do not upload files for outside clients here, and do not share this link outside the office. '+
     'The check is an informative observation derived from benchmarks, not a regulatory opinion; accessibility, egress, fire safety and code compliance require review by a licensed consultant.',
   /* --- layers, tools, legend --- */
   lyNotes:'Notes', lySyms:'Symbols', lyDims:'Dimensions', lyAreas:'Areas',
+  lyMgr:'Layers ▾', lyPlanTitle:'Plan layers', lyMarkTitle:'Markup layers', lyFills:'Room colour fills', lyFade:'Fade plan',
+  lyNoOcg:'This file carries no PDF layers. A plan exported from AutoCAD / Revit with layers lists each one here.',
+  dsPlan:n=>'Dimension style read from the plan itself ('+n+' dimensions found): text height, colour, line weight, gap.',
+  dsRef:'The plan has no readable dimensions: text height comes from the plan text, the look from the RD&A dimension reference.',
+  cadLen:'Length', cadKeys:'D dim · A area · S smart dim · F3 Snap · F8 Ortho · wheel = zoom · middle button = pan',
+  tTypedNoCalib:'Typing a length needs a scale',
   tDim:'Dimension', tArea:'Measure area', tCalib:'Calibrate', tPin:'Numbered note', tCloud:'Cloud note',
   clearMarkupBtn:'Clear markup',
   lgFail:'Fail', lgWarn:'Minor fix', lgInfo:'Info / to verify', lgEl:'Electrical', lgIt:'Data',
   lgMove:'Circulation', lgDim:'Dimensions', lgArea:'Area measurement', calibratedNote:'Scale calibrated',
   /* --- tool hints + prompts + toasts --- */
-  hintDim:'Click a start point, then an end point',
+  hintDim:'Start point, then end point · type a length + Enter · Esc to finish',
   hintArea:'Click point by point around the room outline · Enter, or click the first point, to close',
   hintCalib:'Draw a line over a known dimension on the plan',
   hintPin:'Click the plan to place a numbered note',
@@ -875,9 +987,26 @@ en:{
   tExportMade:'Export created — editable and re-savable', tXlsxErr:'Could not create the Excel file',
   tPages:n=>n+' pages — choose "Save as PDF" in the print dialog',
   tManualMode:'No text layer found — manual markup mode', tImgLoaded:'Image loaded — manual markup mode',
+  planAdd:'+ Add plans', tPlansAdded:n=>n+' plans added to the list',
   confirmClear:'Delete all symbols, dimension lines, area measurements, clouds and manual notes?',
   /* --- tabs, tiles --- */
-  tabIron:'Core', tabNotes:'Notes', tabProg:'Program', tabOpen:'Unseen', tabMarks:'Markup',
+  tabIron:'Core', tabNotes:'Notes', tabProg:'Program', tabOpen:'Unseen', tabMarks:'Markup', tabNorms:'Norms',
+  tSmart:'Smart dimension', hintSmart:'Click inside a space — it is measured wall to wall automatically (Shift = both directions)',
+  normSelTitle:'Norm attached to the next dimension lines', nNone:'No norm', nLbl:'Norm',
+  tSmartNone:'No walls found on both sides — click inside an enclosed space', tSmartNoCalib:'Dimension added — calibrate one line to get its length',
+  nNoValue:'No length — calibrate one dimension line', nOk:(v,m)=>v+' cm ≥ '+m+' cm',
+  nShort:(v,m,g)=>v+' cm — '+g+' cm short of '+m+' cm', nEdge:(v,m)=>v+' cm — borderline against '+m+' cm (measuring accuracy ±2 cm)',
+  nAlt:(v,m,g,w)=>v+' cm — '+g+' cm short of '+m+'; allowed '+w,
+  nOkMax:(v,m)=>v+' m ≤ '+m+' m', nOver:(v,m,g)=>v+' m — '+g+' m over '+m+' m',
+  nWcLen:(b,g)=>'Stall length '+b+' cm — '+g+' cm short of 200 cm',
+  kLaw:'Law', kStd:'Standard', kPractice:'Office practice',
+  normsTitle:'Norms and requirements', normsIntro:'Every requirement with its source. To measure: press "Measure", then click inside the space on the plan — it is measured wall to wall and a note records the gap. A requirement that was not measured stays open.',
+  nSpr:'The building has sprinklers and smoke control', nNeedCalib:'Not calibrated — measurements get no length. Calibrate one dimension line of known length.',
+  nOpen:'Not measured', nCheck:'Check', nFail:'Short', nReads:n=>n+' readings', nMeasure:'Measure',
+  normsManual:'Requirements a 2D plan cannot show', normsDisc:'Values were read from the regulations (Wikisource text) and SI 1918 part 3.1 (2023, gov.il). They do not replace an accessibility or fire-safety consultant, or a check of the binding text.',
+  fOcc:'Occupancy and exits', fOccMsg:(o,a,n,e)=>'Occupancy by the regulations: '+o+' people ('+a+' m² ÷ 10) — '+n+' exits required; '+e+' marked (IN/EX)',
+  fBigRoom:'Rooms for 50 people or more', fBigRoomMsg:l=>'At least 2 exit openings required (3.2.13.2): '+l,
+  xsNorms:'Norms', thNorm:'Requirement', thReq2:'Threshold', thKind:'Kind', thRead:'Reading', rptNorms:'Norms and requirements',
   tlFail:'Fail', tlWarn:'Minor fix', tlIron:'Core rules', tlTags:'Tags',
   tlStations:'Stations', tlSeats:'Seats', tlArea:'m²', tlSyms:'Symbols',
   /* --- panel: iron --- */
@@ -891,6 +1020,15 @@ en:{
   scaleOnMsg:'New dimension lines are measured automatically in centimetres.',
   scaleOffMsg:'Calibrate once against a known dimension — every later line is then computed automatically.',
   calibNow:'Calibrate now',
+  autoDimsBtn:'Auto-dimension every room', autoDimsOffBtn:'Remove auto dimensions',
+  dimsHideBtn:'Hide dimensions', dimsShowBtn:'Show dimensions',
+  autoDimTag:n=>' · auto'+(n?' · '+n:''),
+  tAutoDims:n=>n+' dimension lines added automatically', tAutoDimsOff:'Auto dimensions removed',
+  scRevit:'Exact scale from the Revit geometry.',
+  scText:(d,n,c)=>'Scale 1:'+d+' from the PDF'+(n?', checked against '+n+' rooms with an area ('+c+'% off)':'')+'.',
+  scArea:(n,d)=>'Scale derived from '+n+' rooms with an m² area'+(d?' (the sheet\'s 1:'+d+' did not match)':'')+'.',
+  scHand:'Scale from a hand calibration.',
+  autoSkipped:n=>n+' rooms were not measured automatically — no colour fill, or the size did not match the tag\'s area. Draw them by hand.',
   /* --- panel: notes --- */
   grpFail:'Fail — to fix', grpWarn:'Minor fix', grpInfo:'Info / manual', grpOk:'Pass',
   noNotes:'No notes — the plan passed every check.',
@@ -981,11 +1119,11 @@ en:{
   rvtLinksTitle:'External links', rvtLinkOk:'Loaded', rvtLinkBad:'Not found', rvtNoLinks:'No external links in this file.',
   rvtLevelLabel:'Name of the plan / floor you want to check',
   rvtLevelPh:'e.g. FL03, Level 3',
-  rvtHow1:'Revit 2025+: make sure Macros are enabled — Options → Macros → Enable application macros, then close and reopen Revit (one-time).',
-  rvtHow2:'Revit 2025+ only: the first time, make sure .NET SDK 8 and Visual Studio Code are installed (needed to run the macro editor).',
-  rvtHow3:'Manage → Macros → Macro Manager → "My Macros" (Application, not Document) → Create, paste in the macro code you downloaded, and click Run.',
-  rvtHow4:'A File Explorer window opens on its own with the JSON file selected — drag it onto the "Upload the macro’s JSON" button below. The name you typed above picks the right floor out of that export.',
-  rvtDlMacro:'Download macro (.cs)', rvtUploadJson:'Upload the macro’s JSON',
+  rvtHow1:'One-time: install the RDA tab in pyRevit — copy the RDA.extension folder to %APPDATA%\\pyRevit\\Extensions and click pyRevit → Reload.',
+  rvtHow2:'Open the model in Revit → RDA tab → Test Fit → Export Test Fit. Read-only — the model is not changed or saved.',
+  rvtHow3:'File Explorer opens with the -testfit-export.json file selected — drag it onto this page or the "Upload JSON from Revit" button.',
+  rvtHow4:'The name you typed above picks the floor out of the export. Without pyRevit, use the macro (.cs) — on Revit 2025+ it needs .NET SDK 8 and VS Code.',
+  rvtDlMacro:'Fallback macro (.cs)', rvtUploadJson:'Upload JSON from Revit',
   rvtLevelNoMatch:n=>`No level named "${n}" was found in the file — used the level with the most rooms instead.`,
   rvtLevelMatched:n=>`Selected the "${n}" level, matching what you typed.`,
   errDwg:(fmt,app,path)=>'<b>'+fmt+' is a closed binary format — a browser cannot read it.</b>'+
@@ -1041,6 +1179,7 @@ en:{
   /* --- iron rules --- */
   iRoomDims:'Every room dimensioned',
   iRoomDimsOk:n=>n+' dimensions detected on the plan.',
+  iRoomDimsAuto:n=>'Length and width added automatically for '+n+' rooms.',
   iRoomDimsBad:(n,t)=>'Only '+n+' dimensions detected against '+t+' tags. Mark the missing ones with the dimension tool.',
   iOverall:'Overall dimension lines — length and width',
   iOverallOk:'Overall dimension lines detected on the plan.',
@@ -1049,7 +1188,41 @@ en:{
   iEntryOk:'Entry and exit are marked.', iEntryBad:'No entry/exit marking detected. Drag IN and EX from the library.',
   iPanels:'Electrical and data cabinets',
   iPanelsOk:'Electrical and data cabinets are marked.', iPanelsBad:'No cabinet marking detected. Drag EL and IT from the library.',
-  srcAuto:'Detected automatically', srcManual:'Completed manually', srcMissing:'Missing'
+  srcAuto:'Detected automatically', srcManual:'Completed manually', srcMissing:'Missing',
+  /* --- programme schedule: room codes from the RD&A site --- */
+  circulation:'Circulation / core',
+  sMatchedCode:c=>'Matched by code '+c, sMatchedType:c=>'Matched by type to '+c+' — type the code into Number',
+  sMatchedManual:c=>'Assigned by hand to '+c, sUnassigned:'Not assigned to the programme — pick a code from the list',
+  sUnknownCode:c=>'Code '+c+' is not in the programme', sOtherFloor:(c,f)=>'Code '+c+' belongs to another floor (this check is for '+f+')',
+  sDupCode:c=>'Code '+c+' is used by more than one room',
+  sExtra:'Not in the programme — extra room', sExtraType:t=>'More '+t+' rooms than the programme asks for', sMarkedExtra:'Marked as extra by hand',
+  sAreaFail:(a,m)=>a+' m² — below the required '+m+' m²', sAreaEdge:(a,m)=>a+' m² — borderline against '+m+' m²',
+  sAreaOk:(a,m)=>a+' m² ≥ '+m+' m²', sNoArea:'The room has no area',
+  sSeatsFail:(c,s)=>c+' seats — the programme asks for '+s, sSeatsOk:(c,s)=>c+' seats ≥ '+s,
+  sNoCap:n=>'No Capacity on the room — '+n+' seats cannot be checked. Fill Capacity in Revit',
+  sDesksFail:(c,d)=>c+' desks — the department needs '+d, sDesksOk:(c,d)=>c+' desks ≥ '+d,
+  sOsArea:(a,t)=>'Area '+a+' m² against '+t+' m² in the programme', sOsAreaLow:(a,t)=>'Area '+a+' m² — under 90% of the programme’s '+t+' m²',
+  sDeptBad:(d,p)=>'Department "'+d+'" — the programme says "'+p+'"', sDeptMissing:p=>'Department is empty — the programme says "'+p+'"',
+  sOsSplit:n=>'The department is drawn as '+n+' rooms — the total is checked',
+  sOsNoDept:'Open space with no department — fill Department or assign a code',
+  thCode:'Code', thReq:'Requirement', thDrawn:'On plan',
+  stMissing:'Missing', reqMin:m=>'≥ '+m+' m²', reqSeats:s=>s+' seats', reqDesks:d=>d+' desks', reqArea:a=>'~'+a+' m²',
+  byType:'≈ by type', byManual:'by hand',
+  missTitle:n=>'Missing · '+n, extraTitle:n=>'Extra · '+n, noMissing:'Nothing missing', noExtra:'No extras',
+  fSched:'Programme rooms', fSchedMsg:(m,t,x)=>m+' of '+t+' codes found on the plan'+(x?' · '+x+' missing':''),
+  fHead:'Desks against headcount', fHeadMsg:(d,o,h)=>d+' desks + '+o+' enclosed offices = '+(d+o)+' against '+h+' people',
+  fHeadNoCap:h=>'No Capacity on the open space — desks cannot be counted against '+h+' people',
+  fNet:'Net against gross', fNetMsg:(n,g,p)=>n+' m² net drawn against '+g+' m² gross ('+p+'%)',
+  fNetOver:(n,g)=>n+' m² net is more than '+g+' m² gross — check the areas',
+  fExtras:'Extra rooms', fExtrasMsg:(n,l)=>n+' rooms not in the programme: '+l,
+  fCodes:'Duplicate / unknown codes', fCodesMsg:l=>l,
+  fUnassigned:'Unassigned rooms', fUnassignedMsg:n=>n+' rooms waiting to be assigned by hand (Notes tab)',
+  assignLbl:'Programme assignment', assignAuto:'Automatic', assignExtra:'Not in the programme (extra)',
+  adjTouch:'Adjacent — shared wall', adjNear:m=>'Near — '+m+' m', adjFar:m=>'Far — '+m+' m · worth a look',
+  adjNoDept:d=>'Department "'+d+'" was not found on the plan', adjNoGeo:'No geometry — check by eye',
+  adjScope:'Adjacency', revitCodes:'Download codes for Revit (Excel)', revitCodesSheet:'Codes for Revit',
+  rcNumber:'Number', rcName:'Name', rcDept:'Department', rcReq:'Requirement', rcFrom:'Source',
+  xsSched:'Missing and extra', rptMissExtra:'Missing and extra'
 }};
 
 function T(k){
@@ -1161,22 +1334,94 @@ const SYMBOLS = [
 ];
 const SYMMAP = {}; SYMBOLS.forEach(g => g.items.forEach(s => SYMMAP[s.id] = s));
 
+/* =====================================================================
+   1a. NORMS — planning regulations, the Israeli accessibility standard and
+   office practice, each with the clause it comes from. Every number here
+   was read from the source text (Oct 2026):
+   · תקנות התכנון והבנייה (בקשה להיתר, תנאיו ואגרות), תש״ל-1970, תוספת שנייה
+     — nusach on Wikisource, to be checked against the binding text (Nevo).
+   · ת״י 1918 חלק 3.1 (2023) — as published by the Commission for Equal
+     Rights of Persons with Disabilities on gov.il.
+   kind: law = the regulations · std = SI 1918 (binding through the
+   regulations) · practice = office practice, NOT law — editable through
+   the programme's rules.norms. A value of ours never poses as a statute.
+   ===================================================================== */
+const SRC={
+  r3_2_12_8:{he:'תקנות התכנון והבנייה, תוספת 2, פרט 3.2.12.8', en:'Planning & Building Regs, 2nd Schedule, 3.2.12.8'},
+  r3_2_1_3: {he:'תקנות התכנון והבנייה, תוספת 2, פרט 3.2.1.3 (טבלה)', en:'Planning & Building Regs, 2nd Schedule, 3.2.1.3 (table)'},
+  r3_2_15_5:{he:'תקנות התכנון והבנייה, תוספת 2, טבלה 3.2.15.5 (תעסוקה ומשרדים)', en:'Planning & Building Regs, table 3.2.15.5 (offices)'},
+  r3_2_13:  {he:'תקנות התכנון והבנייה, תוספת 2, פרטים 3.2.13.2–3.2.13.3', en:'Planning & Building Regs, 3.2.13.2–3.2.13.3'},
+  r3_2_12_2:{he:'תקנות התכנון והבנייה, תוספת 2, טבלה 3.2.12.2 (משרדים: 10 מ״ר לנפש)', en:'Planning & Building Regs, table 3.2.12.2 (offices: 10 m² per person)'},
+  r2_03:    {he:'תקנות התכנון והבנייה, תוספת 2, פרט 2.03', en:'Planning & Building Regs, 2nd Schedule, 2.03'},
+  r3_2_12_9:{he:'תקנות התכנון והבנייה, תוספת 2, פרט 3.2.12.9', en:'Planning & Building Regs, 2nd Schedule, 3.2.12.9'},
+  si_2_5_2: {he:'ת״י 1918 חלק 3.1 (2023), סעיף 2.5.2', en:'SI 1918 part 3.1 (2023), 2.5.2'},
+  si_2_5_3: {he:'ת״י 1918 חלק 3.1 (2023), סעיף 2.5.3', en:'SI 1918 part 3.1 (2023), 2.5.3'},
+  si_2_5_4: {he:'ת״י 1918 חלק 3.1 (2023), סעיף 2.5.4', en:'SI 1918 part 3.1 (2023), 2.5.4'},
+  si_2_6_2: {he:'ת״י 1918 חלק 3.1 (2023), סעיף 2.6', en:'SI 1918 part 3.1 (2023), 2.6'},
+  si_2_7_2: {he:'ת״י 1918 חלק 3.1 (2023), סעיף 2.7.2', en:'SI 1918 part 3.1 (2023), 2.7.2'},
+  si_2_13:  {he:'ת״י 1918 חלק 3.1 (2023), סעיף 2.13', en:'SI 1918 part 3.1 (2023), 2.13'},
+  practice: {he:'נוהג משרדי RD&A — לא חוק, ניתן לעריכה', en:'RD&A office practice — not law, editable'}
+};
+/* min/max in metres. `alt` is the relaxed figure the same clause allows
+   under a stated condition; a reading between alt and the main figure is
+   amber, with the condition spelled out. `spr` = value with sprinklers. */
+const NORMS=[
+  { id:'egress', kind:'law', min:1.10, alt:{min:0.90, when:{he:'רק אם המעבר משרת עד 10 איש ואורכו עד 15 מ׳', en:'only if it serves up to 10 people and is at most 15 m long'}},
+    n:{he:'רוחב מעבר בדרך מוצא', en:'Exit-route passage width'}, src:'r3_2_12_8',
+    how:{he:'נמדד בגובה 1.20 מ׳ בין ציפויי הקיר; לא חל על דלתות', en:'measured at 1.20 m between wall finishes; not for doors'} },
+  { id:'access', kind:'std', min:1.30, alt:{min:0.90, when:{he:'רק בפרוזדור שהתקנות מתירות צר מ-130, עם שטחי סיבוב בפניות והרחבות כל 15 מ׳', en:'only where the regulations allow a corridor under 130, with turning spaces at turns and widenings every 15 m'}},
+    n:{he:'רוחב דרך נגישה / פרוזדור', en:'Accessible route / corridor width'}, src:'si_2_5_2' },
+  { id:'door', kind:'law', min:0.80,
+    n:{he:'רוחב פתח פנוי בדלת', en:'Clear door opening'}, src:'r3_2_1_3',
+    how:{he:'פנוי למעבר, בין רכיבי הבניין; גם ת״י 1918-3.1 סעיף 2.5.3', en:'clear passage between building elements; also SI 1918-3.1 2.5.3'} },
+  { id:'latch', kind:'std', min:0.30,
+    n:{he:'קיר חופשי בצד המנעול', en:'Free wall on the latch side'}, src:'si_2_5_4' },
+  { id:'push', kind:'std', min:1.50,
+    n:{he:'משטח תפקוד לפני דלת (צד דחיפה / הזזה)', en:'Clear floor space at a door (push / sliding side)'}, src:'si_2_5_4',
+    how:{he:'150×150 או 130×170 ס״מ', en:'150×150 or 130×170 cm'} },
+  { id:'turn', kind:'std', min:1.50,
+    n:{he:'שטח סיבוב לכיסא גלגלים (Ø150)', en:'Wheelchair turning space (Ø150)'}, src:'si_2_13' },
+  { id:'wc1', kind:'std', min:1.50,
+    n:{he:'תא שירותים נגיש — רוחב (טיפוס 1)', en:'Accessible WC stall — width (type 1)'}, src:'si_2_13',
+    how:{he:'תא טיפוס 1 לא קטן מ-150×200 ס״מ, נמדד בין חיפויי הקירות', en:'a type-1 stall is at least 150×200 cm, between finished walls'} },
+  { id:'ramp', kind:'std', min:1.30,
+    n:{he:'רוחב כבש', en:'Ramp width'}, src:'si_2_6_2', how:{he:'שיפוע עד 8%', en:'slope up to 8%'} },
+  { id:'travel', kind:'law', max:30, spr:90,
+    n:{he:'מרחק הליכה למוצא — משרדים', en:'Travel distance to an exit — offices'}, src:'r3_2_15_5',
+    how:{he:'30 מ׳ בלי מתזים · 90 מ׳ עם מתזים ושליטה בעשן. קו ישר הוא חסם תחתון למסלול האמיתי', en:'30 m without sprinklers · 90 m with sprinklers and smoke control. A straight line is a lower bound of the real path'} },
+  { id:'deadend', kind:'law', max:6, spr:15,
+    n:{he:'פרוזדור ללא מוצא — משרדים', en:'Dead-end corridor — offices'}, src:'r3_2_15_5',
+    how:{he:'6 מ׳ בלי מתזים · 15 מ׳ עם מתזים', en:'6 m without sprinklers · 15 m with sprinklers'} },
+  { id:'chair', kind:'practice', min:1.00,
+    n:{he:'כיסא עמדה — קיר / מכשול', en:'Desk chair to wall / obstacle'}, src:'practice',
+    how:{he:'מקצה השולחן עד הקיר שמאחורי הכיסא', en:'from the desk edge to the wall behind the chair'} }
+];
+/* can't be read from a 2D plan — checked by hand, but with the real number */
+const NORM_MANUAL=[
+  { id:'h_room', kind:'law', n:{he:'גובה חדר לשהיית אדם ≥ 2.50 מ׳', en:'Height of an occupied room ≥ 2.50 m'}, src:'r2_03' },
+  { id:'h_corr', kind:'law', n:{he:'גובה מזקף ראש במעבר ≥ 2.20 מ׳ (הנמכות מקומיות ≥ 2.00)', en:'Corridor headroom ≥ 2.20 m (local drops ≥ 2.00)'}, src:'r3_2_12_9' },
+  { id:'stairs', kind:'std', n:{he:'מדרגות: שלח ≥ 26 ס״מ · רום 10–17.5 ס״מ', en:'Stairs: tread ≥ 26 cm · riser 10–17.5 cm'}, src:'si_2_7_2' },
+  { id:'ramp_s', kind:'std', n:{he:'שיפוע כבש ≤ 8%', en:'Ramp slope ≤ 8%'}, src:'si_2_6_2' }
+];
+const NORMMAP={}; NORMS.forEach(n=>NORMMAP[n.id]=n);
+const OFFICE_M2_PER_PERSON=10;   /* table 3.2.12.2 */
+
 /* ---- manual checks (plan cannot reveal) ---- */
 const MANUAL_CHECKS = [
   { id:'corridor',  n:{he:'רוחב מסדרון ראשי', en:'Main corridor width'},
-    note:{he:'נהוג במשרד 126–197 ס״מ. מינימום נגישות — אימות יועץ.', en:'Common office range 126–197 cm. Accessibility minimum — consultant to verify.'} },
+    note:{he:'דרך מוצא ≥ 110 ס״מ (פרט 3.2.12.8) · דרך נגישה ≥ 130 ס״מ (ת״י 1918-3.1 סעיף 2.5.2). למדידה: טאב תקנים.', en:'Exit route ≥ 110 cm (3.2.12.8) · accessible route ≥ 130 cm (SI 1918-3.1 2.5.2). Measure from the Norms tab.'} },
   { id:'aisle',     n:{he:'מעברים בין עמדות', en:'Aisles between workstations'},
-    note:{he:'מעבר חופשי בין גבי כיסאות ושולחנות.', en:'Clear passage between chair backs and desks.'} },
+    note:{he:'מעבר שהוא חלק מדרך מוצא ≥ 110 ס״מ (פרט 3.2.12.8). כיסא–קיר: נוהג משרדי, לא חוק.', en:'A passage that is part of an exit route ≥ 110 cm (3.2.12.8). Chair to wall: office practice, not law.'} },
   { id:'doors',     n:{he:'רוחב פתח דלת חופשי', en:'Clear door opening width'},
-    note:{he:'נהוג 90–110 ס״מ. מינימום נטו — אימות יועץ.', en:'Common range 90–110 cm. Net minimum — consultant to verify.'} },
+    note:{he:'≥ 80 ס״מ פנוי למעבר (פרט 3.2.1.3; ת״י 1918-3.1 סעיף 2.5.3) · קיר חופשי 30 ס״מ בצד המנעול.', en:'≥ 80 cm clear (3.2.1.3; SI 1918-3.1 2.5.3) · 30 cm free wall on the latch side.'} },
   { id:'partitions',n:{he:'גובה מחיצות ופרטי קיר', en:'Partition heights and wall details'},
     note:{he:'סטנדרט משרדי: רצפה-תקרה H=305 · חיזוקי TV H=150.', en:'Office standard: floor-to-ceiling H=305 · TV backing H=150.'} },
   { id:'accwc',     n:{he:'תא שירותים נגיש בקומה', en:'Accessible toilet stall on the floor'},
-    note:{he:'דרישה רגולטורית — אימות יועץ נגישות.', en:'Regulatory requirement — accessibility consultant to verify.'} },
+    note:{he:'טיפוס 1 ≥ 150×200 ס״מ, שטח סיבוב Ø150 (ת״י 1918-3.1 סעיף 2.13).', en:'Type 1 ≥ 150×200 cm, turning space Ø150 (SI 1918-3.1 2.13).'} },
   { id:'egress',    n:{he:'שני מוצאי מילוט ומרחקים', en:'Two means of egress and travel distances'},
-    note:{he:'בדיקת יועץ בטיחות.', en:'Safety consultant to review.'} },
+    note:{he:'מעל 30 איש בקומה — לפחות 2 דרכי מוצא (פרט 3.2.13.3). מרחק הליכה במשרדים ≤ 30 מ׳ בלי מתזים / ≤ 90 עם (טבלה 3.2.15.5).', en:'Over 30 people on the floor — at least 2 exits (3.2.13.3). Office travel distance ≤ 30 m without sprinklers / ≤ 90 with (table 3.2.15.5).'} },
   { id:'heights',   n:{he:'גבהים ותקרות מונמכות', en:'Heights and dropped ceilings'},
-    note:{he:'לא ניתן לבדיקה מתוכנית 2D.', en:'Cannot be checked from a 2D plan.'} },
+    note:{he:'חדר לשהיית אדם ≥ 2.50 מ׳ (פרט 2.03) · מעבר ≥ 2.20 מ׳ (פרט 3.2.12.9). לא ניתן לבדיקה מתוכנית 2D.', en:'Occupied room ≥ 2.50 m (2.03) · corridor ≥ 2.20 m (3.2.12.9). Cannot be checked from a 2D plan.'} },
   { id:'hvac',      n:{he:'מיזוג לחדרים פנימיים', en:'HVAC for internal rooms'},
     note:{he:'חדרים ללא חזית — תיאום יועץ מיזוג.', en:'Rooms with no façade — coordinate with the HVAC consultant.'} },
   { id:'sym_doors', n:{he:'דלתות — כיווני פתיחה', en:'Doors — swing directions'},
@@ -1210,7 +1455,9 @@ const TYPE_OPEN_ITEMS = {
    ===================================================================== */
 const STATE = {
   mode:'auto', fileName:'', meta:{}, rooms:[], notes:[], symbols:[], dims:[], areas:[],
-  manual:{}, open:{}, program:null, calib:null, iron:{}, seq:1
+  manual:{}, open:{}, program:null, calib:null, iron:{}, seq:1,
+  assign:{}, sched:null, adj:[],
+  spr:false, normArm:'', geo:[]
 };
 let PDFPAGE=null, BASE=null, VP1=null, ZOOM=1, TOOL=null, SEL=null, PENDING=null;
 const LAYERS = { notes:true, syms:true, dims:true, areas:true };
@@ -1235,15 +1482,31 @@ async function parsePdf(data, fileName){
   const content = await page.getTextContent();
 
   const buckets=[0,0,0,0], items0=[], everyText=[], seen=new Set();
+  /* numbers that may be the plan's own dimensions, and every text height —
+     the dimension style is read off these (9c) */
+  const nums=[], txtH={area:[], all:[]};
   for(const it of content.items){
     const t=it.transform, str=it.str.trim();
     if(!str) continue;
     everyText.push(str.toLowerCase());
+    const fh=Math.hypot(t[2],t[3]);
+    if(fh>0){ txtH.all.push(fh); if(/m²|m2/.test(str)) txtH.area.push(fh); }
+    if(/^\d{1,4}(?:[.,]\d{1,2})?$/.test(str)) nums.push({str, t:t.slice(), w:it.width||0});
     const k=str+'|'+Math.round(t[4])+'|'+Math.round(t[5]);
     if(seen.has(k)) continue; seen.add(k);
     const b=((Math.round(Math.atan2(t[1],t[0])/(Math.PI/2))%4)+4)%4;
     buckets[b]++; items0.push({str,t,w:it.width||0,b});
   }
+  /* a dimension's number stands alone on its line — the "33" of "33 W 148" does not */
+  nums.forEach(n=>{
+    const t=n.t, fh=Math.hypot(t[2],t[3]), fw=Math.hypot(t[0],t[1])||1, ux=t[0]/fw, uy=t[1]/fw;
+    n.alone=!content.items.some(o=>{
+      const q=o.transform;
+      if(!o.str.trim() || (q[4]===t[4] && q[5]===t[5])) return false;
+      const dx=q[4]-t[4], dy=q[5]-t[5], along=dx*ux+dy*uy, across=-dx*uy+dy*ux;
+      return Math.abs(across)<=fh*0.4 && along<n.w+fh*0.5 && along+(o.width||0)>-fh*0.5;
+    });
+  });
   const dom=buckets.indexOf(Math.max(...buckets));
   const th=dom*Math.PI/2, cos=Math.round(Math.cos(th)), sin=Math.round(Math.sin(th));
   const raw=[];
@@ -1307,16 +1570,24 @@ async function parsePdf(data, fileName){
   const vp1=page.getViewport({scale:1});
   tags.forEach(t=>{ const p=vp1.convertToViewportPoint(t.pdfX,t.pdfY); t.nx=p[0]/vp1.width; t.ny=p[1]/vp1.height; });
 
-  return { tags, allText:everyText, page, vp1, fileName };
+  return { tags, allText:everyText, page, vp1, fileName, pdf, nums, txtH };
 }
 
 /* =====================================================================
    4. CLASSIFICATION + ROOM RULES
    ===================================================================== */
 function classify(name, tag){
-  const n=(name||'').toLowerCase();
   if(tag&&tag.isDept) return 'workstations';
+  /* a programme code typed into Revit's Number says what the room is */
+  if(tag&&tag.codeType&&hasSchedule()) return tag.codeType;
+  /* the Revit import keeps the bare room name apart from its number, so a
+     code like FL01-IT-01 can never be mistaken for words in the name */
+  const n=((tag&&tag.rname!=null&&hasSchedule())?tag.rname:(name||'')).toLowerCase();
   if(!n) return 'unknown';
+  const he=classifyHe(n);
+  if(he) return he;
+  if(/open ?space/.test(n)) return 'openspace';
+  if(/corridor|circulation|\bstairs?\b|\blifts?\b|elevator|\bshaft\b|\bcore\b|lift lobby/.test(n)) return 'circulation';
   if(n.includes('board')) return 'boardroom';
   if(n.includes('alternative meeting')) return 'altmeeting';
   if(n.includes('meet up')||n.includes('game room')) return 'social';
@@ -1345,7 +1616,215 @@ function classify(name, tag){
   if(/\bvr\b/.test(n)) return 'specialty';
   if(n.includes('neighbourhood')||n.includes('neighborhood')||n.includes('open')) return 'openspace';
   if(/^room\b/.test(n)) return 'future';
+  if(/\boffice\b/.test(n)) return 'staffroom';
   return 'unknown';
+}
+/* Hebrew room names. Order matters: סמנכ״ל contains מנכ״ל, "ישיבות לא
+   פורמלי" contains ישיבות, and an open-space name often carries a
+   department such as "IT" — so the specific forms are tested first. */
+const HE_TYPES=[
+  [/אופן ?ספייס|חלל עבודה פתוח|עמדות עבודה|ישיבה פתוחה/, 'openspace'],
+  [/מסדרון|מעבר|מדרגות|מעליות|פיר|גרעין|חדר מכונות/, 'circulation'],
+  [/דירקטוריון|בורדרום/, 'boardroom'],
+  [/ישיבות? (לא[ -]?פורמלי|אלטרנטיבי)|פינת ישיבה/, 'altmeeting'],
+  [/ישיבות|ישיבה|פגישות|ועידה/, 'meeting'],
+  [/טלפון|פון ?בוט|תא שקט|תא שיחה/, 'phonebooth'],
+  [/סמנכ["״׳']?ל/, 'vp'],
+  [/מנכ["״׳']?ל|יו["״]?ר|הנהלה/, 'executive'],
+  [/משאבי אנוש/, 'hr'],
+  [/שרתים|תקשורת/, 'it'],
+  [/הנקה/, 'nursery'],
+  [/מטבח|קפיטריה|פינת קפה/, 'kitchenette'],
+  [/לובי מעליות/, 'circulation'],
+  [/קבלה|המתנה|לובי/, 'reception'],
+  [/מחסן|ארכיון|אחסון/, 'storage'],
+  [/הדפסה|צילום|מדפסת/, 'printcopy'],
+  [/שירותים|שרותים|נכים/, 'wc'],
+  [/מקלחת/, 'shower'],
+  [/לאונג/, 'lounge'],
+  [/עתודה/, 'future'],
+  [/אחזקה|תפעול/, 'facilities'],
+  [/קולנוע|השמעה|תצוגה|סטודיו|אולפן/, 'specialty'],
+  [/מנהל/, 'director'],
+  [/חדר צוות|חדר עבודה|משרד/, 'staffroom']
+];
+function classifyHe(n){
+  if(!/[֐-׿]/.test(n)) return null;
+  for(const [re,t] of HE_TYPES) if(re.test(n)) return t;
+  return null;
+}
+
+/* =====================================================================
+   4a. PROGRAMME SCHEDULE — codes such as FL01-MR-02, typed by the
+   architect into the Revit room's Number, tie each drawn room to one
+   programme entry. Without a `schedule` in the programme nothing here
+   runs and the checker behaves exactly as before.
+   ===================================================================== */
+const CODE_PREFIX={ OS:'openspace', MR:'meeting', BR:'boardroom', AM:'altmeeting', SO:'social',
+  PB:'phonebooth', EX:'executive', VP:'vp', DR:'director', HB:'hrbp', TR:'staffroom', HR:'hr',
+  FA:'facilities', IT:'it', NU:'nursery', KT:'kitchenette', WC:'wc', SH:'shower', LG:'lounge',
+  RC:'reception', PC:'printcopy', ST:'storage', SV:'service', FU:'future', SP:'specialty' };
+/* enclosed rooms that seat one person each when Capacity is empty */
+const OFFICE_KEYS=['executive','vp','director','hrbp','staffroom','hr'];
+/* drawn rooms that no programme asks for, but nobody should call "extra" */
+const NEUTRAL_KEYS=['circulation','wc','shower','service'];
+
+/* "fl01 - mr 2" → {floor:'FL01', pre:'MR', num:2, key:'FL01-MR-02'} */
+function parseCode(s){
+  const t=String(s==null?'':s).toUpperCase().replace(/[–—_]/g,'-').replace(/\s+/g,'');
+  const m=/^(?:(FL\d{1,3})-?)?([A-Z]{2})-?(\d{1,3})$/.exec(t);
+  if(!m || !CODE_PREFIX[m[2]]) return null;
+  const num=parseInt(m[3],10);
+  return { floor:m[1]||'', pre:m[2], num, key:(m[1]?m[1]+'-':'')+m[2]+'-'+String(num).padStart(2,'0') };
+}
+/* a code inside free text — the PDF path has no Number field */
+function findCode(s){
+  const m=/(?:FL\d{1,3}\s*-\s*)?\b[A-Z]{2}\s*-\s*\d{1,3}\b/i.exec(String(s||''));
+  return m?parseCode(m[0]):null;
+}
+function normDept(s){
+  return String(s==null?'':s).normalize('NFC').toLowerCase()
+    .replace(/["״׳'`]/g,'').replace(/[–—]/g,'-').replace(/\s*-\s*/g,'-').replace(/\s+/g,' ').trim();
+}
+const hasSchedule = () => !!(STATE.program && Array.isArray(STATE.program.schedule) && STATE.program.schedule.length);
+const roomKey = (tag,i) => tag.rid!=null ? 'id'+tag.rid : 'r'+i;
+
+/* Match every drawn room to at most one schedule entry:
+   1. exact code (Number, or a code inside the name);
+   2. by type, preferring the same Department, biggest room to biggest need;
+   3. what is left is either extra, neutral (corridors, WC) or unassigned.
+   A choice made by hand in a note's dropdown (STATE.assign) beats all three. */
+function matchSchedule(rooms){
+  const P=STATE.program, sch=P.schedule.filter(e=>e&&e.code);
+  const floor=String((P.meta&&P.meta.floor)||'').toUpperCase();
+  const entries=sch.map((e,ix)=>({ e, ix, pc:parseCode(e.code)||{key:String(e.code).toUpperCase()}, rooms:[] }));
+  const byKey={}; entries.forEach(x=>{ byKey[x.pc.key]=x; if(x.pc.floor) byKey[x.pc.key.replace(/^FL\d+-/,'')]=byKey[x.pc.key.replace(/^FL\d+-/,'')]||x; });
+  const codeIssues=[];
+  const ctx=rooms.map(r=>({ r, entry:null, how:null, flags:[] }));
+  const take=(c,x,how)=>{ c.entry=x; c.how=how; x.rooms.push(c); };
+  const isOS=x=>x.e.key==='openspace';
+
+  /* 0. by hand */
+  ctx.forEach(c=>{
+    const a=STATE.assign[roomKey(c.r.tag,c.r.i)];
+    if(!a) return;
+    if(a==='__extra'){ c.how='extra-manual'; return; }
+    const x=entries.find(y=>y.e.code===a);
+    if(x) take(c,x,'manual');
+  });
+  /* 1. by code */
+  ctx.forEach(c=>{
+    if(c.how) return;
+    const t=c.r.tag, pc=parseCode(t.number)||findCode(t.number)||findCode(t.rname!=null?t.rname:t.name)||findCode(t.code);
+    if(!pc) return;
+    c.code=pc;
+    if(pc.floor && floor && pc.floor!==floor){ c.flags.push(['w',T('sOtherFloor',pc.key,floor)]); codeIssues.push(T('sOtherFloor',pc.key,floor)); return; }
+    const x=byKey[pc.key]||byKey[pc.key.replace(/^FL\d+-/,'')];
+    if(!x){ c.flags.push(['w',T('sUnknownCode',pc.key)]); codeIssues.push(T('sUnknownCode',pc.key)); return; }
+    /* one department's open space may be drawn as several rooms — that is a
+       split, not a duplicate; any other code used twice is a mistake */
+    if(x.rooms.length && !isOS(x)){
+      c.flags.push(['w',T('sDupCode',x.e.code)]);
+      if(!codeIssues.includes(T('sDupCode',x.e.code))) codeIssues.push(T('sDupCode',x.e.code));
+      return;
+    }
+    take(c,x,'code');
+  });
+  /* 2. by type — department first, then size */
+  const free=x=>!x.rooms.length;
+  const need=x=>numN(x.e.minArea)??numN(x.e.area)??0;
+  const left=ctx.filter(c=>!c.how);
+  left.forEach(c=>{ c.type=classify(c.r.tag.name,c.r.tag); });
+  /* open space: one entry per department, so only the department can decide */
+  left.filter(c=>c.type==='openspace'||c.type==='workstations').forEach(c=>{
+    const os=entries.filter(isOS);
+    if(!os.length) return;
+    const d=normDept(c.r.tag.department);
+    let x=d?os.find(y=>normDept(y.e.dept)===d):null;
+    if(!x && os.length===1) x=os[0];
+    if(x) take(c,x,'type'); else c.how='os-nodept';
+  });
+  const groups={};
+  left.filter(c=>!c.how).forEach(c=>{ (groups[c.type]=groups[c.type]||[]).push(c); });
+  Object.keys(groups).forEach(type=>{
+    const cs=groups[type].sort((a,b)=>(b.r.tag.area||0)-(a.r.tag.area||0));
+    cs.forEach(c=>{
+      const pool=entries.filter(x=>x.e.key===type && free(x));
+      if(!pool.length) return;
+      const d=normDept(c.r.tag.department);
+      const same=d?pool.filter(x=>normDept(x.e.dept)===d):[];
+      const cand=(same.length?same:pool).sort((a,b)=>need(b)-need(a));
+      /* the biggest need this room can still satisfy, else the smallest need */
+      const a=c.r.tag.area;
+      const fit=a!=null?cand.find(x=>need(x)<=a):null;
+      take(c, fit||cand[cand.length-1], 'type');
+    });
+  });
+  /* 3. the rest */
+  const schedKeys=new Set(entries.map(x=>x.e.key));
+  ctx.forEach(c=>{
+    if(c.how) return;
+    const type=c.type||classify(c.r.tag.name,c.r.tag);
+    if(NEUTRAL_KEYS.includes(type)) c.how='neutral';
+    else if(type==='unknown') c.how='unassigned';
+    else { c.how='extra'; c.extraWhy=schedKeys.has(type)?T('sExtraType',typeName(type)):T('sExtra'); }
+  });
+
+  /* open-space totals per department entry */
+  entries.forEach(x=>{
+    const rs=x.rooms.map(c=>c.r.tag);
+    const areas=rs.map(t=>t.area).filter(v=>v!=null), caps=rs.map(t=>t.ppl).filter(v=>v!=null);
+    x.area=areas.length?+areas.reduce((s,v)=>s+v,0).toFixed(2):null;
+    x.cap=caps.length?caps.reduce((s,v)=>s+v,0):null;
+  });
+  ctx.forEach(c=>{ c.r.sched=c; });
+  return { entries, ctx, codeIssues,
+    missing: entries.filter(free),
+    extra:   ctx.filter(c=>c.how==='extra'||c.how==='extra-manual'),
+    unassigned: ctx.filter(c=>c.how==='unassigned'||c.how==='os-nodept') };
+}
+
+/* The checks one schedule entry asks of its drawn room(s). Returns the
+   messages; checkRoom folds them into the room's own result. */
+function scheduleMsgs(c){
+  const out=[], x=c.entry, e=x&&x.e;
+  c.flags.forEach(f=>out.push({l:f[0]==='w'?'warn':'info', m:f[1]}));
+  if(c.how==='extra') out.push({l:'warn', m:c.extraWhy});
+  if(c.how==='extra-manual') out.push({l:'info', m:T('sMarkedExtra')});
+  if(c.how==='unassigned') out.push({l:'warn', m:T('sUnassigned')});
+  if(c.how==='os-nodept') out.push({l:'warn', m:T('sOsNoDept')});
+  if(!e) return out;
+  out.push({l:c.how==='type'?'info':'ok', m:c.how==='code'?T('sMatchedCode',e.code):c.how==='manual'?T('sMatchedManual',e.code):T('sMatchedType',e.code)});
+  const t=c.r.tag, os=e.key==='openspace';
+  const a=os?x.area:t.area, cap=os?x.cap:t.ppl;
+  if(os && x.rooms.length>1) out.push({l:'info', m:T('sOsSplit',x.rooms.length)});
+  const min=numN(e.minArea);
+  if(min!=null){
+    if(a==null) out.push({l:'info', m:T('sNoArea')});
+    else if(a<min*0.95) out.push({l:'fail', m:T('sAreaFail',a,min)});
+    else if(a<min) out.push({l:'warn', m:T('sAreaEdge',a,min)});
+    else out.push({l:'ok', m:T('sAreaOk',a,min)});
+  }
+  if(os){
+    const d=numN(e.desks), ta=numN(e.area);
+    if(d!=null){
+      if(cap==null) out.push({l:'info', m:T('sNoCap',d)});
+      else if(cap<d) out.push({l:'fail', m:T('sDesksFail',cap,d)});
+      else out.push({l:'ok', m:T('sDesksOk',cap,d)});
+    }
+    if(ta!=null && a!=null) out.push(a<ta*0.9 ? {l:'warn', m:T('sOsAreaLow',a,ta)} : {l:'ok', m:T('sOsArea',a,ta)});
+  }
+  const s=numN(e.seats);
+  if(s!=null && !os){
+    if(cap==null) out.push({l:'info', m:T('sNoCap',s)});
+    else if(cap<s) out.push({l:'fail', m:T('sSeatsFail',cap,s)});
+    else out.push({l:'ok', m:T('sSeatsOk',cap,s)});
+  }
+  if(e.dept){
+    if(!t.department) out.push({l:'info', m:T('sDeptMissing',e.dept)});
+    else if(normDept(t.department)!==normDept(e.dept)) out.push({l:'warn', m:T('sDeptBad',t.department,e.dept)});
+  }
+  return out;
 }
 const TYPE_NAME={
   boardroom:{he:'חדר דירקטוריון', en:'Board room'}, meeting:{he:'חדר ישיבות', en:'Meeting room'},
@@ -1359,6 +1838,7 @@ const TYPE_NAME={
   lounge:{he:'לאונג׳', en:'Lounge'}, social:{he:'מפגש / משחק', en:'Meet up / game'},
   printcopy:{he:'הדפסה', en:'Print & copy'}, storage:{he:'אחסון', en:'Storage'},
   specialty:{he:'ייעודי', en:'Specialty'}, reception:{he:'קבלה / המתנה', en:'Reception / waiting'},
+  circulation:{he:'מעבר / גרעין', en:'Circulation / core'},
   unknown:{he:'לא מזוהה', en:'Unrecognised'}
 };
 const typeName = t => L(TYPE_NAME[t]) || t;
@@ -1372,7 +1852,21 @@ function interpSeat(tbl,s){
   const [sL,aL]=tbl[tbl.length-1]; return aL*s/sL;
 }
 
-function checkRoom(tag){
+/* With a programme schedule, a room matched to an entry is judged by that
+   entry's own numbers — the office-standard thresholds would only repeat
+   or contradict them. Rooms the schedule does not claim keep the standard
+   checks, plus a line saying why they are unclaimed. */
+function checkRoom(tag, sc){
+  if(!sc) return checkRoomStd(tag);
+  const base = sc.entry ? {type:sc.entry.e.key, level:'ok', msgs:[]} : checkRoomStd(tag);
+  if(sc.how==='neutral' && base.type==='circulation') return base;
+  const extra=scheduleMsgs(sc);
+  const rank={ok:0,info:0,warn:1,fail:2}, back=['ok','warn','fail'];
+  let lv=rank[base.level]||0;
+  extra.forEach(m=>{ lv=Math.max(lv, rank[m.l]||0); });
+  return { type:base.type, level:back[lv], msgs:extra.concat(base.msgs) };
+}
+function checkRoomStd(tag){
   const type=classify(tag.name,tag), R=RULES[type]||{};
   const out={type,level:'ok',msgs:[]};
   const fail=m=>{out.level='fail'; out.msgs.push({l:'fail',m});};
@@ -1381,6 +1875,7 @@ function checkRoom(tag){
   const ok=m=>out.msgs.push({l:'ok',m});
 
   if(type==='unknown'){ warn(tag.name?T('mUnknownNamed',tag.name):T('mUnknownBlank')); return out; }
+  if(type==='circulation'){ ok(T('circulation')); return out; }
   if(type==='workstations'){
     ok(T('mStations', tag.stations, tag.name));
     if(!tag.name) warn(T('mDeptNoName'));
@@ -1466,10 +1961,12 @@ function ironChecks(parse, rooms){
   const hasDim=STATE.dims.length>0;
   const R=[];
 
+  const autoRooms=new Set(STATE.dims.filter(d=>d.auto==='room').map(d=>d.room)).size;
+  const byText=dimTok >= Math.max(4, Math.round(rooms.length*0.5));
   R.push({ id:'roomdims', n:T('iRoomDims'),
-    auto: dimTok >= Math.max(4, Math.round(rooms.length*0.5)),
+    auto: byText || autoRooms>=Math.max(2,Math.round(rooms.length*0.25)),
     manual: STATE.dims.length>=Math.max(2,Math.round(rooms.length*0.25)),
-    okMsg:T('iRoomDimsOk',dimTok),
+    okMsg: byText ? T('iRoomDimsOk',dimTok) : T('iRoomDimsAuto',autoRooms),
     badMsg:T('iRoomDimsBad',dimTok,rooms.length),
     tool:'dim' });
 
@@ -1551,7 +2048,106 @@ function floorChecks(parse, rooms){
   if(noCap) out.push({ level:'warn', n:T('fCapCover'), m:T('fCapCoverMsg',noCap,capRelevant.length) });
   const dq=rooms.length?Math.round(100*rooms.filter(r=>r.tag.name).length/rooms.length):0;
   out.push({level:dq>=95?'ok':dq>=80?'warn':'fail', n:T('fDataQ'), m:T('fDataQMsg',dq)});
+  if(STATE.sched) out.push(...scheduleFloorChecks(rooms));
+  out.push(...egressFloorChecks(rooms));
   return out;
+}
+
+function scheduleFloorChecks(rooms){
+  const S=STATE.sched, meta=(STATE.program&&STATE.program.meta)||{}, out=[];
+  const tot=S.entries.length, miss=S.missing.length;
+  out.push({ level:miss?'fail':'ok', n:T('fSched'), m:T('fSchedMsg',tot-miss,tot,miss) });
+
+  /* headcount = open-space desks + one person per enclosed office (its
+     Capacity when filled) — exactly how the programme reaches its total */
+  const hc=numN(meta.headcount);
+  if(hc!=null){
+    const osRooms=rooms.filter(r=>['openspace','workstations'].includes(r.check.type));
+    const caps=osRooms.map(r=>r.tag.ppl).filter(v=>v!=null);
+    const offices=rooms.filter(r=>OFFICE_KEYS.includes(r.check.type) && r.sched && r.sched.how!=='extra-manual')
+      .reduce((s,r)=>s+(r.tag.ppl!=null?r.tag.ppl:1),0);
+    if(osRooms.length && !caps.length) out.push({ level:'warn', n:T('fHead'), m:T('fHeadNoCap',hc) });
+    else {
+      const desks=caps.reduce((s,v)=>s+v,0), all=desks+offices;
+      out.push({ level: all>=hc?'ok' : all>=hc*0.9?'warn':'fail', n:T('fHead'), m:T('fHeadMsg',desks,offices,hc) });
+    }
+  }
+  const gross=numN(meta.areaGross);
+  const net=rooms.reduce((s,r)=>s+(r.tag.area||0),0);
+  if(gross && net){
+    const n=+net.toFixed(0), p=Math.round(100*net/gross);
+    out.push(net>gross*1.02
+      ? { level:'warn', n:T('fNet'), m:T('fNetOver',n,gross) }
+      : { level:'info', n:T('fNet'), m:T('fNetMsg',n,gross,p) });
+  }
+  if(S.extra.length){
+    const names=S.extra.filter(c=>c.how==='extra').map(c=>c.r.tag.name||('#'+c.r.i));
+    if(names.length) out.push({ level:'warn', n:T('fExtras'), m:T('fExtrasMsg',names.length,names.join(' · ')) });
+  }
+  if(S.codeIssues.length) out.push({ level:'warn', n:T('fCodes'), m:T('fCodesMsg',S.codeIssues.join(' · ')) });
+  if(S.unassigned.length) out.push({ level:'warn', n:T('fUnassigned'), m:T('fUnassignedMsg',S.unassigned.length) });
+  return out;
+}
+
+/* =====================================================================
+   6a. ADJACENCY — the programme's "A ↔ B" QA lines, measured on the
+   drawn outlines. Only ever a suggestion on the QA list, never a fail:
+   a corridor between two departments can be exactly what was intended.
+   ===================================================================== */
+const ADJ_TOUCH=0.35, ADJ_NEAR=6;  /* metres: a partition is ~10–20 cm */
+function parseAdj(name){
+  const s=String(name||'');
+  if(s.indexOf('↔')<0) return null;
+  const [a,b]=s.split('↔');
+  const clean=x=>x.replace(/\s+[—–]\s+.*$/,'').trim();
+  const A=clean(a), B=clean(b);
+  return (A&&B)?{a:A,b:B}:null;
+}
+function segDist(p,q,r,s){
+  const d=(a,b,c)=>{ /* point a to segment b–c */
+    const vx=c.x-b.x, vy=c.y-b.y, L2=vx*vx+vy*vy;
+    let t=L2?((a.x-b.x)*vx+(a.y-b.y)*vy)/L2:0; t=Math.max(0,Math.min(1,t));
+    return Math.hypot(a.x-(b.x+t*vx), a.y-(b.y+t*vy));
+  };
+  return Math.min(d(p,r,s), d(q,r,s), d(r,p,q), d(s,p,q));
+}
+function polyDist(A,B){
+  let best=Infinity;
+  for(let i=0;i<A.length;i++){ const p=A[i], q=A[(i+1)%A.length];
+    for(let j=0;j<B.length;j++){ const r=B[j], s=B[(j+1)%B.length];
+      const v=segDist(p,q,r,s); if(v<best) best=v; if(best===0) return 0; } }
+  return best;
+}
+function adjacency(rooms){
+  const qa=(STATE.program&&STATE.program.qa)||[];
+  const pairs=qa.map((q,i)=>({i, p:parseAdj(q&&q.name||q)})).filter(x=>x.p);
+  if(!pairs.length) return [];
+  /* a room speaks for its own Department, else for the programme entry it matched */
+  const byDept={};
+  rooms.forEach(r=>{
+    const d=normDept(r.tag.department || (r.sched&&r.sched.entry&&r.sched.entry.e.dept) || '');
+    if(d) (byDept[d]=byDept[d]||[]).push(r);
+  });
+  return pairs.map(({i,p})=>{
+    const A=byDept[normDept(p.a)]||[], B=byDept[normDept(p.b)]||[];
+    let lv='i', msg;
+    if(!A.length) msg=T('adjNoDept',p.a);
+    else if(!B.length) msg=T('adjNoDept',p.b);
+    else {
+      const pa=A.filter(r=>r.tag.poly), pb=B.filter(r=>r.tag.poly);
+      if(!pa.length||!pb.length) msg=T('adjNoGeo');
+      else {
+        let d=Infinity;
+        pa.forEach(x=>pb.forEach(y=>{ if(x!==y) d=Math.min(d, polyDist(x.tag.poly,y.tag.poly)); }));
+        if(pa.some(x=>pb.includes(x))) d=0; /* one room holding both departments */
+        const m=d.toFixed(1);
+        if(d<=ADJ_TOUCH){ lv='o'; msg=T('adjTouch'); }
+        else if(d<=ADJ_NEAR){ lv='o'; msg=T('adjNear',m); }
+        else { lv='w'; msg=T('adjFar',m); }
+      }
+    }
+    return { qa:i, a:p.a, b:p.b, lv, msg };
+  });
 }
 
 /* =====================================================================
@@ -1570,7 +2166,9 @@ function openItems(rooms){
     });
   });
   (STATE.program&&STATE.program.qa||[]).forEach((q,i)=>{
-    out.push({ id:'qa'+i, type:'qa', scope:T('qaScope'), n:q.name||q });
+    const adj=(STATE.adj||[]).find(a=>a.qa===i);
+    out.push({ id:'qa'+i, type:adj?'adj':'qa', n:q.name||q,
+      scope: adj ? T('adjScope')+': '+adj.msg : T('qaScope'), adjLv:adj?adj.lv:null });
   });
   return out;
 }
@@ -1587,7 +2185,7 @@ function buildNotes(rooms, fc){
     if(r.check.level==='ok') return;
     const body=r.check.msgs.filter(m=>m.l===r.check.level).map(m=>m.m).join(' · ');
     out.push({ id:'r'+r.i, lv:LV[r.check.level], src:'room',
-      title:r.tag.name||T('mUnknownBlank'), sub:typeName(r.check.type),
+      title:r.tag.name||T('mUnknownBlank'), sub:typeName(r.check.type), rk:roomKey(r.tag,r.i),
       body: edits['r'+r.i]||body, edited:!!edits['r'+r.i],
       nx:r.tag.nx, ny:r.tag.ny, area:r.tag.area, ppl:r.tag.ppl });
   });
@@ -1652,14 +2250,14 @@ function layout(){
   const c=cv.getContext('2d');
   c.setTransform(dpr,0,0,dpr,0,0); c.clearRect(0,0,w,h);
   c.imageSmoothingEnabled=true; c.imageSmoothingQuality='high';
-  c.drawImage(BASE,0,0,w,h);
+  drawBase(c,w,h);
   drawOverlay(); placeSymbols();
   $('#zlabel').textContent=Math.round(ZOOM*100)+'%';
   $('#tFit').classList.toggle('on', Math.abs(ZOOM-1)<0.01);
 }
 
 const CLR={f:'#E1504B',w:'#E38B00',i:'#0000FF',o:'#16A34A'};
-const DIM_CLR='#D6009A', AREA_CLR='#0000FF';
+const DIM_CLR='#808080', AREA_CLR='#0000FF';
 let MARKERS=[];
 
 function lvColor(lv){ return CLR[lv]||'#8A8A8A'; }
@@ -1815,26 +2413,8 @@ function paintCloud(c,w,h,k,n,sel){
 }
 
 function paintDims(c,w,h,k){
-  STATE.dims.forEach(d=>{
-    const x1=d.x1*w, y1=d.y1*h, x2=d.x2*w, y2=d.y2*h;
-    const col=d.calib?'#0000FF':DIM_CLR;
-    c.strokeStyle=col; c.lineWidth=1.6*k;
-    c.beginPath(); c.moveTo(x1,y1); c.lineTo(x2,y2); c.stroke();
-    const a=Math.atan2(y2-y1,x2-x1), t=7*k;
-    [[x1,y1],[x2,y2]].forEach(([px,py])=>{
-      c.beginPath();
-      c.moveTo(px-Math.sin(a)*t, py+Math.cos(a)*t);
-      c.lineTo(px+Math.sin(a)*t, py-Math.cos(a)*t);
-      c.stroke();
-    });
-    const lbl=d.label||'—', mx=(x1+x2)/2, my=(y1+y2)/2;
-    c.font='600 '+(11*k).toFixed(1)+'px Helvetica,Arial';
-    c.textAlign='center'; c.textBaseline='middle'; c.direction=isHe()?'rtl':'ltr';
-    const tw=c.measureText(lbl).width+9*k, th=16*k;
-    c.fillStyle='#fff'; c.fillRect(mx-tw/2,my-th/2,tw,th);
-    c.strokeStyle=col; c.lineWidth=1.2*k; c.strokeRect(mx-tw/2,my-th/2,tw,th);
-    c.fillStyle=col; c.fillText(lbl,mx,my+0.5*k);
-  });
+  const S=dimStyle();
+  STATE.dims.forEach(d=>{ dimBg(d,S); dimDraw(c,d,w,h,S,SEL===d.id); });
 }
 
 function paintAreas(c,w,h,k){
@@ -1878,6 +2458,7 @@ function drawOverlay(){
   c.setTransform(dpr,0,0,dpr,0,0); c.clearRect(0,0,w,h);
   MARKERS=paintMarkup(c,w,h,{layers:LAYERS, sel:SEL});
   drawPending(c,w,h);
+  drawCadCursor(c,w,h);
 }
 
 /* rubber-band feedback for the in-progress dim / polygon / cloud */
@@ -1885,8 +2466,11 @@ function drawPending(c,w,h){
   if(!PENDING) return;
   c.save();
   if(PENDING.kind==='dim' && PENDING.x1!=null){
-    c.strokeStyle=DIM_CLR; c.lineWidth=1.5; c.setLineDash([5,4]);
-    c.beginPath(); c.moveTo(PENDING.x1*w,PENDING.y1*h); c.lineTo(PENDING.mx*w,PENDING.my*h); c.stroke();
+    /* the dimension being drawn already looks like the finished one */
+    const d={x1:PENDING.x1, y1:PENDING.y1, x2:PENDING.mx, y2:PENDING.my, calib:TOOL==='calib'};
+    const m=STATE.calib?dimPx(d)*STATE.calib.mPerPx:null;
+    d.txt=TOOL==='calib'?'?':(m!=null?dimTxt(m):'?');
+    dimDraw(c,d,w,h,dimStyle(),false);
   }
   if(PENDING.kind==='area' && PENDING.pts.length){
     const p=PENDING.pts;
@@ -1942,9 +2526,9 @@ function polyPerimeter(pts){
    *shown* in centimetres — a manual entry stores the metres it was typed as. */
 function relabelMeasures(){
   STATE.dims.forEach(d=>{
-    if(d.manualM!=null) d.label=fmtCm(d.manualM);
-    else if(STATE.calib) d.label=fmtCm(dimPx(d)*STATE.calib.mPerPx);
-    else d.label='?';
+    const m=d.manualM!=null?d.manualM:(STATE.calib?dimPx(d)*STATE.calib.mPerPx:null);
+    d.label=m!=null?fmtCm(m):'?';
+    d.txt=m!=null?dimTxt(m):'?';   /* on the plan: the bare number, as the plan writes it */
   });
   STATE.areas.forEach(a=>{
     const m2=polyArea(a.pts);
@@ -1952,6 +2536,664 @@ function relabelMeasures(){
     a.perim=polyPerimeter(a.pts)||null;
     a.label=m2?fmtM2(m2):T('notCalibShort');
   });
+}
+
+/* =====================================================================
+   9a. SMART DIMENSION + NORMS ON DIMENSIONS
+   One click inside a space: rays run left/right and up/down through the
+   base drawing until they hit ink (a wall, a desk, a partition line), and
+   the shorter clear span becomes a dimension. With a calibration — or a
+   Revit plan, which is exact — it is labelled straight away. Any
+   dimension can carry a norm; its reading against that norm becomes a
+   note on the plan that states the gap.
+   ===================================================================== */
+let INK=null;
+function inkData(){
+  if(INK && INK.src===BASE) return INK;
+  const c=BASE.getContext('2d',{willReadFrequently:true});
+  INK={ src:BASE, w:BASE.width, h:BASE.height, d:c.getImageData(0,0,BASE.width,BASE.height).data };
+  return INK;
+}
+function isInk(I,x,y){
+  if(x<0||y<0||x>=I.w||y>=I.h) return true;
+  const i=(y*I.w+x)*4, d=I.d;
+  return d[i+3]>40 && (0.299*d[i]+0.587*d[i+1]+0.114*d[i+2])<170;
+}
+/* first ink pixel from (x,y) in direction (dx,dy); starts by leaving any
+   line the click landed on */
+function castRay(I,x,y,dx,dy){
+  let s=0;
+  while(isInk(I,x+dx*s,y+dy*s) && s<6) s++;
+  while(!isInk(I,x+dx*s,y+dy*s)) s++;
+  /* A Revit plan is drawn from room boundaries, which ARE the finished wall
+     faces — measure to the centre of that line. A PDF wall has thickness,
+     and the clear width runs to its inner face, where the ink starts. */
+  if(!vectorBase()) return s;
+  let t=0; while(t<12 && isInk(I,x+dx*(s+t),y+dy*(s+t)) && !(x+dx*(s+t)<0||y+dy*(s+t)<0||x+dx*(s+t)>=I.w||y+dy*(s+t)>=I.h)) t++;
+  return s+(t-1)/2;
+}
+const vectorBase = () => !!(STATE.parse && !STATE.parse.page && STATE.rooms.some(r=>r.tag.poly));
+function smartDim(p, both){
+  const I=inkData();
+  const x=Math.round(p.nx*I.w), y=Math.round(p.ny*I.h);
+  if(isInk(I,x,y) && isInk(I,x+3,y) && isInk(I,x,y+3)) return [];
+  const l=castRay(I,x,y,-1,0), r=castRay(I,x,y,1,0), u=castRay(I,x,y,0,-1), d=castRay(I,x,y,0,1);
+  /* pixel i covers [i, i+1): the clear span runs from the near edge of the
+     first free pixel to the far edge of the last one (raster), or between
+     the two line centres (vector) */
+  const c=vectorBase()?0.5:0;
+  const H={ x1:(x-l+1-c)/I.w, y1:(y+0.5)/I.h, x2:(x+r+c)/I.w, y2:(y+0.5)/I.h, len:l+r-1 };
+  const V={ x1:(x+0.5)/I.w, y1:(y-u+1-c)/I.h, x2:(x+0.5)/I.w, y2:(y+d+c)/I.h, len:u+d-1 };
+  const okH=x-l>0 && x+r<I.w-1, okV=y-u>0 && y+d<I.h-1;   /* a ray that ran off the sheet found no wall */
+  const cand=[okH&&H, okV&&V].filter(Boolean).sort((a,b)=>a.len-b.len);
+  return both?cand:cand.slice(0,1);
+}
+
+function dimMeters(d){
+  if(d.manualM!=null) return d.manualM;
+  return STATE.calib ? dimPx(d)*STATE.calib.mPerPx : null;
+}
+
+/* =====================================================================
+   9c. DIMENSION STYLE — taken from the plan, never invented.
+   A PDF that carries its own dimensions (a number with a dimension line
+   running out on both sides of it) gives the text height, width factor,
+   colours, line weight, text gap and units. A plan without any keeps its
+   own text height (the m² tags) and the RD&A reference look: 50% grey
+   Arial, dot ends, an opaque text background that breaks the line.
+   Sizes are fractions of the plan's height, so a dimension scales with
+   the drawing exactly like the plan's own text.
+   ===================================================================== */
+const DIM_REF={ clr:'#808080', lclr:'#808080', gap:0.29, dot:0.18, ext:0.25, wf:1, unit:'cm' };
+let DSTYLE=null, DSTYLE_BASE=null, DSTYLE_PARSE=null;
+const med=a=>{ const s=a.slice().sort((p,q)=>p-q); return s.length?s[Math.floor(s.length/2)]:null; };
+const lumOf=p=>0.299*p[0]+0.587*p[1]+0.114*p[2];
+const rgbHex=p=>'#'+p.map(v=>Math.round(v).toString(16).padStart(2,'0')).join('');
+const medRGB=list=>[0,1,2].map(i=>med(list.map(p=>p[i])));
+
+function dimStyle(){
+  if(DSTYLE && DSTYLE_BASE===BASE && DSTYLE_PARSE===STATE.parse) return DSTYLE;
+  if(!BASE) return Object.assign({fs:0.01, lw:0.0008, src:'ref'}, DIM_REF);
+  const H=BASE.height, P=STATE.parse||{};
+  let S=planDims();
+  if(!S){
+    let fs=null;
+    if(P.vp1 && P.txtH){
+      const a=P.txtH.area.length?P.txtH.area:P.txtH.all;
+      if(a.length) fs=med(a)*BASE.width/P.vp1.width;
+    }
+    if(!fs && P.geo) fs=11;                 /* the Revit base writes its room tags at 11 px */
+    if(!fs) fs=H/90;
+    S=Object.assign({}, DIM_REF, { fs:fs/H, lw:Math.max(1,fs*0.06)/H, src:'ref' });
+  }
+  DSTYLE=S; DSTYLE_BASE=BASE; DSTYLE_PARSE=STATE.parse;
+  return S;
+}
+
+/* A dimension on the sheet = a number whose baseline has a thin line just
+   under it, running out past both ends of the text. Room numbers, tags in
+   boxes and furniture labels fail one of those tests. */
+function planDims(){
+  const P=STATE.parse;
+  if(!P||!P.nums||!P.nums.length||!P.vp1||!BASE) return null;
+  const I=inkData(), W=I.w, H=I.h, D=I.d, sc=BASE.width/P.vp1.width, hits=[];
+  const px=(x,y)=>{ x=Math.round(x); y=Math.round(y); if(x<0||y<0||x>=W||y>=H) return null; const i=(y*W+x)*4; return [D[i],D[i+1],D[i+2]]; };
+  P.nums.forEach(n=>{
+    const t=n.t, fh=Math.hypot(t[2],t[3]), fw=Math.hypot(t[0],t[1]);
+    if(!fh||!fw||n.alone===false) return;
+    const o=P.vp1.convertToViewportPoint(t[4],t[5]);
+    const pu=P.vp1.convertToViewportPoint(t[4]+t[0]/fw, t[5]+t[1]/fw);
+    const pv=P.vp1.convertToViewportPoint(t[4]+t[2]/fh, t[5]+t[3]/fh);
+    const ux=pu[0]-o[0], uy=pu[1]-o[1], vx=pv[0]-o[0], vy=pv[1]-o[1];
+    if(Math.abs(ux)>0.02 && Math.abs(uy)>0.02) return;          /* square to the sheet only */
+    const F=fh*sc, Wt=n.w*sc, bx=o[0]*sc, by=o[1]*sc;
+    if(F<4) return;
+    const at=(a,b)=>px(bx+ux*a+vx*b, by+uy*a+vy*b);              /* a along the text, b up from the baseline */
+    const cover=(b,a0,a1)=>{ let k=0,m=0; for(let a=a0;a<=a1;a++){ const p=at(a,b); if(!p) continue; m++; if(lumOf(p)<235) k++; } return m?k/m:0; };
+    const span=Math.round(F*1.2), q=Math.max(2,Math.round(F*0.2));
+    let line=-1, thick=0;
+    for(let b=1;b<=Math.ceil(F*0.9);b++){
+      const ok=cover(-b,-span,-q)>=0.8 && cover(-b,Wt+q,Wt+span)>=0.8;
+      if(ok){ if(line<0) line=b; thick++; }
+      else if(line>=0) break;
+    }
+    if(line<0 || thick>Math.max(2,F*0.2)) return;
+    /* thin: clear paper just past the line on both sides of it */
+    const clear=b=>cover(b,-span,-q)<0.5 && cover(b,Wt+q,Wt+span)<0.5;
+    if(!clear(-(line+thick+1)) || (line>2 && !clear(-(line-2)))) return;
+    /* nothing ruled across the top of it either — that is a tag in a box */
+    for(let b=Math.round(F*0.8);b<=Math.round(F*1.3);b++) if(cover(b,-q,Wt+q)>=0.8) return;
+    const lp=[], tp=[], bp=[];
+    for(let a=-span;a<=-q;a++){
+      for(let b=line;b<line+thick;b++){ const p=at(a,-b); if(p) lp.push(p); }
+      const p=at(a,-(line+thick+1)); if(p) bp.push(p);
+    }
+    for(let a=0;a<=Wt;a++) for(let b=0;b<=F*0.7;b++){ const p=at(a,b); if(p&&lumOf(p)<215) tp.push(p); }
+    if(tp.length<4) return;
+    tp.sort((p,r)=>lumOf(p)-lumOf(r));
+    const tc=tp[Math.floor(tp.length*0.1)];
+    /* a hairline plots lighter than its pen: same pen as the text when the
+       line is lighter than it, and the weight is what the paler pixel implies */
+    const lc=medRGB(lp), bgL=med(bp.map(lumOf)), lL=lumOf(lc), tL=lumOf(tc);
+    const pale=lL>tL && bgL>tL+20;
+    hits.push({ F, gap:(line-0.5)/F, wf:fw/fh, tc, dec:/[.,]/.test(n.str),
+      lc:pale?tc:lc, lw:pale?Math.max(0.3,Math.min(thick, thick*(bgL-lL)/(bgL-tL))):thick });
+  });
+  if(hits.length<2) return null;
+  /* the plan's dimension style is the one most of them share */
+  let grp=[];
+  hits.forEach(a=>{ const g=hits.filter(b=>Math.abs(b.F-a.F)<=a.F*0.08); if(g.length>grp.length) grp=g; });
+  if(grp.length<2) return null;
+  const F=med(grp.map(g=>g.F));
+  return {
+    fs:F/BASE.height, lw:med(grp.map(g=>g.lw))/BASE.height,
+    gap:med(grp.map(g=>g.gap)), wf:med(grp.map(g=>g.wf)),
+    clr:rgbHex(medRGB(grp.map(g=>g.tc))), lclr:rgbHex(medRGB(grp.map(g=>g.lc))),
+    dot:DIM_REF.dot, ext:DIM_REF.ext,
+    unit:grp.filter(g=>g.dec).length>grp.length/2?'m':'cm', src:'plan', n:grp.length
+  };
+}
+function dimTxt(m){ return dimStyle().unit==='m' ? m.toFixed(2) : String(Math.round(m*100)); }
+function dimStyleOut(){ const S=dimStyle(); return {fs:S.fs, lw:S.lw, gap:S.gap, dot:S.dot, ext:S.ext, wf:S.wf, clr:S.clr, lclr:S.lclr}; }
+
+/* the opaque text background takes the colour the text sits on — the
+   room's fill — so the number reads like the plan's own */
+function dimBg(d,S){
+  const lt=d.lt!=null?d.lt:0.5, key=[d.x1,d.y1,d.x2,d.y2,lt,S.fs].join();
+  if(d.bg && d.bgK===key) return;
+  const I=inkData(), len=Math.hypot((d.x2-d.x1)*I.w,(d.y2-d.y1)*I.h)||1;
+  let ux=(d.x2-d.x1)*I.w/len, uy=(d.y2-d.y1)*I.h/len;
+  if(ux<-1e-6||(Math.abs(ux)<1e-6&&uy>0)){ ux=-ux; uy=-uy; }
+  const F=S.fs*I.h, off=S.gap*F+0.36*F, r=Math.max(2,Math.round(F*0.8));
+  const cx=Math.round((d.x1+(d.x2-d.x1)*lt)*I.w+uy*off), cy=Math.round((d.y1+(d.y2-d.y1)*lt)*I.h-ux*off);
+  const cnt=new Map();
+  for(let y=cy-r;y<=cy+r;y++) for(let x=cx-r;x<=cx+r;x++){
+    if(x<0||y<0||x>=I.w||y>=I.h) continue;
+    const i=(y*I.w+x)*4, p=[I.d[i],I.d[i+1],I.d[i+2]];
+    if(lumOf(p)<170) continue;
+    const k=(p[0]<<16)|(p[1]<<8)|p[2]; cnt.set(k,(cnt.get(k)||0)+1);
+  }
+  let best=0, col=0xffffff; cnt.forEach((v,k)=>{ if(v>best){ best=v; col=k; } });
+  d.bg='#'+col.toString(16).padStart(6,'0'); d.bgK=key;
+}
+
+/* ONE dimension painter — the live plan, the print composite and the
+   interactive export all draw with this exact function (see exportHtml) */
+function dimDraw(c,d,w,h,S,sel){
+  var x1=d.x1*w, y1=d.y1*h, x2=d.x2*w, y2=d.y2*h, len=Math.hypot(x2-x1,y2-y1);
+  if(len<0.5) return;
+  var ux=(x2-x1)/len, uy=(y2-y1)/len;
+  /* text reads left to right, or bottom to top on a vertical dimension */
+  if(ux<-1e-6||(Math.abs(ux)<1e-6&&uy>0)){ ux=-ux; uy=-uy; }
+  var vx=uy, vy=-ux;
+  var F=S.fs*h, lw=Math.max(0.6,S.lw*h), cap=0.716*F, gap=S.gap*F, e=S.ext*F;
+  var bg=d.bg||'#ffffff';
+  /* same colour as the plan's dimensions, darkened only as far as it takes
+     to stay legible (3:1) on a darker room fill */
+  function lumHex(hx){ var v=parseInt(hx.slice(1),16), c=[v>>16,(v>>8)&255,v&255].map(function(x){ x/=255; return x<=0.03928?x/12.92:Math.pow((x+0.055)/1.055,2.4); }); return 0.2126*c[0]+0.7152*c[1]+0.0722*c[2]; }
+  function ink(fg){ var b=lumHex(bg), f=fg;
+    for(var i=0;i<12 && (b+0.05)/(lumHex(f)+0.05)<3;i++){ var v=parseInt(f.slice(1),16); f='#'+[v>>16,(v>>8)&255,v&255].map(function(x){ return ('0'+Math.round(x*0.85).toString(16)).slice(-2); }).join(''); }
+    return f; }
+  var col=d.calib?'#0000FF':ink(S.clr), lcol=d.calib?'#0000FF':ink(S.lclr);
+  var lt=d.lt!=null?d.lt:0.5, mx=x1+(x2-x1)*lt, my=y1+(y2-y1)*lt, lbl=String(d.txt||d.label||'—');
+  c.save();
+  if(sel){
+    c.strokeStyle='#CFFF04'; c.lineWidth=lw+Math.max(5,F*0.4); c.lineCap='round';
+    c.beginPath(); c.moveTo(x1,y1); c.lineTo(x2,y2); c.stroke();
+  }
+  c.strokeStyle=lcol; c.lineWidth=lw; c.lineCap='butt';
+  c.beginPath(); c.moveTo(x1,y1); c.lineTo(x2,y2);
+  [[x1,y1],[x2,y2]].forEach(function(p){ c.moveTo(p[0]-vx*e,p[1]-vy*e); c.lineTo(p[0]+vx*e,p[1]+vy*e); });
+  c.stroke();
+  c.fillStyle=lcol;
+  var r=Math.max(lw*1.1, S.dot*F/2);
+  [[x1,y1],[x2,y2]].forEach(function(p){ c.beginPath(); c.arc(p[0],p[1],r,0,6.2832); c.fill(); });
+  c.font=F.toFixed(2)+'px Arial,Helvetica,sans-serif';
+  c.direction='ltr'; c.textAlign='center'; c.textBaseline='alphabetic';
+  var tw=c.measureText(lbl).width*S.wf, pad=0.12*F;
+  c.translate(mx,my); c.rotate(Math.atan2(uy,ux));
+  c.fillStyle=bg;
+  c.fillRect(-tw/2-pad, -(gap+cap+pad), tw+2*pad, gap+cap+pad+lw/2+0.5);
+  c.scale(S.wf,1); c.fillStyle=col;
+  c.fillText(lbl,0,-gap);
+  c.restore();
+}
+
+/* =====================================================================
+   9b. AUTO DIMENSIONS — a length and a width for every tagged room,
+   wall face to wall face, drawn exactly like a hand-drawn dimension.
+   Revit plan: cut straight from the room polygon (exact).
+   PDF plan: each room is measured from its colour fill, and every room
+   with an m² tag must match it. The scale is what most rooms agree on;
+   the sheet's own "1 : N" text is used only when the rooms confirm it.
+   ===================================================================== */
+/* Revit paints each room in its colour-scheme fill, and that fill runs exactly
+   to the room boundary — the finished wall face, the same line Revit's area is
+   measured to. Furniture is drawn on top of it, so the fill's outer edge is the
+   room's edge whatever stands inside. One flood from the tag gives the room. */
+/* the room's fill = the commonest light, non-white colour around its tag */
+function fillColorAt(I, cx, cy){
+  const W=I.w, H=I.h, d=I.d, cnt=new Map();
+  for(let dy=-30;dy<=30;dy+=2) for(let dx=-30;dx<=30;dx+=2){
+    const x=cx+dx, y=cy+dy; if(x<0||y<0||x>=W||y>=H) continue;
+    const i=(y*W+x)*4, r=d[i], g=d[i+1], b=d[i+2];
+    if(r>=250&&g>=250&&b>=250) continue;
+    if(0.299*r+0.587*g+0.114*b<120) continue;
+    const k=(r<<16)|(g<<8)|b; cnt.set(k,(cnt.get(k)||0)+1);
+  }
+  let col=-1, best=0; cnt.forEach((v,k)=>{ if(v>best){ best=v; col=k; } });
+  return best<40 ? -1 : col;
+}
+function fillBox(cx, cy){
+  const I=inkData(), W=I.w, H=I.h, d=I.d;
+  const col=fillColorAt(I, cx, cy);
+  if(col<0) return null;
+  const R=col>>16, G=(col>>8)&255, B=col&255;
+  const same=i=>Math.abs(d[i*4]-R)<=6&&Math.abs(d[i*4+1]-G)<=6&&Math.abs(d[i*4+2]-B)<=6;
+  /* seed on the nearest pixel of that colour */
+  let seed=-1;
+  for(let r=0;r<=30&&seed<0;r++) for(let a=0;a<Math.max(1,r*8)&&seed<0;a++){
+    const x=Math.round(cx+r*Math.cos(a*2*Math.PI/Math.max(1,r*8))), y=Math.round(cy+r*Math.sin(a*2*Math.PI/Math.max(1,r*8)));
+    if(x>=0&&y>=0&&x<W&&y<H&&same(y*W+x)) seed=y*W+x;
+  }
+  if(seed<0) return null;
+  const seen=new Uint8Array(W*H), st=new Int32Array(W*H);
+  const rMin=new Int32Array(H).fill(W), rMax=new Int32Array(H).fill(-1);
+  const cMin=new Int32Array(W).fill(H), cMax=new Int32Array(W).fill(-1);
+  let sp=0, n=0, x0=W, x1=-1, y0=H, y1=-1, cap=W*H*0.2;
+  st[sp++]=seed; seen[seed]=1;
+  while(sp){
+    const i=st[--sp], x=i%W, y=(i-x)/W;
+    if(++n>cap) return null;                        /* leaked into the whole sheet */
+    if(x<rMin[y]) rMin[y]=x; if(x>rMax[y]) rMax[y]=x;
+    if(y<cMin[x]) cMin[x]=y; if(y>cMax[x]) cMax[x]=y;
+    if(x<x0)x0=x; if(x>x1)x1=x; if(y<y0)y0=y; if(y>y1)y1=y;
+    if(x>0  &&!seen[i-1]&&same(i-1)){ seen[i-1]=1; st[sp++]=i-1; }
+    if(x<W-1&&!seen[i+1]&&same(i+1)){ seen[i+1]=1; st[sp++]=i+1; }
+    if(y>0  &&!seen[i-W]&&same(i-W)){ seen[i-W]=1; st[sp++]=i-W; }
+    if(y<H-1&&!seen[i+W]&&same(i+W)){ seen[i+W]=1; st[sp++]=i+W; }
+  }
+  if(x1-x0<8||y1-y0<8||x0<=0||y0<=0||x1>=W-1||y1>=H-1) return null;
+  /* furniture only ever cuts a row of fill short, never widens it — so the
+     flood's outer bounds are the room's walls, even when desks stand against
+     them on most rows */
+  const rows=[], cols=[];
+  for(let y=y0;y<=y1;y++) if(rMax[y]>=0) rows.push([rMin[y],rMax[y],y]);
+  for(let x=x0;x<=x1;x++) if(cMax[x]>=0) cols.push([cMin[x],cMax[x],x]);
+  const L={v:x0,n:rows.filter(s=>s[0]<=x0+1).length,of:rows.length}, Rr={v:x1,n:rows.filter(s=>s[1]>=x1-1).length,of:rows.length};
+  const T_={v:y0,n:cols.filter(s=>s[0]<=y0+1).length,of:cols.length}, Bb={v:y1,n:cols.filter(s=>s[1]>=y1-1).length,of:cols.length};
+  const pick=(list,a,b,lo,hi,f)=>{
+    const want=lo+(hi-lo)*f; let at=null;
+    list.forEach(s=>{ if(Math.abs(s[0]-a)<=1&&Math.abs(s[1]-b)<=1&&(at==null||Math.abs(s[2]-want)<Math.abs(at-want))) at=s[2]; });
+    return at;
+  };
+  /* the line goes on a row that touches both walls; an L-shaped room may have none */
+  let hy=pick(rows,L.v,Rr.v,T_.v,Bb.v,0.22), vx=pick(cols,T_.v,Bb.v,L.v,Rr.v,0.78);
+  const rect=hy!=null&&vx!=null;
+  if(hy==null) hy=Math.round(y0+(y1-y0)*0.22);
+  if(vx==null) vx=Math.round(x0+(x1-x0)*0.78);
+  /* what lies just past each edge: a wall (gray cut, dark ink) or the next
+     room's fill. A desk row is a thin line with white behind it — that edge
+     is furniture, not the room's end */
+  const solid=(x,y)=>{ if(x<0||y<0||x>=W||y>=H) return false;
+    const i=(y*W+x)*4; return !(d[i]>=235&&d[i+1]>=235&&d[i+2]>=235); };
+  const edge=(fixed, from, to, dir, horiz)=>{
+    let ok=0, n=0;
+    for(let t=from;t<=to;t+=Math.max(1,Math.round((to-from)/24))){
+      n++;
+      let hit=0; for(let o=3;o<=7;o++){ const q=fixed+dir*o; if(horiz?solid(t,q):solid(q,t)) hit++; }
+      if(hit>=4) ok++;
+    }
+    return n?ok/n:0;
+  };
+  const walls=Math.min(edge(L.v,T_.v,Bb.v,-1,false), edge(Rr.v,T_.v,Bb.v,1,false),
+                       edge(T_.v,L.v,Rr.v,-1,true),  edge(Bb.v,L.v,Rr.v,1,true));
+  return { x0:L.v, x1:Rr.v, y0:T_.v, y1:Bb.v, hy, vx, walls,
+    rect };
+}
+/* the value most rays agree on (±2px), not the mean — a door gap is a minority */
+function modeOf(vals){
+  const v=vals.filter(x=>x!=null).sort((a,b)=>a-b);
+  if(!v.length) return null;
+  let best=v[0], bestN=0;
+  v.forEach(a=>{ const n=v.filter(b=>Math.abs(b-a)<=2).length; if(n>bestN){ bestN=n; best=a; } });
+  return { v:best, n:bestN, of:v.length };
+}
+
+/* Revit's wall cut is one pure gray, the commonest neutral tone on the sheet */
+function wallGray(){
+  const I=inkData(), d=I.d, n=I.w*I.h;
+  if(I.gray!==undefined) return I.gray;
+  const hist=new Uint32Array(256);
+  for(let i=0;i<n;i+=3){ const r=d[i*4]; if(r>90&&r<240&&r===d[i*4+1]&&r===d[i*4+2]) hist[r]++; }
+  let g=0; for(let v=1;v<256;v++) if(hist[v]>hist[g]) g=v;
+  I.gray = hist[g]>n/3*0.01 ? g : null;
+  return I.gray;
+}
+/* walk each edge outward, across furniture, until a wall (the gray cut) or
+   another room's fill; the step most rows agree on moves the edge */
+function extendBox(b, maxExt){
+  const I=inkData(), W=I.w, H=I.h, d=I.d, gray=wallGray();
+  if(gray==null) return null;
+  const stop=(x,y)=>{
+    if(x<0||y<0||x>=W||y>=H) return true;
+    const i=(y*W+x)*4, r=d[i], g=d[i+1], bl=d[i+2];
+    if(Math.abs(r-gray)<=4&&Math.abs(g-gray)<=4&&Math.abs(bl-gray)<=4) return true;
+    const sat=Math.max(r,g,bl)-Math.min(r,g,bl);
+    return sat>12 && (0.299*r+0.587*g+0.114*bl)<250;   /* a coloured room fill */
+  };
+  const walk=(x,y,dx,dy)=>{ for(let s=0;s<=maxExt;s++) if(stop(x+dx*s,y+dy*s)) return s; return null; };
+  const side=(fixed,lo,hi,dx,dy)=>{
+    const vals=[];
+    for(let f=0.2;f<=0.8;f+=0.05){
+      const t=Math.round(lo+(hi-lo)*f);
+      vals.push(dx ? walk(fixed+dx,t,dx,0) : walk(t,fixed+dy,0,dy));
+    }
+    const m=modeOf(vals);
+    return m && m.n>=vals.length*0.4 ? m.v : null;
+  };
+  const l=side(b.x0,b.y0,b.y1,-1,0), r=side(b.x1,b.y0,b.y1,1,0);
+  const t=side(b.y0,b.x0,b.x1,0,-1), bo=side(b.y1,b.x0,b.x1,0,1);
+  if(l==null||r==null||t==null||bo==null) return null;
+  const x0=b.x0-l, x1=b.x1+r, y0=b.y0-t, y1=b.y1+bo;
+  return { x0, x1, y0, y1, hy:Math.round(y0+(y1-y0)*0.22), vx:Math.round(x0+(x1-x0)*0.78), walls:1 };
+}
+
+/* the sheet's own scale: "1 : 100" in its text, and the pixel size of a point */
+function pdfScale(parse){
+  if(!parse.vp1 || !BASE) return null;
+  const counts={};
+  (parse.allText||[]).forEach(t=>{ const m=/(?:^|\D)1\s*:\s*(\d{2,4})(?:\D|$)/.exec(t); if(m) counts[m[1]]=(counts[m[1]]||0)+1; });
+  const best=Object.keys(counts).sort((a,b)=>counts[b]-counts[a])[0];
+  if(!best) return null;
+  const pxPerPt=BASE.width/parse.vp1.width;
+  return { den:+best, mPerPx:(+best)*0.0254/72/pxPerPt };
+}
+
+function autoDimsPdf(){
+  const W=BASE.width, H=BASE.height;
+  const boxes=[];
+  STATE.parse.tags.forEach((t,i)=>{
+    /* a room with no colour fill (an AutoCAD sheet) is not measured: rays on
+       bare ink stop at every desk and chair, and a wrong length is worse than none */
+    const b=fillBox(Math.round(t.nx*W), Math.round(t.ny*H));
+    if(!b || b.x1-b.x0<8 || b.y1-b.y0<8) return;
+    /* two tags in one room give it one pair of dimensions */
+    if(boxes.some(o=>Math.abs(o.x0-b.x0)<4&&Math.abs(o.x1-b.x1)<4&&Math.abs(o.y0-b.y0)<4&&Math.abs(o.y1-b.y1)<4)) return;
+    boxes.push(Object.assign(b, { tag:t, i }));
+  });
+
+  /* scale: every filled room with an m² tag proposes one (√area ÷ its box);
+     the largest group that agrees within 2% wins — a room only partly found
+     (desks splitting its fill) proposes a wrong one and stays outside the group */
+  const px2=b=>(b.x1-b.x0+1)*(b.y1-b.y0+1);
+  const props=boxes.filter(b=>b.tag.area>0&&b.rect).map(b=>Math.sqrt(b.tag.area/px2(b)));
+  let grp=[];
+  props.forEach(a=>{ const g=props.filter(b=>Math.abs(b/a-1)<=0.02); if(g.length>grp.length) grp=g; });
+  const fromArea=grp.length>=3 ? grp.slice().sort((a,b)=>a-b)[grp.length>>1] : null;
+  const txt=pdfScale(STATE.parse);
+  let cal=null;
+  /* the sheet's "1:N" is exact only if the sheet was printed at it — a fit-to-page
+     print says 1:100 and is not; the rooms decide */
+  if(txt && fromArea && Math.abs(fromArea/txt.mPerPx-1)<=0.015)
+    cal={ mPerPx:txt.mPerPx, src:'text', den:txt.den, check:fromArea/txt.mPerPx-1, n:grp.length };
+  else if(fromArea) cal={ mPerPx:fromArea, src:'area', n:grp.length, den:txt?txt.den:null, check:txt?fromArea/txt.mPerPx-1:null };
+  else if(txt) cal={ mPerPx:txt.mPerPx, src:'text', den:txt.den, n:0 };
+
+  /* a room with an m² tag must measure to it (±12%) — otherwise its box is
+     incomplete and no dimension is better than a wrong one */
+  const k=cal?cal.mPerPx:null;
+  /* desks and cabinets stand on the fill against a wall, so a short box gets
+     one chance: each edge walks out over furniture to the wall behind it */
+  if(k) boxes.forEach((b,j)=>{
+    if(!(b.tag.area>0)) return;
+    const r=px2(b)*k*k/b.tag.area;
+    if(r>=0.88 && r<=1.12) return;
+    const e=extendBox(b, Math.round(1.3/k));
+    if(e) boxes[j]=Object.assign(e,{ tag:b.tag, i:b.i });
+  });
+  const kept=boxes.filter(b=>{
+    /* no room is narrower than a door */
+    if(k && Math.min(b.x1-b.x0+1, b.y1-b.y0+1)*k<0.9) return false;
+    if(!(b.tag.area>0) || !k) return b.rect && b.walls>=0.6;
+    const r=px2(b)*k*k/b.tag.area;
+    return r>=0.88 && r<=1.12;
+  });
+  STATE.autoSkipped=STATE.parse.tags.length-kept.length;
+  return { boxes:kept, cal };
+}
+
+/* Revit: cut a horizontal and a vertical line through the polygon itself */
+function polyCut(poly, axis, at){
+  const xs=[];
+  for(let i=0;i<poly.length;i++){
+    const a=poly[i], b=poly[(i+1)%poly.length];
+    const ua=axis==='h'?a.y:a.x, ub=axis==='h'?b.y:b.x;
+    if((ua<=at&&ub>at)||(ub<=at&&ua>at)){
+      const t=(at-ua)/(ub-ua);
+      xs.push(axis==='h'?a.x+(b.x-a.x)*t:a.y+(b.y-a.y)*t);
+    }
+  }
+  xs.sort((a,b)=>a-b);
+  let best=null;
+  for(let i=0;i+1<xs.length;i+=2) if(!best||xs[i+1]-xs[i]>best[1]-best[0]) best=[xs[i],xs[i+1]];
+  return best;
+}
+function autoDimsRevit(){
+  const G=STATE.parse.geo;
+  const N=p=>({ nx:(p.x-G.minX+G.margin)*G.scale/G.w, ny:(G.h-(p.y-G.minY+G.margin)*G.scale)/G.h });
+  const out=[];
+  STATE.parse.tags.forEach((t,i)=>{
+    const P=t.poly; if(!P||P.length<3) return;
+    const xs=P.map(p=>p.x), ys=P.map(p=>p.y);
+    const minX=Math.min(...xs), maxX=Math.max(...xs), minY=Math.min(...ys), maxY=Math.max(...ys);
+    const hy=minY+(maxY-minY)*0.78, vx=minX+(maxX-minX)*0.78;   /* world Y is up: 0.78 = upper part */
+    const h=polyCut(P,'h',hy), v=polyCut(P,'v',vx);
+    if(h) out.push({ a:N({x:h[0],y:hy}), b:N({x:h[1],y:hy}), i });
+    if(v) out.push({ a:N({x:vx,y:v[1]}), b:N({x:vx,y:v[0]}), i, lt:0.72 });
+  });
+  return out;
+}
+
+/* replaces the room dimensions; a hand calibration is never overwritten */
+function autoDims(){
+  if(!STATE.parse || !BASE || !STATE.parse.tags.length) return 0;
+  STATE.dims=STATE.dims.filter(d=>d.auto!=='room');
+  const segs=[];
+  STATE.autoSkipped=0;
+  if(STATE.parse.geo){
+    autoDimsRevit().forEach(s=>segs.push({ x1:s.a.nx, y1:s.a.ny, x2:s.b.nx, y2:s.b.ny, i:s.i, lt:s.lt }));
+  } else {
+    const { boxes, cal }=autoDimsPdf();
+    const handCal=STATE.calib && !STATE.calib.src;
+    if(cal && !handCal) STATE.calib=cal;
+    const W=BASE.width, H=BASE.height;
+    boxes.forEach(b=>{
+      segs.push({ x1:b.x0/W, y1:(b.hy+0.5)/H, x2:(b.x1+1)/W, y2:(b.hy+0.5)/H, i:b.i });
+      segs.push({ x1:(b.vx+0.5)/W, y1:b.y0/H, x2:(b.vx+0.5)/W, y2:(b.y1+1)/H, i:b.i, lt:0.72 });
+    });
+  }
+  segs.forEach(s=>STATE.dims.push({ id:'d'+(STATE.seq++), x1:s.x1, y1:s.y1, x2:s.x2, y2:s.y2,
+    norm:'', auto:'room', room:s.i, lt:s.lt }));
+  STATE.autoDims='on';
+  relabelMeasures();
+  return segs.length;
+}
+function roomDimName(d){
+  const r=STATE.parse&&STATE.parse.tags[d.room];
+  return r ? (r.name||'') : '';
+}
+function autoDimsBtn(){ const n=autoDims(); refresh(); toast(T('tAutoDims', n)); }
+function autoDimsOff(){
+  STATE.dims=STATE.dims.filter(d=>d.auto!=='room'); STATE.autoDims='off';
+  refresh(); toast(T('tAutoDimsOff'));
+}
+/* a short line describing where the scale came from, for the scale card */
+function scaleSource(){
+  const c=STATE.calib; if(!c) return '';
+  if(STATE.parse && STATE.parse.geo) return T('scRevit');
+  if(c.src==='text') return T('scText', c.den, c.n, c.check!=null?Math.abs(c.check*100).toFixed(1):null);
+  if(c.src==='area') return T('scArea', c.n, c.den);
+  return T('scHand');
+}
+const normName = n => L(n.n);
+function normReq(n){
+  if(n.min!=null) return '≥ '+Math.round(n.min*100)+' '+T('uCm');
+  const mx=STATE.spr&&n.spr!=null?n.spr:n.max;
+  return '≤ '+mx+' '+T('uM');
+}
+/* {lv, msg} for one reading against one norm — the gap is always spelled out */
+function evalNorm(n, v){
+  if(v==null) return { lv:'i', msg:T('nNoValue') };
+  const cm=x=>Math.round(x*100);
+  if(n.min!=null){
+    if(v>=n.min) return { lv:'o', msg:T('nOk', cm(v), cm(n.min)) };
+    if(n.alt && v>=n.alt.min) return { lv:'w', msg:T('nAlt', cm(v), cm(n.min), cm(n.min-v), L(n.alt.when)) };
+    if(v>=n.min-0.02) return { lv:'w', msg:T('nEdge', cm(v), cm(n.min)) };
+    return { lv:'f', msg:T('nShort', cm(v), cm(n.min), cm(n.min-v)) };
+  }
+  const mx=STATE.spr&&n.spr!=null?n.spr:n.max;
+  if(v<=mx) return { lv:'o', msg:T('nOkMax', v.toFixed(1), mx) };
+  return { lv:'f', msg:T('nOver', v.toFixed(1), mx, (v-mx).toFixed(1)) };
+}
+const KIND_LBL = k => T(k==='law'?'kLaw':k==='std'?'kStd':'kPractice');
+
+/* the programme can override a norm's figure (office practice above all) */
+function applyNormRules(){
+  const o=STATE.program&&STATE.program.rules&&STATE.program.rules.norms;
+  if(!o||typeof o!=='object') return;
+  Object.keys(o).forEach(id=>{ const n=NORMMAP[id]; if(n&&o[id]&&typeof o[id]==='object'){
+    ['min','max','spr'].forEach(k=>{ const v=numN(o[id][k]); if(v!=null) n[k]=v; }); } });
+}
+
+/* Norm notes are derived from the dimensions and the room geometry on
+   every refresh; a note the user rewrote keeps their words. */
+function syncNormNotes(){
+  const edits={}; STATE.notes.forEach(n=>{ if(n.src==='norm'&&n.edited) edits[n.id]=n.body; });
+  STATE.notes=STATE.notes.filter(n=>n.src!=='norm');
+  STATE.dims.forEach(d=>{
+    const n=d.norm&&NORMMAP[d.norm]; if(!n) return;
+    const r=evalNorm(n, dimMeters(d));
+    const id='n'+d.id;
+    STATE.notes.push({ id, lv:r.lv, src:'norm', title:normName(n), sub:KIND_LBL(n.kind),
+      body: edits[id] || (r.msg+' · '+L(SRC[n.src])), edited:!!edits[id],
+      nx:(d.x1+d.x2)/2, ny:(d.y1+d.y2)/2 });
+  });
+}
+function setDimNorm(id, v){
+  const d=STATE.dims.find(x=>x.id===id); if(!d) return;
+  d.norm=v||''; refresh();
+}
+function armNorm(id){
+  STATE.normArm=id||'';
+  const s=$('#normSel'); if(s) s.value=STATE.normArm;
+  if(id) armTool('smart');
+}
+function normOptions(cur){
+  return `<option value="">${T('nNone')}</option>`+
+    NORMS.map(n=>`<option value="${n.id}" ${cur===n.id?'selected':''}>${esc(normName(n))} (${esc(normReq(n))})</option>`).join('');
+}
+function fillNormSel(){
+  const s=$('#normSel'); if(!s) return;
+  s.innerHTML=normOptions(STATE.normArm);
+  s.title=T('normSelTitle');
+}
+
+/* =====================================================================
+   9b. GEOMETRY CHECKS — Revit outlines are exact, so a corridor's clear
+   width and an accessible WC's turning circle can be read off directly:
+   rasterise the room at 5 cm, take the Euclidean distance transform; the
+   largest inscribed circle has radius max(DT), and a corridor's clear
+   width is twice that.
+   ===================================================================== */
+function edt1(f,n){ /* Felzenszwalb–Huttenlocher squared EDT, one row */
+  const d=new Float64Array(n), v=new Int32Array(n), z=new Float64Array(n+1);
+  let k=0; v[0]=0; z[0]=-Infinity; z[1]=Infinity;
+  for(let q=1;q<n;q++){
+    let s;
+    do{ const p=v[k]; s=((f[q]+q*q)-(f[p]+p*p))/(2*q-2*p); if(s<=z[k]) k--; else break; }while(k>=0);
+    k++; v[k]=q; z[k]=s; z[k+1]=Infinity;
+  }
+  k=0;
+  for(let q=0;q<n;q++){ while(z[k+1]<q) k++; const p=v[k]; d[q]=(q-p)*(q-p)+f[p]; }
+  return d;
+}
+function maxInscribed(outer, holes, cell){
+  cell=cell||0.05;
+  let x0=Infinity,y0=Infinity,x1=-Infinity,y1=-Infinity;
+  outer.forEach(p=>{ x0=Math.min(x0,p.x); y0=Math.min(y0,p.y); x1=Math.max(x1,p.x); y1=Math.max(y1,p.y); });
+  const W=Math.ceil((x1-x0)/cell)+2, H=Math.ceil((y1-y0)/cell)+2;
+  if(W*H>4e6) return null;
+  const inside=(px,py)=>{ const P={nx:px,ny:py};
+    const conv=pts=>pts.map(q=>({x:q.x,y:q.y}));
+    if(!pointInPoly(P,conv(outer))) return false;
+    return !(holes||[]).some(h=>pointInPoly(P,conv(h)));
+  };
+  const BIG=1e12, g=new Float64Array(W*H);
+  for(let j=0;j<H;j++) for(let i=0;i<W;i++){
+    g[j*W+i]=inside(x0+(i-0.5)*cell, y0+(j-0.5)*cell)?BIG:0;
+  }
+  const col=new Float64Array(H);
+  for(let i=0;i<W;i++){ for(let j=0;j<H;j++) col[j]=g[j*W+i]; const r=edt1(col,H); for(let j=0;j<H;j++) g[j*W+i]=r[j]; }
+  const row=new Float64Array(W); let best=0;
+  for(let j=0;j<H;j++){ for(let i=0;i<W;i++) row[i]=g[j*W+i]; const r=edt1(row,W); for(let i=0;i<W;i++) if(r[i]>best) best=r[i]; }
+  return Math.sqrt(best)*cell;   /* metres from the deepest point to the nearest wall */
+}
+const CORRIDOR_RE=/corridor|circulation|passage|מסדרון|מעבר|פרוזדור/i;
+const ACC_WC_RE=/accessible|disabled|נכים|נגיש/i;
+function geoChecks(rooms){
+  const out=[];
+  rooms.forEach(r=>{
+    const t=r.tag; if(!t.poly) return;
+    const nm=(t.rname!=null?t.rname:t.name)||'';
+    const corridor=CORRIDOR_RE.test(nm) && !/stair|מדרגות|פיר|shaft/i.test(nm);
+    const accwc=ACC_WC_RE.test(nm) && (r.check.type==='wc' || /wc|toilet|שירותים/i.test(nm));
+    if(!corridor && !accwc) return;
+    const lp=outerLoop({boundary:[t.poly.map(p=>[p.x,p.y])]});
+    const rad=maxInscribed(lp.outer||t.poly, []);
+    if(rad==null) return;
+    if(corridor){
+      const w=2*rad;
+      [NORMMAP.egress, NORMMAP.access].forEach(n=>out.push({ r, norm:n, v:w, ...evalNorm(n,w) }));
+    }
+    if(accwc){
+      out.push({ r, norm:NORMMAP.turn, v:2*rad, ...evalNorm(NORMMAP.turn, 2*rad) });
+      let bx0=Infinity,by0=Infinity,bx1=-Infinity,by1=-Infinity;
+      t.poly.forEach(p=>{ bx0=Math.min(bx0,p.x); by0=Math.min(by0,p.y); bx1=Math.max(bx1,p.x); by1=Math.max(by1,p.y); });
+      const a=Math.min(bx1-bx0,by1-by0), b=Math.max(bx1-bx0,by1-by0);
+      const e=evalNorm(NORMMAP.wc1, a);
+      if(e.lv==='o' && b<2.00) out.push({ r, norm:NORMMAP.wc1, v:b, lv:'f', msg:T('nWcLen', Math.round(b*100), Math.round((2-b)*100)) });
+      else out.push({ r, norm:NORMMAP.wc1, v:a, ...e });
+    }
+  });
+  return out;
+}
+/* geometry findings fold into the room's own result, so they reach the
+   note, the table and every export without a second channel */
+function applyGeo(rooms){
+  STATE.geo=geoChecks(rooms);
+  const rank={o:0,i:0,w:1,f:2}, back=['ok','warn','fail'], from={ok:0,info:0,warn:1,fail:2};
+  STATE.geo.forEach(g=>{
+    const c=g.r.check;
+    c.msgs.push({ l:{o:'ok',i:'info',w:'warn',f:'fail'}[g.lv], m:normName(g.norm)+': '+g.msg+' · '+L(SRC[g.norm.src]) });
+    c.level=back[Math.max(from[c.level]||0, rank[g.lv]||0)];
+  });
+}
+
+/* occupancy by the regulations' own factor, and what it implies for exits */
+function egressFloorChecks(rooms){
+  const out=[];
+  const use=rooms.filter(r=>r.tag.area!=null && !NEUTRAL_KEYS.includes(r.check.type) && r.check.type!=='it');
+  const net=use.reduce((s,r)=>s+r.tag.area,0);
+  if(!net) return out;
+  const occ=Math.ceil(net/OFFICE_M2_PER_PERSON);
+  const exits=STATE.symbols.filter(s=>s.k==='exit'||s.k==='entry').length;
+  const need=occ>1000?4:occ>500?3:occ>30?2:1;
+  out.push({ level: exits>=need ? 'ok' : 'warn', n:T('fOcc'),
+    m:T('fOccMsg', occ, Math.round(net), need, exits) });
+  const big=use.filter(r=>Math.max(r.tag.ppl||0, Math.ceil(r.tag.area/OFFICE_M2_PER_PERSON))>=50);
+  if(big.length) out.push({ level:'warn', n:T('fBigRoom'), m:T('fBigRoomMsg', big.map(r=>r.tag.name||'#'+r.i).join(' · ')) });
+  return out;
 }
 
 function placeSymbols(){
@@ -1996,8 +3238,8 @@ function planPoint(e){
   return { nx:(e.clientX-b.left)/b.width, ny:(e.clientY-b.top)/b.height };
 }
 
-const TOOLBTN={dim:'tDim', area:'tArea', calib:'tCalib', pin:'tPin', cloud:'tCloud'};
-const TOOLHINTKEY={dim:'hintDim', area:'hintArea', calib:'hintCalib', pin:'hintPin', cloud:'hintCloud'};
+const TOOLBTN={dim:'tDim', smart:'tSmart', area:'tArea', calib:'tCalib', pin:'tPin', cloud:'tCloud'};
+const TOOLHINTKEY={dim:'hintDim', smart:'hintSmart', area:'hintArea', calib:'hintCalib', pin:'hintPin', cloud:'hintCloud'};
 function clearArmed(){ Object.keys(TOOLBTN).forEach(k=>{ const b=$('#'+TOOLBTN[k]); if(b) b.classList.remove('armed'); }); }
 
 function armTool(t){
@@ -2029,11 +3271,13 @@ function skipNextClick(){ SKIPUNTIL=Date.now()+300; }
 $('#planBox').addEventListener('click', e=>{
   if(e.target.closest('.sym')) return;
   if(Date.now()<SKIPUNTIL){ SKIPUNTIL=0; return; }
-  const p=planPoint(e);
+  const p=CADTOOLS.includes(TOOL)?cadPoint(e):planPoint(e);
   if(!TOOL){
     const {w,h}=boxSize(); const mx=p.nx*w, my=p.ny*h;
     const hit=MARKERS.find(m=>mx>=m.bx-5&&mx<=m.bx+m.S+5&&my>=m.by-5&&my<=m.by+m.S+5);
     if(hit){ selectNote(hit.id); return; }
+    const dh=LAYERS.dims && hitDim(mx,my,w,h);
+    if(dh){ SEL=dh.id; drawOverlay(); placeSymbols(); return; }
     const ah=STATE.areas.find(a=>pointInPoly(p,a.pts));
     if(ah){ SEL=ah.id; setTab('sym'); drawOverlay(); return; }
     SEL=null; drawOverlay(); placeSymbols();
@@ -2062,9 +3306,24 @@ $('#planBox').addEventListener('click', e=>{
     PENDING.pts.push({x:p.nx,y:p.ny}); drawOverlay();
     return;
   }
+  if(TOOL==='smart'){
+    const segs=smartDim(p, e.shiftKey);
+    if(!segs.length){ toast(T('tSmartNone')); return; }
+    segs.forEach(sg=>STATE.dims.push({ id:'d'+(STATE.seq++), x1:sg.x1, y1:sg.y1, x2:sg.x2, y2:sg.y2, norm:STATE.normArm, auto:true }));
+    if(!STATE.calib) toast(T('tSmartNoCalib'));
+    relabelMeasures(); refresh();
+    return;   /* stays armed — click the next space */
+  }
   if(TOOL==='dim'||TOOL==='calib'){
     if(!PENDING){ PENDING={kind:'dim', x1:p.nx,y1:p.ny,mx:p.nx,my:p.ny}; drawOverlay(); return; }
-    const d={ id:'d'+(STATE.seq++), x1:PENDING.x1, y1:PENDING.y1, x2:p.nx, y2:p.ny, calib:TOOL==='calib' };
+    finishDim(p.nx, p.ny);
+  }
+});
+function finishDim(x2, y2){
+  CAD.typed='';
+  {
+    const d={ id:'d'+(STATE.seq++), x1:PENDING.x1, y1:PENDING.y1, x2, y2, calib:TOOL==='calib',
+      norm:TOOL==='calib'?'':STATE.normArm };
     const px=dimPx(d);
     if(TOOL==='calib'){
       const v=prompt(T('askCalib'),'');
@@ -2083,16 +3342,22 @@ $('#planBox').addEventListener('click', e=>{
       const cm=parseFloat(String(v).replace(',','.'));
       if(cm>0) d.manualM=cm/100;
     }
-    STATE.dims.push(d); PENDING=null; armTool(null);
+    STATE.dims.push(d); PENDING=null;   /* stays armed, like DIMLINEAR on repeat — Esc ends it */
     relabelMeasures(); refresh();
   }
-});
+}
 $('#planBox').addEventListener('dblclick', e=>{
   if(TOOL==='area'&&PENDING&&PENDING.pts.length>=3){ e.preventDefault(); skipNextClick(); finishArea(); }
 });
 $('#planBox').addEventListener('mousemove', e=>{
-  if(PENDING&&PENDING.kind!=='cloud'){ const p=planPoint(e); PENDING.mx=p.nx; PENDING.my=p.ny; drawOverlay(); }
+  const cad=CADTOOLS.includes(TOOL);
+  const p=cad?cadPoint(e):planPoint(e);
+  CAD.cur=cad?p:null;
+  if(PENDING&&PENDING.kind!=='cloud'){ PENDING.mx=p.nx; PENDING.my=p.ny; }
+  cadStatus(p);
+  if(cad||(PENDING&&PENDING.kind!=='cloud')) drawOverlay();
 });
+$('#planBox').addEventListener('mouseleave', ()=>{ if(CAD.cur){ CAD.cur=null; drawOverlay(); } cadStatus(null); });
 
 function finishArea(){
   if(!PENDING||PENDING.pts.length<3){ PENDING=null; armTool(null); drawOverlay(); return; }
@@ -2155,6 +3420,8 @@ function finishCloud(){
 $('#planBox').addEventListener('dragover', e=>e.preventDefault());
 $('#planBox').addEventListener('drop', e=>{
   e.preventDefault();
+  /* files dropped on an open plan join the plan list */
+  if(e.dataTransfer.files.length) return routeFiles(e.dataTransfer.files);
   const k=e.dataTransfer.getData('sym'); if(!k) return;
   const p=planPoint(e);
   STATE.symbols.push({id:'s'+(STATE.seq++), k, nx:p.nx, ny:p.ny, label:''});
@@ -2164,13 +3431,284 @@ function dimPx(d){
   const dx=(d.x2-d.x1)*BASE.width, dy=(d.y2-d.y1)*BASE.height;
   return Math.hypot(dx,dy);
 }
+
+/* =====================================================================
+   10a. DRAFTING AIDS — the way a DWG viewer behaves.
+   SNAP (F3): the cursor locks onto dimension / area end points, and onto
+   the plan's own edges — a wall face, a partition — within a few pixels.
+   On a Revit plan the room boundary line IS the wall face, so it snaps to
+   the line's centre. ORTHO (F8, or hold Shift to flip it): dimensions and
+   area edges run square to the sheet. While drawing, the status bar reads
+   the live length / ΔX / ΔY (or area / perimeter); with the first point of
+   a dimension down, typing a length and Enter ends it at exactly that.
+   ===================================================================== */
+const CAD={ snap:true, ortho:true, cur:null, typed:'' };
+const CADTOOLS=['dim','calib','area'];
+function cadAnchor(){
+  if(!PENDING) return null;
+  if(PENDING.kind==='dim' && PENDING.x1!=null) return {x:PENDING.x1, y:PENDING.y1};
+  if(PENDING.kind==='area' && PENDING.pts.length) return PENDING.pts[PENDING.pts.length-1];
+  return null;
+}
+function cadPoint(e){
+  const p=planPoint(e);
+  let x=p.nx, y=p.ny, snap=null, axis=null;
+  if(!BASE) return {nx:x, ny:y, snap, axis};
+  const A=cadAnchor(), ortho=CAD.ortho!==!!e.shiftKey;
+  if(A && ortho){
+    axis=Math.abs((x-A.x)*BASE.width)>=Math.abs((y-A.y)*BASE.height)?'h':'v';
+    if(axis==='h') y=A.y; else x=A.x;
+  }
+  if(CAD.snap){
+    const s=snapEnd(x,y,axis,A)||snapEdge(x,y,axis);
+    if(s){ x=s.x; y=s.y; snap=s.kind; }
+  }
+  return {nx:x, ny:y, snap, axis};
+}
+function snapEnd(x,y,axis,A){
+  const {w,h}=boxSize(), pts=[];
+  STATE.dims.forEach(d=>pts.push({x:d.x1,y:d.y1},{x:d.x2,y:d.y2}));
+  STATE.areas.forEach(a=>(a.pts||[]).forEach(q=>pts.push(q)));
+  if(PENDING&&PENDING.kind==='area') PENDING.pts.forEach(q=>pts.push(q));
+  let best=null, bd=10;
+  pts.forEach(q=>{
+    if(A && q.x===A.x && q.y===A.y) return;
+    const dd=axis==='h'?Math.abs(q.x-x)*w : axis==='v'?Math.abs(q.y-y)*h : Math.hypot((q.x-x)*w,(q.y-y)*h);
+    if(dd<bd){ bd=dd; best=axis==='h'?{x:q.x,y}:axis==='v'?{x,y:q.y}:{x:q.x,y:q.y}; }
+  });
+  return best && Object.assign(best,{kind:'end'});
+}
+function snapEdge(x,y,axis){
+  const I=inkData(), {w}=boxSize(), r=Math.max(2,Math.ceil(8*I.w/Math.max(1,w)));
+  const X=x*I.w, Y=y*I.h, vec=vectorBase();
+  const L=(px,py)=>{ if(px<0||py<0||px>=I.w||py>=I.h) return 255; const i=(py*I.w+px)*4; return 0.299*I.d[i]+0.587*I.d[i+1]+0.114*I.d[i+2]; };
+  /* nearest place along one axis where the drawing changes tone sharply */
+  const scan=hor=>{
+    const ref=hor?X:Y, c0=Math.floor(ref), fix=hor?Math.floor(Y):Math.floor(X);
+    const at=i=>hor?L(i,fix):L(fix,i);
+    let best=null;
+    const take=pos=>{ const dd=Math.abs(pos-ref); if(dd<=r && (!best||dd<best.dd)) best={pos,dd}; };
+    if(vec){
+      let st=null;
+      for(let i=c0-r-8;i<=c0+r+8;i++){ const ink=at(i)<128; if(ink&&st==null) st=i; if(!ink&&st!=null){ take((st+i)/2); st=null; } }
+    } else {
+      for(let i=c0-r;i<=c0+r;i++){
+        const dv=Math.abs(at(i+1)-at(i));
+        const a=at(i-1), b=at(i+2);
+        if(dv>=25 && dv>=Math.abs(at(i)-a) && dv>=Math.abs(b-at(i+1)) && Math.abs(b-a)>=45){
+          /* sub-pixel: an anti-aliased edge pixel is part one tone, part the other */
+          const f=j=>Math.max(0,Math.min(1,(b-at(j))/(b-a)));
+          take(i+f(i)+f(i+1));
+        }
+      }
+    }
+    return best;
+  };
+  if(axis==='h'){ const b=scan(true); return b&&{x:b.pos/I.w, y, kind:'edge'}; }
+  if(axis==='v'){ const b=scan(false); return b&&{x, y:b.pos/I.h, kind:'edge'}; }
+  const bh=scan(true), bv=scan(false);
+  if(!bh&&!bv) return null;
+  return { x:bh?bh.pos/I.w:x, y:bv?bv.pos/I.h:y, kind:'edge' };
+}
+function drawCadCursor(c,w,h){
+  const p=CAD.cur;
+  if(!p || !CADTOOLS.includes(TOOL)) return;
+  const x=p.nx*w, y=p.ny*h;
+  c.save();
+  /* full-sheet crosshair, as in a CAD viewport */
+  c.strokeStyle='rgba(27,27,27,.28)'; c.lineWidth=1;
+  c.beginPath(); c.moveTo(0,y+0.5); c.lineTo(w,y+0.5); c.moveTo(x+0.5,0); c.lineTo(x+0.5,h); c.stroke();
+  if(p.snap){
+    const s=6;
+    c.strokeStyle='#1B1B1B'; c.lineWidth=3;
+    const mark=()=>{ c.beginPath();
+      if(p.snap==='end') c.rect(x-s,y-s,2*s,2*s);
+      else { c.moveTo(x,y-s-1); c.lineTo(x+s+1,y); c.lineTo(x,y+s+1); c.lineTo(x-s-1,y); c.closePath(); }
+      c.stroke(); };
+    mark(); c.strokeStyle='#CFFF04'; c.lineWidth=1.6; mark();
+  }
+  c.restore();
+}
+function cadToggle(k){
+  CAD[k]=!CAD[k];
+  const b=$('#cad'+k[0].toUpperCase()+k.slice(1)); if(b) b.classList.toggle('on',CAD[k]);
+  toast(k.toUpperCase()+' '+(CAD[k]?'ON':'OFF'));
+}
+function cadStatus(p){
+  const el=$('#cadRead'); if(!el) return;
+  const m=STATE.calib?STATE.calib.mPerPx:null, u=' '+T(dimStyle().unit==='m'?'uM':'uCm');
+  let t='';
+  if(BASE && m && PENDING && PENDING.kind==='dim' && PENDING.x1!=null){
+    const dx=Math.abs(PENDING.mx-PENDING.x1)*BASE.width*m, dy=Math.abs(PENDING.my-PENDING.y1)*BASE.height*m;
+    t=T('cadLen')+' '+dimTxt(Math.hypot(dx,dy))+u+'   ΔX '+dimTxt(dx)+'   ΔY '+dimTxt(dy);
+  } else if(BASE && m && PENDING && PENDING.kind==='area' && PENDING.pts.length>=2){
+    const pts=PENDING.pts.concat([{x:PENDING.mx,y:PENDING.my}]);
+    t=fmtM2(polyArea(pts))+'   '+T('perim')+' '+polyPerimeter(pts).toFixed(2)+' '+T('uM');
+  } else if(BASE && m && p){
+    t='X '+(p.nx*BASE.width*m).toFixed(2)+'   Y '+(p.ny*BASE.height*m).toFixed(2)+' '+T('uM');
+  }
+  if(CAD.typed) t+='   ⌨ '+CAD.typed+u+' ↵';
+  el.textContent=t;
+}
+function typedDim(){
+  const v=parseFloat(CAD.typed.replace(',','.'));
+  if(!(v>0)){ CAD.typed=''; cadStatus(CAD.cur); return; }
+  if(!STATE.calib){ CAD.typed=''; toast(T('tTypedNoCalib')); return; }
+  const lenM=dimStyle().unit==='m'?v:v/100, px=lenM/STATE.calib.mPerPx;
+  let dx=(PENDING.mx-PENDING.x1)*BASE.width, dy=(PENDING.my-PENDING.y1)*BASE.height;
+  const n=Math.hypot(dx,dy); if(n<1e-6){ dx=1; dy=0; } else { dx/=n; dy/=n; }
+  finishDim(PENDING.x1+dx*px/BASE.width, PENDING.y1+dy*px/BASE.height);
+}
+/* a click on a dimension line or its number selects it (Delete removes it) */
+function hitDim(mx,my,w,h){
+  const S=dimStyle(), F=S.fs*h;
+  let best=null, bd=Math.max(6,F*0.9);
+  STATE.dims.forEach(d=>{
+    const x1=d.x1*w, y1=d.y1*h, x2=d.x2*w, y2=d.y2*h, L2=(x2-x1)**2+(y2-y1)**2;
+    if(!L2) return;
+    const t=Math.max(0,Math.min(1,((mx-x1)*(x2-x1)+(my-y1)*(y2-y1))/L2));
+    const dd=Math.hypot(mx-(x1+t*(x2-x1)), my-(y1+t*(y2-y1)));
+    if(dd<bd){ bd=dd; best=d; }
+  });
+  return best;
+}
+
+/* ---- wheel zooms at the cursor, middle button pans — CAD habits ---- */
+$('#planHost').addEventListener('wheel', e=>{
+  if(!BASE || e.ctrlKey) return;
+  e.preventDefault();
+  const host=$('#planHost'), b=$('#planBox').getBoundingClientRect();
+  const fx=(e.clientX-b.left)/b.width, fy=(e.clientY-b.top)/b.height;
+  setZoom(ZOOM*(e.deltaY<0?1.2:1/1.2));
+  const nb=$('#planBox').getBoundingClientRect();
+  host.scrollLeft+=(nb.left+fx*nb.width)-e.clientX;
+  host.scrollTop+=(nb.top+fy*nb.height)-e.clientY;
+},{passive:false});
+$('#planHost').addEventListener('pointerdown', e=>{
+  if(e.button!==1) return;
+  e.preventDefault();
+  const host=$('#planHost'), sx=e.clientX, sy=e.clientY, l0=host.scrollLeft, t0=host.scrollTop;
+  host.setPointerCapture(e.pointerId); host.style.cursor='grabbing';
+  const mv=ev=>{ host.scrollLeft=l0-(ev.clientX-sx); host.scrollTop=t0-(ev.clientY-sy); };
+  const up=()=>{ host.removeEventListener('pointermove',mv); host.removeEventListener('pointerup',up); host.style.cursor=''; };
+  host.addEventListener('pointermove',mv); host.addEventListener('pointerup',up);
+});
+
+/* =====================================================================
+   10b. LAYERS — the plan's own layers next to the markup layers.
+   A PDF plotted with layers (AutoCAD / Revit "export layers") lists its
+   OCGs here and each one switches on and off. Every plan also gets the
+   room colour fills as a layer, and a fade for the whole drawing, like an
+   XREF fade, so the review marks stand out. Analysis always reads the
+   full, unfaded drawing — only the view changes.
+   ===================================================================== */
+const BASEV={ fills:true, fade:0, canvas:null, key:'', ocgCanvas:null, ocgFor:null, ocgKey:'' };
+function baseView(){
+  if(!BASE) return null;
+  const ocg=BASEV.ocgCanvas && BASEV.ocgFor===BASE;
+  if(BASEV.fills && !ocg) return BASE;
+  const key=(BASEV.fills?'f':'-')+(ocg?BASEV.ocgKey:'');
+  if(BASEV.canvas && BASEV.for===BASE && BASEV.key===key) return BASEV.canvas;
+  const src=ocg?BASEV.ocgCanvas:BASE, c=document.createElement('canvas');
+  c.width=src.width; c.height=src.height;
+  const x=c.getContext('2d',{willReadFrequently:true}); x.drawImage(src,0,0);
+  if(!BASEV.fills){
+    const cols=roomFills();
+    if(cols.length){
+      const im=x.getImageData(0,0,c.width,c.height), d=im.data;
+      for(let i=0;i<d.length;i+=4){
+        for(const q of cols) if(Math.abs(d[i]-q[0])<=6&&Math.abs(d[i+1]-q[1])<=6&&Math.abs(d[i+2]-q[2])<=6){ d[i]=d[i+1]=d[i+2]=255; break; }
+      }
+      x.putImageData(im,0,0);
+    }
+  }
+  BASEV.canvas=c; BASEV.for=BASE; BASEV.key=key;
+  return c;
+}
+/* the fill colours actually used by the tagged rooms */
+function roomFills(){
+  const I=inkData(), P=STATE.parse, set=new Map();
+  ((P&&P.tags)||[]).forEach(t=>{
+    if(t.nx==null) return;
+    const col=fillColorAt(I, Math.round(t.nx*I.w), Math.round(t.ny*I.h));
+    if(col>=0) set.set(col,1);
+  });
+  return [...set.keys()].map(k=>[k>>16,(k>>8)&255,k&255]);
+}
+function drawBase(c,w,h){
+  c.drawImage(baseView(),0,0,w,h);
+  if(BASEV.fade){ c.fillStyle='rgba(255,255,255,'+BASEV.fade+')'; c.fillRect(0,0,w,h); }
+}
+async function pdfLayers(){
+  const P=STATE.parse;
+  if(!P||!P.pdf) return [];
+  if(P.ocg) return P.ocg;
+  try{
+    const cfg=await P.pdf.getOptionalContentConfig(), g=cfg.getGroups()||{};
+    P.ocgCfg=cfg;
+    P.ocg=Object.keys(g).map(id=>({id, name:g[id].name||id, on:g[id].visible!==false}));
+  }catch(e){ P.ocg=[]; }
+  return P.ocg;
+}
+async function setPdfLayer(id,on){
+  const P=STATE.parse, L=(P.ocg||[]).find(l=>l.id===id);
+  if(!L) return;
+  L.on=on; P.ocgCfg.setVisibility(id,on);
+  if(P.ocg.every(l=>l.on)){ BASEV.ocgCanvas=null; }
+  else {
+    const c=document.createElement('canvas'); c.width=BASE.width; c.height=BASE.height;
+    const vp=P.page.getViewport({scale:BASE.width/P.vp1.width});
+    await P.page.render({canvasContext:c.getContext('2d'), viewport:vp, intent:'print',
+      optionalContentConfigPromise:Promise.resolve(P.ocgCfg)}).promise;
+    BASEV.ocgCanvas=c; BASEV.ocgFor=BASE; BASEV.ocgKey=P.ocg.map(l=>l.on?1:0).join('');
+  }
+  layout();
+}
+function closeLayerPop(){ const p=$('#layerPop'); if(p) p.classList.remove('on'); }
+async function toggleLayerPop(e){
+  if(e) e.stopPropagation();
+  const p=$('#layerPop');
+  if(p.classList.contains('on')){ p.classList.remove('on'); return; }
+  await renderLayerPop(); p.classList.add('on');
+}
+async function renderLayerPop(){
+  const ocg=await pdfLayers();
+  const ck=(on,act,lbl,extra)=>`<label class="lrow"><input type="checkbox" ${on?'checked':''} onchange="${act}"><span>${esc(lbl)}</span>${extra||''}</label>`;
+  const cnt=n=>`<i class="lcnt">${n}</i>`;
+  const S=dimStyle();
+  $('#layerPop').innerHTML=
+    `<div class="lph">${T('lyPlanTitle')}</div>`+
+    (ocg.length ? ocg.map(l=>ck(l.on,`setPdfLayer('${l.id}',this.checked)`,l.name)).join('')
+                : `<div class="lnote">${T('lyNoOcg')}</div>`)+
+    ck(BASEV.fills,`BASEV.fills=this.checked;layout()`,T('lyFills'))+
+    `<label class="lrow"><span>${T('lyFade')}</span><input type="range" min="0" max="0.8" step="0.1" value="${BASEV.fade}" oninput="BASEV.fade=+this.value;this.nextElementSibling.textContent=Math.round(this.value*100)+'%';layout()"><i class="lcnt">${Math.round(BASEV.fade*100)}%</i></label>`+
+    `<div class="lph">${T('lyMarkTitle')}</div>`+
+    ck(LAYERS.dims,`toggleLayer('dims')`,T('lyDims'),cnt(STATE.dims.length))+
+    ck(LAYERS.areas,`toggleLayer('areas')`,T('lyAreas'),cnt(STATE.areas.length))+
+    ck(LAYERS.notes,`toggleLayer('notes')`,T('lyNotes'),cnt(STATE.notes.length))+
+    ck(LAYERS.syms,`toggleLayer('syms')`,T('lySyms'),cnt(STATE.symbols.length))+
+    `<div class="lnote">${S.src==='plan'?T('dsPlan',S.n):T('dsRef')}</div>`;
+}
+document.addEventListener('click', e=>{ const p=$('#layerPop'); if(p && p.classList.contains('on') && !e.target.closest('#layerPop')) p.classList.remove('on'); });
 document.addEventListener('keydown', e=>{
   const typing = /INPUT|TEXTAREA/.test(document.activeElement.tagName) || document.activeElement.isContentEditable;
-  if(e.key==='Escape'){ armTool(null); PENDING=null; drawOverlay(); closeExportMenu(); }
+  if(e.key==='Escape'){ CAD.typed=''; armTool(null); PENDING=null; drawOverlay(); closeExportMenu(); closeLayerPop(); cadStatus(null); }
+  if(e.key==='F3'||e.key==='F8'){ e.preventDefault(); cadToggle(e.key==='F3'?'snap':'ortho'); return; }
+  /* typed length: with the first point down, type the length and Enter */
+  if(!typing && TOOL==='dim' && PENDING && PENDING.x1!=null && !e.ctrlKey && !e.metaKey){
+    if(/^[0-9.,]$/.test(e.key)){ e.preventDefault(); CAD.typed+=e.key; cadStatus(CAD.cur); return; }
+    if(e.key==='Backspace' && CAD.typed){ e.preventDefault(); CAD.typed=CAD.typed.slice(0,-1); cadStatus(CAD.cur); return; }
+    if(e.key==='Enter' && CAD.typed){ e.preventDefault(); typedDim(); return; }
+  }
+  if(!typing && !TOOL && !e.ctrlKey && !e.metaKey && !e.altKey){
+    const k={d:'dim', a:'area', s:'smart'}[e.key.toLowerCase()];
+    if(k && BASE){ e.preventDefault(); armTool(k); return; }
+  }
   if(e.key==='Enter' && TOOL==='area' && PENDING && PENDING.pts.length>=3 && !typing){
     e.preventDefault(); finishArea();
   }
   if((e.key==='Delete'||e.key==='Backspace') && SEL && !typing){
+    STATE.dims=STATE.dims.filter(d=>d.id!==SEL);
     STATE.symbols=STATE.symbols.filter(s=>s.id!==SEL);
     STATE.areas=STATE.areas.filter(a=>a.id!==SEL);
     STATE.notes=STATE.notes.filter(n=>!(n.id===SEL&&(n.src==='custom'||n.src==='cloud')));
@@ -2179,7 +3717,7 @@ document.addEventListener('keydown', e=>{
 });
 
 function setZoom(z){ ZOOM=Math.min(6,Math.max(0.3,z)); layout(); }
-function toggleLayer(k){ LAYERS[k]=!LAYERS[k]; $('#ly'+k[0].toUpperCase()+k.slice(1)).classList.toggle('on',LAYERS[k]); layout(); }
+function toggleLayer(k){ LAYERS[k]=!LAYERS[k]; $('#ly'+k[0].toUpperCase()+k.slice(1)).classList.toggle('on',LAYERS[k]); layout(); renderPanel(); }
 function togglePanel(){ document.body.classList.toggle('collapsed'); $('#btnPanel').classList.toggle('on'); setTimeout(layout,30); }
 function clearMarkup(){
   if(!confirm(T('confirmClear'))) return;
@@ -2202,7 +3740,7 @@ let RT; window.addEventListener('resize',()=>{ clearTimeout(RT); RT=setTimeout(l
    11. PANEL
    ===================================================================== */
 let TAB='iron';
-const TABKEYS=[['iron','tabIron'],['notes','tabNotes'],['prog','tabProg'],['open','tabOpen'],['sym','tabMarks']];
+const TABKEYS=[['iron','tabIron'],['notes','tabNotes'],['prog','tabProg'],['norms','tabNorms'],['open','tabOpen'],['sym','tabMarks']];
 function setTab(k){ TAB=k; renderPanel(); }
 
 function renderPanel(){
@@ -2234,6 +3772,7 @@ function renderPanel(){
   if(TAB==='iron') B.innerHTML=viewIron();
   else if(TAB==='notes'){ B.innerHTML=viewNotes(); bindNotes(); }
   else if(TAB==='prog') B.innerHTML=viewProgram();
+  else if(TAB==='norms') B.innerHTML=viewNorms();
   else if(TAB==='open'){ B.innerHTML=viewOpen(); }
   else if(TAB==='sym'){ B.innerHTML=viewSymbols(); bindSymCards(); }
 }
@@ -2258,7 +3797,7 @@ function viewIron(){
      <div class="iron ${STATE.calib?'o':'w'}">
        <div class="ih"><span class="chip ${STATE.calib?'o':'w'}">${STATE.calib?T('scaleOn'):T('scaleOff')}</span>
        <span class="it">${T('scaleLabel')}</span></div>
-       <div class="ib">${STATE.calib?T('scaleOnMsg'):T('scaleOffMsg')}</div>
+       <div class="ib">${STATE.calib?esc(scaleSource())+' '+T('scaleOnMsg'):T('scaleOffMsg')}</div>
        <div class="cact"><button class="xb" onclick="armTool('calib')">${T('calibNow')}</button></div>
      </div>`;
 }
@@ -2290,6 +3829,7 @@ function notesList(){
           <span class="cs">${n.shape==='cloud'?'☁ ':''}${esc(n.sub)}</span>
         </div>
         <div class="cb" contenteditable="true" data-id="${n.id}">${esc(n.body)}</div>
+        ${n.rk&&STATE.sched?assignSelect(n.rk):''}
         <div class="cact">
           ${(n.shape==='cloud'||n.nx!=null)
             ? `<button class="xb" data-act="goto" data-id="${n.id}">${T('showOnPlan')}</button>`
@@ -2300,6 +3840,23 @@ function notesList(){
       </div>`).join('');
   });
   return h;
+}
+/* every code is offered; the ones another room already holds are marked,
+   since moving a code is as legitimate as filling a gap */
+function assignSelect(rk){
+  const S=STATE.sched, cur=STATE.assign[rk]||'';
+  const holder={}; S.ctx.forEach(c=>{ if(c.entry) holder[c.entry.e.code]=holder[c.entry.e.code]||roomKey(c.r.tag,c.r.i); });
+  const opts=S.entries.map(x=>{
+    const e=x.e, taken=holder[e.code]&&holder[e.code]!==rk;
+    const lbl=e.code+' · '+(L(e.fn)||e.key)+(e.dept?' · '+e.dept:'')+(taken?' ●':'');
+    return `<option value="${esc(e.code)}" ${cur===e.code?'selected':''}>${esc(lbl)}</option>`;
+  }).join('');
+  return `<div class="asg"><label>${T('assignLbl')}</label>
+    <select onchange="setAssign('${rk}', this.value)" onclick="event.stopPropagation()">
+      <option value="" ${!cur?'selected':''}>${T('assignAuto')}</option>
+      <option value="__extra" ${cur==='__extra'?'selected':''}>${T('assignExtra')}</option>
+      ${opts}
+    </select></div>`;
 }
 function bindNotes(){
   $('#tabBody').querySelectorAll('.cb').forEach(el=>{
@@ -2359,7 +3916,62 @@ function viewProgram(){
   progRows().forEach(r=>{
     h+=`<tr class="${r.cls}"><td class="fn">${esc(r.fn)}</td><td>${esc(r.goal)}</td><td>${esc(r.found)}</td><td>${esc(r.delta)}</td></tr>`;
   });
-  return h+'</tbody></table>';
+  h+='</tbody></table>';
+  if(hasSchedule()){
+    if(STATE.sched){
+      const ms=missingList(), ex=extraList();
+      h+=`<div class="msx"><div class="grp-title">${T('missTitle',ms.length)}</div>`+
+        (ms.length?`<ul>${ms.map(m=>`<li><b>${esc(m.code)}</b> · ${esc(m.name)} — ${esc(m.req)}</li>`).join('')}</ul>`:`<div class="empty">${T('noMissing')}</div>`)+
+        `<div class="grp-title">${T('extraTitle',ex.length)}</div>`+
+        (ex.length?`<ul>${ex.map(x=>`<li><b>${esc(x.name)}</b> · ${esc(x.type)}${x.area!=null?' · '+x.area+' '+T('uM2'):''} — ${esc(x.why)}</li>`).join('')}</ul>`:`<div class="empty">${T('noExtra')}</div>`)+
+        '</div>';
+    }
+    h+=`<div class="cact" style="margin-top:12px"><button class="xb" onclick="exportRevitCodes()">${T('revitCodes')}</button></div>`;
+  }
+  return h;
+}
+
+/* Every norm, its status on this plan and how to close it. Nothing is
+   "passed" because it was not looked at: an unmeasured norm stays open. */
+function normStatus(){
+  return NORMS.map(n=>{
+    const reads=STATE.dims.filter(d=>d.norm===n.id).map(d=>({src:'dim', v:dimMeters(d), ...evalNorm(n,dimMeters(d))}))
+      .concat((STATE.geo||[]).filter(g=>g.norm===n).map(g=>({src:'geo', v:g.v, lv:g.lv, msg:(g.r.tag.name||'')+': '+g.msg})));
+    const rank={f:3,w:2,i:1,o:0};
+    const worst=reads.slice().sort((a,b)=>rank[b.lv]-rank[a.lv])[0];
+    return { n, reads, lv: worst?worst.lv:'n', worst };
+  });
+}
+function viewNorms(){
+  let h=`<div class="grp-title">${T('normsTitle')}</div>
+    <div class="iron i" style="margin-bottom:10px"><div class="ib">${T('normsIntro')}</div>
+      <label class="spr"><input type="checkbox" ${STATE.spr?'checked':''} onchange="STATE.spr=this.checked;recheck();refresh()"> ${T('nSpr')}</label></div>`;
+  if(!STATE.calib) h+=`<div class="iron w" style="margin-bottom:10px"><div class="ib">${T('nNeedCalib')}</div>
+    <div class="cact"><button class="xb" onclick="armTool('calib')">${T('calibNow')}</button></div></div>`;
+  normStatus().forEach(s=>{
+    const n=s.n, cls=s.lv==='n'?'w':s.lv;
+    h+=`<div class="iron ${cls}">
+      <div class="ih"><span class="chip ${cls}">${s.lv==='n'?T('nOpen'):s.lv==='o'?T('ironOkWord'):s.lv==='w'?T('nCheck'):T('nFail')}</span>
+        <span class="it">${esc(normName(n))} · ${esc(normReq(n))}</span>
+        <span class="cs" style="font-size:9px;opacity:.55">${esc(KIND_LBL(n.kind))}</span></div>
+      <div class="ib">${esc(L(SRC[n.src]))}${n.how?' · '+esc(L(n.how)):''}</div>
+      ${s.reads.length?`<div class="ib" style="color:${lvColor(s.worst.lv)};opacity:1">${esc(T('nReads',s.reads.length))} — ${esc(s.worst.msg)}</div>`:''}
+      <div class="cact"><button class="xb" onclick="armNorm('${n.id}')">${T('nMeasure')}</button></div>
+    </div>`;
+  });
+  h+=`<div class="grp-title">${T('normsManual')}</div>`;
+  NORM_MANUAL.forEach(m=>{
+    const id='norm_'+m.id, cur=STATE.manual[id]||'na';
+    h+=`<div class="iron ${cur==='ok'?'o':cur==='fail'?'f':'w'}">
+      <div class="ih"><span class="it">${esc(L(m.n))}</span>
+        <span class="tri">
+          <button class="${cur==='ok'?'a-ok':''}" onclick="setManual('${id}','ok')">${T('stOk')}</button>
+          <button class="${cur==='fail'?'a-fail':''}" onclick="setManual('${id}','fail')">${T('stFail')}</button>
+          <button class="${cur==='na'?'a-na':''}" onclick="setManual('${id}','na')">${T('stNa')}</button>
+        </span></div>
+      <div class="ib">${esc(L(SRC[m.src]))} · ${esc(KIND_LBL(m.kind))}</div></div>`;
+  });
+  return h+`<div class="ib" style="font-size:10px;opacity:.5;margin-top:10px">${T('normsDisc')}</div>`;
 }
 
 function viewOpen(){
@@ -2374,7 +3986,7 @@ function viewOpen(){
           <button class="${cur==='fail'?'a-fail':''}" onclick="setManual('${c.id}','fail')">${T('stFail')}</button>
           <button class="${cur==='na'?'a-na':''}" onclick="setManual('${c.id}','na')">${T('stNa')}</button>
         </span></div>
-      <div class="ib">${esc(c.note||'')}</div>
+      <div class="ib"${c.adjLv?` style="color:${lvColor(c.adjLv)};opacity:1"`:''}>${esc(c.note||'')}</div>
     </div>`;
   }).join('');
   return h;
@@ -2382,7 +3994,7 @@ function viewOpen(){
 /* one list for the panel, the PDF sheet and the Excel tab */
 function openList(){
   return MANUAL_CHECKS.map(c=>({id:c.id, n:L(c.n), note:L(c.note)}))
-    .concat((STATE.openItems||[]).map(i=>({id:i.id, n:i.n, note:i.scope})));
+    .concat((STATE.openItems||[]).map(i=>({id:i.id, n:i.n, note:i.scope, adjLv:i.adjLv||null})));
 }
 function setManual(id,v){ STATE.manual[id]=v; renderPanel(); }
 
@@ -2408,13 +4020,23 @@ function viewSymbols(){
     </div>`;
   }).join('') : `<div class="empty">${T('noSyms')}</div>`;
 
-  h+=`<div class="grp-title">${T('dimsTitle')} · ${STATE.dims.length}</div>`;
+  h+=`<div class="grp-title">${T('dimsTitle')} · ${STATE.dims.length}</div>
+    <div class="cact" style="margin-bottom:8px">
+      <button class="xb" onclick="autoDimsBtn()">${T('autoDimsBtn')}</button>
+      ${STATE.dims.some(d=>d.auto==='room')?`<button class="xb" onclick="autoDimsOff()">${T('autoDimsOffBtn')}</button>`:''}
+      <button class="xb" onclick="toggleLayer('dims')">${T(LAYERS.dims?'dimsHideBtn':'dimsShowBtn')}</button>
+    </div>
+    ${STATE.calib?`<div class="cb" style="margin-bottom:8px;opacity:.7">${esc(scaleSource())}</div>`:''}
+    ${STATE.autoSkipped&&STATE.autoDims==='on'?`<div class="cb" style="margin-bottom:8px;color:#E38B00">${esc(T('autoSkipped',STATE.autoSkipped))}</div>`:''}`;
   h+= STATE.dims.length ? STATE.dims.map(d=>`
     <div class="card" style="border-inline-start-color:${d.calib?'#0000FF':DIM_CLR}"><div class="ch">
       <span class="num" style="background:${d.calib?'#0000FF':DIM_CLR}">↔</span>
-      <span class="ct">${esc(d.label||'—')}${d.calib?esc(T('calibLine')):''}</span>
+      <span class="ct">${esc(d.label||'—')}${d.calib?esc(T('calibLine')):''}${d.auto==='room'?esc(T('autoDimTag', roomDimName(d))):''}</span>
       <button class="xb" onclick="STATE.dims=STATE.dims.filter(x=>x.id!=='${d.id}');refresh()">${T('del')}</button>
-    </div></div>`).join('') : `<div class="empty">${T('noDims')}</div>`;
+    </div>${d.calib?'':`<div class="asg"><label>${T('nLbl')}</label>
+      <select onchange="setDimNorm('${d.id}',this.value)">${normOptions(d.norm||'')}</select></div>`}
+    ${d.norm&&NORMMAP[d.norm]?(()=>{ const r=evalNorm(NORMMAP[d.norm],dimMeters(d)); return `<div class="cb" style="color:${lvColor(r.lv)}">${esc(r.msg)}</div>`; })():''}
+    </div>`).join('') : `<div class="empty">${T('noDims')}</div>`;
 
   const tot=STATE.areas.reduce((s,a)=>s+(a.m2||0),0);
   h+=`<div class="grp-title">${T('areasTitle')} · ${STATE.areas.length}${tot?' · '+T('totalArea')+' '+fmtM2(tot):''}</div>`;
@@ -2464,8 +4086,9 @@ $('#planBox').addEventListener('click', e=>{
    12. PIPELINE
    ===================================================================== */
 function refresh(){
-  buildOrder();
   if(BASE) relabelMeasures();
+  syncNormNotes();
+  buildOrder();
   STATE.ironR=ironChecks(STATE.parse, STATE.rooms);
   STATE.openItems=openItems(STATE.rooms);
   renderPanel(); drawOverlay(); placeSymbols();
@@ -2494,16 +4117,33 @@ async function runManual(canvas, name){
    own canvas and skip renderBase() entirely — every check downstream reads
    from parse.tags, not from the PDF page, so the rest of the pipeline is
    identical either way. */
+/* Every room/floor result is derived from the parse + the programme + the
+   hand assignments. One place rebuilds it all, so loading a programme
+   after the plan, switching language or assigning a room can never leave
+   a stale table behind. */
+function recheck(){
+  if(!STATE.parse) return;
+  STATE.rooms=STATE.parse.tags.map((tag,i)=>({tag, i:i+1}));
+  STATE.sched = hasSchedule() ? matchSchedule(STATE.rooms) : null;
+  STATE.rooms.forEach(r=>{ r.check=checkRoom(r.tag, STATE.sched?r.sched:null); });
+  applyGeo(STATE.rooms);
+  STATE.adj = adjacency(STATE.rooms);
+  const fc=floorChecks(STATE.parse, STATE.rooms);
+  STATE.floor=fc;
+  buildNotes(STATE.rooms, fc);
+  STATE.openItems=openItems(STATE.rooms);
+}
+function setAssign(rk, v){
+  if(v) STATE.assign[rk]=v; else delete STATE.assign[rk];
+  recheck(); refresh();
+}
+
 async function run(parse, prebuiltBase){
   STATE.mode='auto';
   STATE.parse=parse; STATE.fileName=parse.fileName;
   PDFPAGE=parse.page||null; VP1=parse.vp1||null;
-  STATE.rooms=parse.tags.map((tag,i)=>({tag, i:i+1, check:checkRoom(tag)}));
-  const fc=floorChecks(parse, STATE.rooms);
-  STATE.floor=fc;
-  buildNotes(STATE.rooms, fc);
+  recheck();
   STATE.ironR=ironChecks(parse, STATE.rooms);
-  STATE.openItems=openItems(STATE.rooms);
 
   stampHeader();
   $('#hbtns').style.display='flex';
@@ -2511,6 +4151,11 @@ async function run(parse, prebuiltBase){
   $('#workView').classList.add('on');
 
   if(prebuiltBase) BASE=prebuiltBase; else await renderBase(parse.page);
+  /* every room gets a length and a width, unless they were removed on this plan */
+  if(STATE.autoDims!=='off' && !STATE.dims.some(d=>d.auto==='room')){
+    autoDims();
+    STATE.ironR=ironChecks(parse, STATE.rooms);
+  }
   layout(); renderPanel();
 }
 
@@ -2523,7 +4168,15 @@ async function run(parse, prebuiltBase){
 /* a hand-edited export can put a number where a string belongs or vice versa
    — never let that throw mid-import, just fall back cleanly */
 const numOr=(v,fallback)=>{ const n=Number(v); return Number.isFinite(n)?n:fallback; };
+/* Number(null) and Number('') are 0 — an empty Revit field must stay empty */
+const numN=v=> (v==null||v==='') ? null : numOr(v,null);
 const strOr=v=> typeof v==='string' ? v : '';
+/* Revit's Room.Name getter returns "Name Number" — drop the trailing number
+   so it is not shown (or matched) twice */
+function roomName(r){
+  const n=strOr(r.name).trim(), num=r.number!=null?String(r.number).trim():'';
+  return (num && n.length>num.length && n.endsWith(' '+num)) ? n.slice(0,-num.length).trim() : n;
+}
 
 function pickPrimaryLevel(exp, hint){
   const byLevel={};
@@ -2601,7 +4254,7 @@ function renderRoomsBase(rooms){
     const ct=polyCentroid(outer.map(p=>({x:p.x,y:p.y})));
     const cpx=toPx(ct);
     const areaM2=numOr(r.areaM2,null);
-    const label=(strOr(r.name))+(r.number!=null&&r.number!==''?' '+r.number:'');
+    const label=(roomName(r))+(r.number!=null&&r.number!==''?' '+r.number:'');
     c.fillStyle='#1B1B1B'; c.textAlign='center'; c.textBaseline='middle';
     c.font='600 12px Helvetica,Arial';
     if(label) c.fillText(label, cpx.x, cpx.y-7);
@@ -2609,7 +4262,7 @@ function renderRoomsBase(rooms){
     c.fillText(areaM2?areaM2.toFixed(1)+' '+T('uM2'):'', cpx.x, cpx.y+8);
     r._centroidPx={x:cpx.x/w, y:cpx.y/h};
   });
-  return { canvas:cv, w, h, scale, minX, minY, maxX, maxY };
+  return { canvas:cv, w, h, scale, margin, minX, minY, maxX, maxY };
 }
 
 async function applyRoomExport(exp, levelHint){
@@ -2619,17 +4272,27 @@ async function applyRoomExport(exp, levelHint){
 
   const tags=picked.rooms.map(r=>{
     const area=numOr(r.areaM2,null);
+    /* Revit Number may hold a programme code (FL01-MR-02) — it is kept on
+       its own, and also tells classify() the room type outright */
+    const number=r.number!=null?String(r.number).trim():'';
+    const pc=parseCode(number);
+    const lp=outerLoop(r);
     return {
       area:area!=null?+area.toFixed(2):null,
-      ppl:numOr(r.capacity,null)!=null?Math.round(numOr(r.capacity,0)):null,
+      ppl:numN(r.capacity)!=null?Math.round(numN(r.capacity)):null,
       stations:null, code:null, isDept:false, names:[],
-      name:(strOr(r.name)+(r.number!=null&&r.number!==''?' '+r.number:'')).trim(),
+      name:(roomName(r)+(number?' '+number:'')).trim(),
+      rname:roomName(r), number, department:strOr(r.department).trim(),
+      codeType:pc?CODE_PREFIX[pc.pre]:null,
+      rid:(r.id!=null&&r.id!=='')?r.id:null,
+      poly:lp.outer,
       nx:r._centroidPx?r._centroidPx.x:0.5, ny:r._centroidPx?r._centroidPx.y:0.5,
       pdfX:0, pdfY:0
     };
   });
   const allText=picked.rooms.flatMap(r=>[r.name,r.department,r.comments].filter(v=>typeof v==='string'&&v).map(s=>s.toLowerCase()));
-  const parse={ tags, allText, fileName:(exp.meta&&exp.meta.fileName)||'revit-export', page:null, vp1:null };
+  const parse={ tags, allText, fileName:(exp.meta&&exp.meta.fileName)||'revit-export', page:null, vp1:null,
+    geo:{ w:built.w, h:built.h, scale:built.scale, margin:built.margin, minX:built.minX, minY:built.minY } };
 
   if(exp.meta){
     STATE.meta = Object.assign({}, STATE.meta, {
@@ -2862,6 +4525,7 @@ function applyStatic(){
     else hd.insertBefore(lb, hd.firstChild);
   }
   document.title = 'RDA — Test Fit Checker';
+  fillNormSel();
 }
 function setLang(l){
   if(l!=='he'&&l!=='en') return;
@@ -2873,10 +4537,8 @@ function setLang(l){
     /* rule text, type names and open items are all language-derived —
        rebuild them so nothing is left in the previous language */
     if(STATE.mode==='auto'&&STATE.parse){
-      STATE.rooms=STATE.parse.tags.map((tag,i)=>({tag, i:i+1, check:checkRoom(tag)}));
-      const fc=floorChecks(STATE.parse, STATE.rooms);
-      STATE.floor=fc;
-      buildNotes(STATE.rooms, fc);
+      recheck();
+      STATE.ironR=ironChecks(STATE.parse, STATE.rooms);
     }
     retitleManualNotes();
     stampHeader();
@@ -2902,15 +4564,15 @@ document.addEventListener('click', e=>{ if(!e.target.closest('#hmenu')) closeExp
 
 function applyProgram(p){
   STATE.program=p;
-  if(p.rules) Object.keys(p.rules).forEach(k=>{ RULES[k]=Object.assign({}, RULES[k]||{}, p.rules[k]); });
+  if(p.rules) Object.keys(p.rules).forEach(k=>{ if(k!=='norms') RULES[k]=Object.assign({}, RULES[k]||{}, p.rules[k]); });
+  applyNormRules();
   const b=$('#progBanner');
   b.className='prog-banner loaded';
   b.innerHTML=T('progBanner',
     esc([p.meta&&p.meta.project, p.meta&&p.meta.floor].filter(Boolean).join(' · ')),
     (p.program||[]).length, (p.qa||[]).length);
-  if(STATE.rooms.length){
-    STATE.rooms=STATE.parse.tags.map((tag,i)=>({tag,i:i+1,check:checkRoom(tag)}));
-    buildNotes(STATE.rooms, floorChecks(STATE.parse, STATE.rooms));
+  if(STATE.rooms.length && STATE.parse){
+    recheck();
     refresh();
   }
   toast(T('tProgLoaded'));
@@ -2922,6 +4584,7 @@ function saveJson(){
     meta:Object.assign({file:STATE.fileName, exported:new Date().toISOString().slice(0,10)},
       (STATE.program&&STATE.program.meta)||{}, metaGet()),
     program:(STATE.program&&STATE.program.program)||PROGRAM_REF,
+    schedule:(STATE.program&&STATE.program.schedule)||undefined,
     qa:(STATE.program&&STATE.program.qa)||[],
     rules:(STATE.program&&STATE.program.rules)||{},
     _source:(STATE.program&&STATE.program._source)||undefined,
@@ -2929,7 +4592,15 @@ function saveJson(){
       notes:STATE.notes.map(n=>({id:n.id,num:n.num,lv:n.lv,src:n.src,shape:n.shape,
         title:n.title,sub:n.sub,body:n.body,nx:n.nx,ny:n.ny,pts:n.pts})),
       symbols:STATE.symbols, dims:STATE.dims, areas:STATE.areas,
-      manual:STATE.manual, iron:STATE.iron, calib:STATE.calib
+      manual:STATE.manual, iron:STATE.iron, calib:STATE.calib,
+      assign:STATE.assign, spr:STATE.spr,
+      /* a read-only snapshot of the programme check, for whoever reads the
+         file next (the site, Roy) — it is recomputed on load, never restored */
+      schedule: STATE.sched ? {
+        rows: schedRows().map(r=>({code:r.code, requirement:r.goal, found:r.found, status:r.cls})),
+        missing: missingList(), extra: extraList(),
+        adjacency: (STATE.adj||[]).map(a=>({a:a.a, b:a.b, level:a.lv, note:a.msg}))
+      } : undefined
     }
   };
   dl(exportBase()+'-review.json', JSON.stringify(out,null,2), 'application/json');
@@ -3175,18 +4846,38 @@ function exportXlsx(){
     {v:r.fn, s:XS.BOLD}, {v:r.goal, s:LVSTYLE[r.cls]}, {v:r.found, s:LVSTYLE[r.cls]}, {v:r.delta, s:LVSTYLE[r.cls]}
   ]));
 
-  const rooms={ name:T('xsRooms'), cols:[7,34,22,13,11,13,60],
-    rows:[hrow([T('thNum'),T('xsTagName'),T('xsType'),T('xsAreaCol'),T('xsCap'),T('thStatus'),T('xsFindings')])] };
+  /* the schedule adds three columns; without it the sheet is unchanged */
+  const SC=!!STATE.sched;
+  const rooms={ name:T('xsRooms'), cols:SC?[7,34,16,24,16,22,13,11,13,60]:[7,34,22,13,11,13,60],
+    rows:[hrow(SC
+      ?[T('thNum'),T('xsTagName'),T('rcNumber'),T('rcDept'),T('thCode'),T('xsType'),T('xsAreaCol'),T('xsCap'),T('thStatus'),T('xsFindings')]
+      :[T('thNum'),T('xsTagName'),T('xsType'),T('xsAreaCol'),T('xsCap'),T('thStatus'),T('xsFindings')])] };
   STATE.rooms.forEach(r=>{
     const lv={fail:'f',warn:'w',info:'i',ok:'o'}[r.check.level];
+    const ent=SC&&r.sched&&r.sched.entry;
     rooms.rows.push([
-      r.i, {v:r.tag.name||'—', s:XS.BOLD}, typeName(r.check.type),
+      r.i, {v:r.tag.name||'—', s:XS.BOLD},
+      ...(SC?[r.tag.number||'—', r.tag.department||'—', ent?ent.e.code:'—']:[]),
+      typeName(r.check.type),
       r.tag.area!=null?r.tag.area:'—', r.tag.ppl!=null?r.tag.ppl:'—',
       {v:lvName(lv), s:LVSTYLE[lv]},
       r.check.msgs.map(x=>x.m).join(' · ')
     ]);
   });
   if(!STATE.rooms.length) rooms.rows.push([{v:T('xsNoRooms')}]);
+
+  const sheets=[sum,notes,prog,rooms];
+  if(SC){
+    const ms=missingList(), ex=extraList();
+    const mx={ name:T('xsSched'), cols:[22,34,44,16],
+      rows:[[{v:T('missTitle',ms.length), s:XS.BOLD}], hrow([T('thCode'),T('thFn'),T('thReq'),''])] };
+    ms.forEach(m=>mx.rows.push([{v:m.code, s:XS.FAIL}, m.name, m.req, '']));
+    if(!ms.length) mx.rows.push([T('noMissing')]);
+    mx.rows.push([], [{v:T('extraTitle',ex.length), s:XS.BOLD}], hrow([T('xsTagName'),T('xsType'),T('thNote'),T('xsAreaCol')]));
+    ex.forEach(x=>mx.rows.push([{v:x.name, s:XS.WARN}, x.type, x.why, x.area!=null?x.area:'—']));
+    if(!ex.length) mx.rows.push([T('noExtra')]);
+    sheets.push(mx);
+  }
 
   const meas={ name:T('xsMeasures'), cols:[34,18,18,14],
     rows:[hrow([T('thRoomArea'),T('xsMeasuredM2'),T('xsPerimM'),T('thPts')])] };
@@ -3214,11 +4905,39 @@ function exportXlsx(){
   });
 
   try{
-    dlBlob(exportBase()+'-review.xlsx', buildXlsx([sum,notes,prog,rooms,meas,open]));
+    const nm={ name:T('xsNorms'), cols:[40,14,14,60,46],
+      rows:[hrow([T('thNorm'),T('thReq2'),T('thKind'),T('thRead'),T('thSource')])] };
+    normStatus().forEach(st=>nm.rows.push([
+      {v:normName(st.n), s:XS.BOLD}, normReq(st.n), KIND_LBL(st.n.kind),
+      {v:st.reads.length?T('nReads',st.reads.length)+' — '+st.worst.msg:T('nOpen'), s:st.lv==='n'?XS.WARN:LVSTYLE[st.lv]},
+      L(SRC[st.n.src])
+    ]));
+    NORM_MANUAL.forEach(m=>{ const cur=STATE.manual['norm_'+m.id]||'na';
+      nm.rows.push([{v:L(m.n), s:XS.BOLD}, '', KIND_LBL(m.kind),
+        {v:{ok:T('stOk'),fail:T('stFail'),na:T('stNa')}[cur], s:cur==='ok'?XS.OK:cur==='fail'?XS.FAIL:XS.WARN}, L(SRC[m.src])]); });
+    nm.rows.push([], [{v:T('normsDisc')}]);
+    dlBlob(exportBase()+'-review.xlsx', buildXlsx(sheets.concat([nm,meas,open])));
   }catch(err){
     toast(T('tXlsxErr'));
     showError(T('errXlsx', esc(err.message)));
   }
+}
+
+/* The schedule as the architect types it into Revit: Number, Name,
+   Department — copy a column, paste into the room schedule. */
+function exportRevitCodes(){
+  closeExportMenu();
+  if(!hasSchedule()){ toast(T('progNoJson')); return; }
+  const P=STATE.program;
+  const sh={ name:T('revitCodesSheet'), cols:[16,34,26,34,40],
+    rows:[hrow([T('rcNumber'),T('rcName'),T('rcDept'),T('rcReq'),T('rcFrom')])] };
+  P.schedule.filter(e=>e&&e.code).forEach(e=>sh.rows.push([
+    {v:e.code, s:XS.BOLD}, e.name||L(e.fn)||e.key, e.dept||'', schedReq(e), L(e.from)||''
+  ]));
+  const m=P.meta||{};
+  const stem=[m.project,m.floor].filter(Boolean).join('-').replace(/[\\/:*?"<>|]/g,'-').trim()||exportBase();
+  try{ dlBlob(stem+'-revit-codes.xlsx', buildXlsx([sh])); }
+  catch(err){ toast(T('tXlsxErr')); showError(T('errXlsx', esc(err.message))); }
 }
 
 /* =====================================================================
@@ -3234,10 +4953,73 @@ uploadView.addEventListener('dragover',e=>{ e.preventDefault(); dz.classList.add
 uploadView.addEventListener('dragleave',e=>{ if(e.target===uploadView||!uploadView.contains(e.relatedTarget)) dz.classList.remove('drag'); });
 uploadView.addEventListener('drop',e=>{
   e.preventDefault(); dz.classList.remove('drag');
-  if(e.dataTransfer.files[0]) routeFile(e.dataTransfer.files[0]);
+  routeFiles(e.dataTransfer.files);
 });
-$('#fileInput').addEventListener('change',e=>{ if(e.target.files[0]) routeFile(e.target.files[0]); });
+$('#fileInput').addEventListener('change',e=>{ routeFiles(e.target.files); e.target.value=''; });
 $('#jsonInput').addEventListener('change',e=>{ if(e.target.files[0]) readJson(e.target.files[0]); });
+
+/* =====================================================================
+   14a. SEVERAL PLANS — PDFs/images picked or dropped together become a list
+   in the header. One plan is open at a time; its hand markup (notes, clouds,
+   symbols, dimensions, areas, calibration, assignments, project details) is
+   parked when you switch away and put back when you return. The programme
+   JSON stays shared across all of them.
+   ===================================================================== */
+const PLAN_RE=/\.(pdf|png|jpe?g|webp)$/i;
+let PLANS=[], PLAN_I=-1;
+
+async function routeFiles(list){
+  const files=[...(list||[])];
+  if(!files.length) return;
+  const plans=files.filter(f=>PLAN_RE.test(f.name)), rest=files.filter(f=>!PLAN_RE.test(f.name));
+  if(plans.length){
+    const first=PLANS.length;
+    plans.forEach(f=>PLANS.push({file:f, review:null}));
+    if(plans.length>1) toast(T('tPlansAdded', plans.length));
+    await openPlan(first);
+  }
+  for(const f of rest) await routeFile(f);
+}
+
+function parkPlan(){
+  const p=PLANS[PLAN_I]; if(!p) return;
+  p.review={
+    /* hand notes, plus rule notes whose text was edited (buildNotes re-applies those by id) */
+    notes:STATE.notes.filter(n=>n.src==='custom'||n.src==='cloud'||n.edited),
+    symbols:STATE.symbols, dims:STATE.dims, areas:STATE.areas, manual:STATE.manual,
+    iron:STATE.iron, calib:STATE.calib, assign:STATE.assign, meta:STATE.meta, open:STATE.open,
+    autoDims:STATE.autoDims, autoSkipped:STATE.autoSkipped
+  };
+}
+
+async function openPlan(i){
+  if(!PLANS[i]) return;
+  parkPlan();
+  const r=PLANS[i].review||{};
+  Object.assign(STATE, {
+    notes:r.notes||[], symbols:r.symbols||[], dims:r.dims||[], areas:r.areas||[],
+    manual:r.manual||{}, iron:r.iron||{}, calib:r.calib||null, assign:r.assign||{},
+    meta:r.meta||{}, open:r.open||{}, autoDims:r.autoDims||'', autoSkipped:r.autoSkipped||0
+  });
+  SEL=null; PENDING=null;
+  if(TOOL) armTool(null);
+  PLAN_I=i;
+  renderPlanPick();
+  await routeFile(PLANS[i].file);
+}
+
+function pickPlan(v){
+  if(v==='add'){ renderPlanPick(); $('#fileInput').click(); return; }
+  openPlan(+v);
+}
+
+function renderPlanPick(){
+  const sel=$('#planPick');
+  sel.style.display=PLANS.length?'':'none';
+  sel.innerHTML=PLANS.map((p,i)=>`<option value="${i}">${i+1}/${PLANS.length} · ${esc(p.file.name.replace(PLAN_RE,''))}</option>`).join('')+
+    `<option value="add">${esc(T('planAdd'))}</option>`;
+  sel.value=String(PLAN_I);
+}
 
 function routeFile(f){
   const n=f.name.toLowerCase();
@@ -3521,25 +5303,45 @@ $('#rvtUploadBtn').addEventListener('click', ()=> $('#jsonInput').click());
 function readJson(f){
   const r=new FileReader();
   r.onload=async()=>{
-    try{
-      const j=JSON.parse(r.result);
-      /* two independent schemas can share one file: `rooms` is an as-built
-         survey (from the Revit macro) that becomes the plan itself, `program`
-         is a target/QA list checked against whatever plan is already loaded */
-      if(Array.isArray(j.rooms) && j.rooms.length){
-        showLoading(true);
-        try{ await applyRoomExport(j, RVT_LEVEL_HINT); }
-        catch(err){ showError(T('errParse', esc(err.message))); }
-        showLoading(false);
-      }
-      if(j.program || j.qa || j.meta){
-        if(!(Array.isArray(j.rooms)&&j.rooms.length)) applyProgram(j);
-        else if(j.program) applyProgram(j);
-      }
-      if(j.review && BASE) restoreReview(j.review);
-    }catch(err){ showError(T('errBadJson', esc(err.message))); }
+    try{ await ingestJson(JSON.parse(r.result)); }
+    catch(err){ showError(T('errBadJson', esc(err.message))); }
   };
   r.readAsText(f);
+}
+async function ingestJson(j){
+  /* two independent schemas can share one file: `rooms` is an as-built
+     survey (from the Revit macro) that becomes the plan itself, `program`
+     is a target/QA list checked against whatever plan is already loaded */
+  if(Array.isArray(j.rooms) && j.rooms.length){
+    showLoading(true);
+    try{ await applyRoomExport(j, RVT_LEVEL_HINT); }
+    catch(err){ showError(T('errParse', esc(err.message))); }
+    showLoading(false);
+  }
+  if(j.program || j.qa || j.meta){
+    if(!(Array.isArray(j.rooms)&&j.rooms.length)) applyProgram(j);
+    else if(j.program) applyProgram(j);
+  }
+  if(j.review && BASE) restoreReview(j.review);
+}
+
+/* one click from Revit: the pyRevit Export Test Fit button writes
+   testfit-inbox.js beside this page and opens it with ?inbox — a script tag,
+   because a file:// page may not fetch the JSON from the project folder */
+if(/[?&]inbox=/.test(location.search)){
+  const s=document.createElement('script');
+  s.src='testfit-inbox.js?t='+Date.now();
+  s.onload=async()=>{
+    const ib=window.RDA_INBOX;
+    history.replaceState(null,'',location.pathname);
+    if(!ib || !ib.data) return;
+    RVT_LEVEL_HINT=ib.level||'';
+    $('#rvtLevelHint').value=RVT_LEVEL_HINT;
+    try{ await ingestJson(ib.data); }
+    catch(err){ showError(T('errBadJson', esc(err.message))); }
+  };
+  s.onerror=()=>showError(T('errBadJson', 'testfit-inbox.js'));
+  document.body.appendChild(s);
 }
 function restoreReview(rv){
   if(rv.symbols) STATE.symbols=rv.symbols;
@@ -3548,6 +5350,9 @@ function restoreReview(rv){
   if(rv.manual)  STATE.manual=rv.manual;
   if(rv.iron)    STATE.iron=rv.iron;
   if(rv.calib)   STATE.calib=rv.calib;
+  if(typeof rv.spr==='boolean') STATE.spr=rv.spr;
+  if(rv.assign && typeof rv.assign==='object') STATE.assign=Object.assign({}, rv.assign);
+  if(rv.assign || typeof rv.spr==='boolean') recheck();
   /* hand-made markup only — the rule-derived notes are rebuilt from the plan */
   (rv.notes||[]).filter(n=>n.src==='custom'||n.src==='cloud').forEach(n=>{
     if(!STATE.notes.some(x=>x.id===n.id)) STATE.notes.push(Object.assign({edited:true}, n));
@@ -3607,7 +5412,50 @@ const VARHEX={'--s-el':'#7C3AED','--s-it':'#0EA5E9','--s-mep':'#0891B2','--s-mov
   '--s-fire':'#E1504B','--s-prog':'#D6009A','--black':'#1B1B1B'};
 function hex(c){ const m=/var\((--[a-z-]+)\)/.exec(c); return m?(VARHEX[m[1]]||'#8A8A8A'):c; }
 
+/* one requirement line for a schedule entry, shared by the table and the Revit sheet */
+function schedReq(e){
+  return [numN(e.minArea)!=null?T('reqMin',e.minArea):null,
+    numN(e.desks)!=null?T('reqDesks',e.desks):null,
+    numN(e.area)!=null&&e.key==='openspace'?T('reqArea',e.area):null,
+    numN(e.seats)!=null?T('reqSeats',e.seats):null,
+    e.dept||null].filter(Boolean).join(' · ')||'—';
+}
+/* With a schedule: one row per programme code. The row shape is the same
+   as the per-type rows, so every table, sheet and export takes it as is. */
+function schedRows(){
+  const S=STATE.sched;
+  return S.entries.map(x=>{
+    const e=x.e;
+    let cls, found, delta;
+    if(!x.rooms.length){ cls='f'; found=T('stMissing'); delta='✗'; }
+    else {
+      const lv=x.rooms.map(c=>c.r.check.level);
+      cls=lv.includes('fail')?'f':lv.includes('warn')?'w':'o';
+      const t=x.rooms.map(c=>c.r.tag);
+      const os=e.key==='openspace';
+      const a=os?x.area:t[0].area, cap=os?x.cap:t[0].ppl;
+      found=[t.map(v=>v.name||'—').join(' + '),
+        a!=null?a+' '+T('uM2'):null,
+        cap!=null?(os?T('reqDesks',cap):T('reqSeats',cap)):null,
+        x.rooms.some(c=>c.how==='type')?T('byType'):x.rooms.some(c=>c.how==='manual')?T('byManual'):null
+      ].filter(Boolean).join(' · ');
+      delta=cls==='o'?'✓':cls==='w'?'!':'✗';
+    }
+    return { code:e.code, fn:e.code+' · '+(L(e.fn)||e.name||e.key), goal:schedReq(e), found, delta, cls };
+  });
+}
+function missingList(){
+  return STATE.sched ? STATE.sched.missing.map(x=>({ code:x.e.code, name:L(x.e.fn)||x.e.name||x.e.key, req:schedReq(x.e) })) : [];
+}
+function extraList(){
+  return STATE.sched ? STATE.sched.extra.concat(STATE.sched.unassigned).map(c=>({
+    name:c.r.tag.name||('#'+c.r.i), type:typeName(c.r.check.type),
+    area:c.r.tag.area, why:c.how==='extra'?c.extraWhy:c.how==='extra-manual'?T('sMarkedExtra'):c.how==='os-nodept'?T('sOsNoDept'):T('sUnassigned')
+  })) : [];
+}
+
 function progRows(){
+  if(STATE.sched) return schedRows();
   const P=STATE.program;
   const rows=(P&&P.program&&P.program.length)?P.program:PROGRAM_REF;
   return rows.map(p=>{
@@ -3672,7 +5520,7 @@ function renderComposite(maxW){
   const x=c.getContext('2d');
   x.fillStyle='#fff'; x.fillRect(0,0,W,H);
   x.imageSmoothingEnabled=true; x.imageSmoothingQuality='high';
-  x.drawImage(BASE,0,0,W,H);
+  drawBase(x,W,H);
   paintMarkup(x,W,H,{layers:{notes:true,syms:true,dims:true,areas:true}, sel:null});
   paintSymbolsOn(x,W,H);
   return c;
@@ -3731,7 +5579,7 @@ function planSheet(dataUrl){
       <span><i style="background:#E38B00"></i>${T('lgWarn')}</span>
       <span><i style="background:#0000FF"></i>${T('lgInfoArea')}</span>
       <span><i style="background:#16A34A"></i>${T('lgOkMove')}</span>
-      <span><i style="background:#D6009A"></i>${T('lgDim')}</span>
+      <span><i style="background:#808080"></i>${T('lgDim')}</span>
       <span><i style="background:#7C3AED"></i>${T('lgEl')}</span>
       <span><i style="background:#0EA5E9"></i>${T('lgIt')}</span>
     </div>`;
@@ -3818,6 +5666,17 @@ function buildReport(){
     title:(STATE.program&&STATE.program.program&&STATE.program.program.length)?T('progProject'):T('progOffice'),
     kicker:all.length>1?T('rptOf',i+1,all.length):T('rptVsGoal'), html:progTable(c) }));
 
+  if(STATE.sched){
+    const ms=missingList(), ex=extraList();
+    const tbl=(head,rows)=>`<table class="rt"><thead><tr>${head.map(x=>`<th>${esc(x)}</th>`).join('')}</tr></thead><tbody>${rows}</tbody></table>`;
+    sheets.push({ title:T('rptMissExtra'), kicker:T('missTitle',ms.length)+' · '+T('extraTitle',ex.length), html:
+      `<div class="sh-sub" style="font-weight:500;margin:0 0 4mm">${esc(T('missTitle',ms.length))}</div>`+
+      (ms.length?tbl([T('thCode'),T('thFn'),T('thReq')], ms.map(m=>`<tr class="f"><td class="b">${esc(m.code)}</td><td>${esc(m.name)}</td><td>${esc(m.req)}</td></tr>`).join('')):`<div class="rempty">${T('noMissing')}</div>`)+
+      `<div class="sh-sub" style="font-weight:500;margin:8mm 0 4mm">${esc(T('extraTitle',ex.length))}</div>`+
+      (ex.length?tbl([T('xsTagName'),T('xsType'),T('thNote')], ex.map(x=>`<tr class="w"><td class="b">${esc(x.name)}</td><td>${esc(x.type)}</td><td>${esc(x.why)}</td></tr>`).join('')):`<div class="rempty">${T('noExtra')}</div>`)
+    });
+  }
+
   if(STATE.areas.length||STATE.dims.length)
     sheets.push({title:T('rptMeasures'), kicker:T('rptMeasuresSub'), html:measureTable()});
 
@@ -3828,6 +5687,15 @@ function buildReport(){
     iron.map(r=>`<tr class="${r.level==='o'?'o':'f'}"><td class="b">${esc(r.n)}</td>
       <td><span class="rchip" style="background:${r.level==='o'?'#16A34A':'#E1504B'}">${r.level==='o'?T('ironOkWord'):T('ironMissing')}</span></td>
       <td>${esc(r.src)}</td><td>${esc(r.msg)}</td></tr>`).join('')+'</tbody></table>' });
+
+  const ns=normStatus();
+  sheets.push({ title:T('rptNorms'), kicker:T('nSpr')+': '+(STATE.spr?T('stOk'):'—'), html:
+    `<table class="rt"><thead><tr><th style="width:62mm">${T('thNorm')}</th><th style="width:22mm">${T('thReq2')}</th>
+      <th style="width:20mm">${T('thKind')}</th><th>${T('thRead')}</th><th style="width:58mm">${T('thSource')}</th></tr></thead><tbody>`+
+    ns.map(st=>`<tr class="${st.lv==='n'?'w':st.lv}"><td class="b">${esc(normName(st.n))}</td><td>${esc(normReq(st.n))}</td>
+      <td>${esc(KIND_LBL(st.n.kind))}</td><td>${esc(st.reads.length?T('nReads',st.reads.length)+' — '+st.worst.msg:T('nOpen'))}</td>
+      <td>${esc(L(SRC[st.n.src]))}</td></tr>`).join('')+'</tbody></table>'+
+    `<div class="rempty" style="text-align:start;margin-top:4mm">${esc(T('normsDisc'))}</div>` });
 
   chunk(openList(),14).forEach((c,i,all)=>sheets.push({
     title:T('rptOpen'), kicker:all.length>1?T('rptOf',i+1,all.length):T('rptOpenSub'),
@@ -3885,14 +5753,10 @@ function exportHtml(){
   closeExportMenu();
   if(!BASE){ toast(T('tNoPlan')); return; }
   const maxW=2000;
-  let img=BASE;
-  if(BASE.width>maxW){
-    const c=document.createElement('canvas');
-    c.width=maxW; c.height=Math.round(BASE.height*maxW/BASE.width);
-    const x=c.getContext('2d'); x.imageSmoothingQuality='high';
-    x.drawImage(BASE,0,0,c.width,c.height);
-    img=c;
-  }
+  /* the plan as it is shown — hidden layers stay hidden, the fade stays */
+  const img=document.createElement('canvas');
+  img.width=Math.min(maxW,BASE.width); img.height=Math.round(BASE.height*img.width/BASE.width);
+  { const x=img.getContext('2d'); x.imageSmoothingQuality='high'; x.fillStyle='#fff'; x.fillRect(0,0,img.width,img.height); drawBase(x,img.width,img.height); }
   const dataUrl=img.toDataURL('image/png');
 
   const symdefs={};
@@ -3913,6 +5777,7 @@ function exportHtml(){
     notes:STATE.notes.map(n=>({id:n.id,num:n.num,lv:n.lv,shape:n.shape,pts:n.pts,
       title:n.title,sub:n.sub,body:n.body,nx:n.nx,ny:n.ny})),
     symbols:STATE.symbols, dims:STATE.dims, areas:STATE.areas, manual:STATE.manual, symdefs,
+    dimStyle:dimStyleOut(),
     iron:STATE.ironR.map(r=>({n:r.n,level:r.level,src:r.src,msg:r.msg})),
     prog:progRows(),
     progTitle:(P&&P.program&&P.program.length)?T('progProject'):T('progOffice'),
@@ -3961,11 +5826,11 @@ function exportHtml(){
 '<div id="lg">'+
 lgi('#E1504B','lgFail')+lgi('#E38B00','lgWarn')+lgi('#0000FF','lgInfo')+
 lgi('#7C3AED','lgEl')+lgi('#0EA5E9','lgIt')+lgi('#16A34A','lgMove')+
-lgi('#D6009A','lgDim')+'</div>\n</div>\n'+
+lgi('#808080','lgDim')+'</div>\n</div>\n'+
 '<aside id="panel"><div id="tiles"></div><div id="tabs"></div><div id="body"></div></aside>\n'+
 '</div>\n<div id="print"></div>\n<div id="toast"></div>\n'+
 '<script type="application/json" id="stateJSON">'+JSON.stringify(st).replace(/</g,'\\u003c')+'<\/script>\n'+
-'<script>'+js+'<\/script>\n</body>\n</html>';
+'<script>'+dimDraw.toString()+'\n'+js+'<\/script>\n</body>\n</html>';
 
   dl(exportBase()+'-review.html', html, 'text/html');
   toast(T('tExportMade'));
@@ -4220,25 +6085,7 @@ function draw(){
     lines.forEach(function(l,i){ c.fillText(l, cx, cy-th/2+3*k+lh/2+i*lh); });
     c.restore();
   });
-  if(LAY.dims) (S.dims||[]).forEach(function(d){
-    var x1=d.x1*f.w, y1=d.y1*f.h, x2=d.x2*f.w, y2=d.y2*f.h;
-    var col=d.calib?'#0000FF':'#D6009A';
-    c.strokeStyle=col; c.lineWidth=1.6*k;
-    c.beginPath(); c.moveTo(x1,y1); c.lineTo(x2,y2); c.stroke();
-    var a=Math.atan2(y2-y1,x2-x1), t=7*k;
-    [[x1,y1],[x2,y2]].forEach(function(p){
-      c.beginPath();
-      c.moveTo(p[0]-Math.sin(a)*t, p[1]+Math.cos(a)*t);
-      c.lineTo(p[0]+Math.sin(a)*t, p[1]-Math.cos(a)*t); c.stroke();
-    });
-    var lb=d.label||'—', mx=(x1+x2)/2, my=(y1+y2)/2;
-    c.font='600 '+(11*k).toFixed(1)+'px Helvetica,Arial';
-    c.textAlign='center'; c.textBaseline='middle'; c.direction=isHe()?'rtl':'ltr';
-    var tw=c.measureText(lb).width+9*k, th=16*k;
-    c.fillStyle='#fff'; c.fillRect(mx-tw/2,my-th/2,tw,th);
-    c.strokeStyle=col; c.lineWidth=1.2*k; c.strokeRect(mx-tw/2,my-th/2,tw,th);
-    c.fillStyle=col; c.fillText(lb,mx,my+0.5*k);
-  });
+  if(LAY.dims) (S.dims||[]).forEach(function(d){ dimDraw(c,d,f.w,f.h,S.dimStyle,false); });
   if(LAY.notes){
     S.notes.forEach(function(n){
       if(n.shape!=='cloud') return;
@@ -4428,7 +6275,7 @@ function vSym(){
 
   h+='<div class="gt">'+esc(TT.dimsTitle)+' · '+(S.dims||[]).length+'</div>';
   h+=(S.dims||[]).length ? S.dims.map(function(d,i){
-    var col=d.calib?'#0000FF':'#D6009A';
+    var col=d.calib?'#0000FF':'#808080';
     return '<div class="card" style="border-inline-start-color:'+col+'"><div class="ch">'+
       '<span class="num" style="background:'+col+'">↔</span>'+
       '<span class="ct">'+esc(TT.dimWord)+' '+(i+1)+'</span><span class="cs">'+esc(d.label||'—')+'</span></div></div>';

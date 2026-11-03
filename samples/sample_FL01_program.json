@@ -1,0 +1,317 @@
+{
+  "meta": {
+    "project": "SAMPLE_CO",
+    "floor": "FL01",
+    "client": "Sample Client",
+    "date": "2026-01-01",
+    "areaGross": 520,
+    "headcount": 19
+  },
+  "program": [
+    {
+      "key": "openspace",
+      "fn": {
+        "he": "אופן ספייס",
+        "en": "Open space"
+      },
+      "count": 1,
+      "codes": [
+        "FL01-OS-01",
+        "FL01-OS-02",
+        "FL01-OS-03"
+      ]
+    },
+    {
+      "key": "meeting",
+      "fn": {
+        "he": "חדרי ישיבות",
+        "en": "Meeting rooms"
+      },
+      "count": 2,
+      "codes": [
+        "FL01-MR-01",
+        "FL01-MR-02"
+      ],
+      "minArea": 18
+    },
+    {
+      "key": "executive",
+      "fn": {
+        "he": "משרד הנהלה",
+        "en": "Executive office"
+      },
+      "count": 1,
+      "codes": [
+        "FL01-EX-01"
+      ],
+      "minArea": 15
+    },
+    {
+      "key": "vp",
+      "fn": {
+        "he": "משרד סמנכ״ל",
+        "en": "VP office"
+      },
+      "count": 1,
+      "codes": [
+        "FL01-VP-01"
+      ],
+      "minArea": 15
+    },
+    {
+      "key": "it",
+      "fn": {
+        "he": "IT / חדר שרתים",
+        "en": "IT / server room"
+      },
+      "count": 1,
+      "codes": [
+        "FL01-IT-01"
+      ],
+      "minArea": 8,
+      "required": true
+    },
+    {
+      "key": "kitchenette",
+      "fn": {
+        "he": "מטבחון",
+        "en": "Kitchenette"
+      },
+      "count": 1,
+      "codes": [
+        "FL01-KT-01"
+      ],
+      "minArea": 30,
+      "required": true
+    },
+    {
+      "key": "reception",
+      "fn": {
+        "he": "קבלה / המתנה",
+        "en": "Reception / waiting"
+      },
+      "count": 1,
+      "codes": [
+        "FL01-RC-01"
+      ],
+      "minArea": 20
+    },
+    {
+      "key": "phonebooth",
+      "fn": {
+        "he": "תא טלפון",
+        "en": "Phone booth"
+      },
+      "count": 1,
+      "codes": [
+        "FL01-PB-01"
+      ]
+    },
+    {
+      "key": "storage",
+      "fn": {
+        "he": "מחסן",
+        "en": "Storage"
+      },
+      "count": 1,
+      "codes": [
+        "FL01-ST-01"
+      ],
+      "minArea": 8
+    }
+  ],
+  "schedule": [
+    {
+      "key": "openspace",
+      "fn": {
+        "he": "אופן ספייס",
+        "en": "Open space"
+      },
+      "minArea": null,
+      "line": "l1",
+      "code": "FL01-OS-01",
+      "name": "Open Space - מכירות",
+      "dept": "מכירות",
+      "people": 6,
+      "desks": 6,
+      "area": 72,
+      "from": "sample"
+    },
+    {
+      "key": "openspace",
+      "fn": {
+        "he": "אופן ספייס",
+        "en": "Open space"
+      },
+      "minArea": null,
+      "line": "l1",
+      "code": "FL01-OS-02",
+      "name": "Open Space - פיתוח",
+      "dept": "פיתוח",
+      "people": 8,
+      "desks": 8,
+      "area": 96,
+      "from": "sample"
+    },
+    {
+      "key": "openspace",
+      "fn": {
+        "he": "אופן ספייס",
+        "en": "Open space"
+      },
+      "minArea": null,
+      "line": "l1",
+      "code": "FL01-OS-03",
+      "name": "Open Space - שיווק",
+      "dept": "שיווק",
+      "people": 3,
+      "desks": 3,
+      "area": 36,
+      "from": "sample"
+    },
+    {
+      "key": "meeting",
+      "fn": {
+        "he": "חדרי ישיבות",
+        "en": "Meeting rooms"
+      },
+      "minArea": 18,
+      "line": "s",
+      "code": "FL01-MR-01",
+      "dept": "",
+      "name": "Meeting Room",
+      "seats": 5,
+      "from": "4–6"
+    },
+    {
+      "key": "meeting",
+      "fn": {
+        "he": "חדרי ישיבות",
+        "en": "Meeting rooms"
+      },
+      "minArea": 25,
+      "line": "s",
+      "code": "FL01-MR-02",
+      "dept": "",
+      "name": "Meeting Room",
+      "seats": 9,
+      "from": "8–10"
+    },
+    {
+      "key": "executive",
+      "fn": {
+        "he": "משרד הנהלה",
+        "en": "Executive office"
+      },
+      "minArea": 15,
+      "line": "s",
+      "code": "FL01-EX-01",
+      "dept": "הנהלה",
+      "name": "Executive Office",
+      "seats": null,
+      "from": ""
+    },
+    {
+      "key": "vp",
+      "fn": {
+        "he": "משרד סמנכ״ל",
+        "en": "VP office"
+      },
+      "minArea": 15,
+      "line": "s",
+      "code": "FL01-VP-01",
+      "dept": "כספים",
+      "name": "VP Office",
+      "seats": null,
+      "from": ""
+    },
+    {
+      "key": "it",
+      "fn": {
+        "he": "IT / חדר שרתים",
+        "en": "IT / server room"
+      },
+      "minArea": 8,
+      "line": "s",
+      "code": "FL01-IT-01",
+      "dept": "",
+      "name": "IT Room",
+      "seats": null,
+      "from": ""
+    },
+    {
+      "key": "kitchenette",
+      "fn": {
+        "he": "מטבחון",
+        "en": "Kitchenette"
+      },
+      "minArea": 30,
+      "line": "s",
+      "code": "FL01-KT-01",
+      "dept": "",
+      "name": "Kitchen",
+      "seats": null,
+      "from": ""
+    },
+    {
+      "key": "reception",
+      "fn": {
+        "he": "קבלה / המתנה",
+        "en": "Reception / waiting"
+      },
+      "minArea": 20,
+      "line": "s",
+      "code": "FL01-RC-01",
+      "dept": "",
+      "name": "Reception",
+      "seats": null,
+      "from": ""
+    },
+    {
+      "key": "phonebooth",
+      "fn": {
+        "he": "תא טלפון",
+        "en": "Phone booth"
+      },
+      "minArea": null,
+      "line": "s",
+      "code": "FL01-PB-01",
+      "dept": "",
+      "name": "Phone Booth",
+      "seats": null,
+      "from": ""
+    },
+    {
+      "key": "storage",
+      "fn": {
+        "he": "מחסן",
+        "en": "Storage"
+      },
+      "minArea": 8,
+      "line": "s",
+      "code": "FL01-ST-01",
+      "dept": "",
+      "name": "Storage",
+      "seats": null,
+      "from": ""
+    }
+  ],
+  "qa": [
+    {
+      "name": "מכירות ↔ שיווק — סמיכות חשובה"
+    },
+    {
+      "name": "פיתוח ↔ הנהלה — סמיכות חשובה"
+    },
+    {
+      "name": "כספים ↔ הנהלה — סמיכות חשובה"
+    },
+    {
+      "name": "משאבי אנוש ↔ הנהלה — סמיכות חשובה"
+    },
+    {
+      "name": "חדר שרתים / IT: נעול · אקוסטי"
+    }
+  ],
+  "_readme": "Fictional sample for testing. Pair with sample_FL01_rooms.json."
+}
