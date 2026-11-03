@@ -41,6 +41,8 @@
   }
   .hb:hover{background:rgba(255,255,255,.12);}
   .hb.on{background:var(--accent); color:var(--black); border-color:var(--accent);}
+  #planPick{max-width:240px; text-transform:none; letter-spacing:.02em;}
+  #planPick option{background:var(--black); color:var(--white);}
   .accent-bar{height:3px; background:var(--accent); flex:0 0 auto;}
 
   /* language switch — pinned to the visual left corner in both directions.
@@ -155,7 +157,22 @@
   /* ---------- workspace ---------- */
   #workView{display:none; height:calc(100vh - 49px);}
   #workView.on{display:flex;}
-  #stage{flex:1; display:flex; flex-direction:column; min-width:0; background:var(--gray);}
+  #stage{flex:1; display:flex; flex-direction:column; min-width:0; background:var(--gray); position:relative;}
+  .lpop{display:none; position:absolute; top:42px; inset-inline-start:10px; z-index:40; background:var(--white);
+    border:1px solid var(--border); box-shadow:0 8px 24px rgba(0,0,0,.12); padding:8px 12px 10px; min-width:250px; max-height:70vh; overflow:auto; font-size:11px;}
+  .lpop.on{display:block;}
+  .lph{font-size:9px; letter-spacing:.08em; text-transform:uppercase; opacity:.5; margin:8px 0 4px;}
+  .lrow{display:flex; align-items:center; gap:8px; padding:4px 0; cursor:pointer;}
+  .lrow span{flex:1;}
+  .lrow input[type=range]{flex:1; accent-color:var(--black);}
+  .lcnt{font-style:normal; opacity:.45; font-size:10px; min-width:24px; text-align:end;}
+  .lnote{font-size:10px; opacity:.55; padding:4px 0; line-height:1.4;}
+  #cadbar{flex:0 0 auto; background:var(--white); border-top:1px solid var(--border); display:flex; align-items:center; gap:6px;
+    padding:4px 10px; font-size:10px; white-space:nowrap; overflow-x:auto; direction:ltr; font-variant-numeric:tabular-nums;}
+  .cadt{font:inherit; font-size:9px; letter-spacing:.06em; border:1px solid var(--border); background:var(--white); color:var(--black); padding:2px 7px; cursor:pointer; opacity:.55;}
+  .cadt.on{background:var(--black); color:var(--white); opacity:1;}
+  #cadRead{min-width:220px; padding:0 6px;}
+  #cadKeys{margin-inline-start:auto; opacity:.45;}
   #stagebar{
     height:38px; flex:0 0 auto; background:var(--white); border-bottom:1px solid var(--border);
     display:flex; align-items:center; gap:4px; padding:0 10px; overflow-x:auto; white-space:nowrap;
@@ -491,6 +508,7 @@
   <div class="tool">Test Fit Checker</div>
   <div class="fname" id="fname"></div>
   <div class="hbtns" id="hbtns" style="display:none">
+    <select class="hb" id="planPick" style="display:none" onchange="pickPlan(this.value)"></select>
     <button class="hb" id="btnPanel" onclick="togglePanel()" data-t="panel">פאנל</button>
     <button class="hb" onclick="projectModal()" data-t="projectDetails">פרטי פרויקט</button>
     <div class="hmenu" id="hmenu">
@@ -517,7 +535,7 @@
       <div class="dz-big" data-t="dzBig">גרור תוכנית לכאן</div>
       <div class="dz-small" data-t="dzSmall"></div>
     </div>
-    <input type="file" id="fileInput" accept=".pdf,.rvt,.rfa,.png,.jpg,.jpeg">
+    <input type="file" id="fileInput" accept=".pdf,.rvt,.rfa,.json,.png,.jpg,.jpeg" multiple>
     <input type="file" id="jsonInput" accept=".json,application/json">
 
     <div class="fmt">
@@ -546,8 +564,8 @@
           <li data-t="rvtHow4"></li>
         </ol>
         <div class="rv-actions">
-          <a class="mini pri" href="RDA_TestFit_Export_Macro.cs" download data-t="rvtDlMacro"></a>
-          <button class="mini" id="rvtUploadBtn" data-t="rvtUploadJson"></button>
+          <button class="mini pri" id="rvtUploadBtn" data-t="rvtUploadJson"></button>
+          <a class="mini" href="RDA_TestFit_Export_Macro.cs" download data-t="rvtDlMacro"></a>
         </div>
       </div>
     </div>
@@ -567,6 +585,7 @@
       <button class="tb on" id="lySyms"  onclick="toggleLayer('syms')"  data-t="lySyms"></button>
       <button class="tb on" id="lyDims"  onclick="toggleLayer('dims')"  data-t="lyDims"></button>
       <button class="tb on" id="lyAreas" onclick="toggleLayer('areas')" data-t="lyAreas"></button>
+      <button class="tb" id="lyMgr" onclick="toggleLayerPop(event)" data-t="lyMgr"></button>
       <span class="tbsep"></span>
       <button class="tb" id="tDim"   onclick="armTool('dim')"   data-t="tDim"></button>
       <button class="tb" id="tSmart" onclick="armTool('smart')" data-t="tSmart"></button>
@@ -580,12 +599,19 @@
       <button class="tb" onclick="clearMarkup()" data-t="clearMarkupBtn"></button>
       <span class="zlabel" id="toolHint" style="min-width:auto; opacity:.6"></span>
     </div>
+    <div id="layerPop" class="lpop"></div>
     <div id="planHost">
       <div id="planBox">
         <canvas id="planCanvas"></canvas>
         <canvas id="ovl"></canvas>
         <div id="symLayer"></div>
       </div>
+    </div>
+    <div id="cadbar">
+      <button class="cadt on" id="cadSnap" onclick="cadToggle('snap')" title="F3">SNAP</button>
+      <button class="cadt on" id="cadOrtho" onclick="cadToggle('ortho')" title="F8 / Shift">ORTHO</button>
+      <span id="cadRead"></span>
+      <span id="cadKeys" data-t="cadKeys"></span>
     </div>
     <div id="legend">
       <span class="lg"><i style="background:#E1504B"></i><b data-t="lgFail"></b></span>
@@ -594,7 +620,7 @@
       <span class="lg"><i style="background:#7C3AED"></i><b data-t="lgEl"></b></span>
       <span class="lg"><i style="background:#0EA5E9"></i><b data-t="lgIt"></b></span>
       <span class="lg"><i style="background:#16A34A"></i><b data-t="lgMove"></b></span>
-      <span class="lg"><i style="background:#D6009A"></i><b data-t="lgDim"></b></span>
+      <span class="lg"><i style="background:#808080"></i><b data-t="lgDim"></b></span>
       <span class="lg"><i style="background:#0000FF"></i><b data-t="lgArea"></b></span>
       <span class="lg" id="calibNote" style="opacity:.5"></span>
     </div>
@@ -639,19 +665,25 @@ he:{
   expHtmT:'HTML — דוח אינטראקטיבי', expHtmS:'עצמאי, ניתן לעריכה אצל הלקוח',
   expJsnT:'JSON — שמירת מצב', expJsnS:'לטעינה חוזרת בפלטפורמה',
   heroH1:'בדוק <em>Test Fit</em><br>בשניות.',
-  dzBig:'גרור תוכנית לכאן', dzSmall:'PDF מיוצא מ-Revit · או לחץ לבחירת קובץ',
+  dzBig:'גרור תוכנית לכאן', dzSmall:'PDF מיוצא מ-Revit · אפשר כמה קבצים יחד · או לחץ לבחירה',
   rvtSoon:'RVT', loadingPlan:'מנתח תוכנית…',
   scopeNote:'כלי פנימי של Roy David Architects — עובד לגמרי בדפדפן, בלי שרת ובלי העלאת קבצים לשום מקום. '+
     'אין להעלות אליו קבצים ללקוחות חוץ ואין לשתף את הקישור מחוץ למשרד. '+
     'הבדיקה היא תצפית אינפורמטיבית שנגזרת מבנצ׳מרקים — לא חוות דעת רגולטורית; נגישות, מילוט, בטיחות אש ותקינה מחייבים בדיקה של יועץ מוסמך.',
   /* --- layers, tools, legend --- */
   lyNotes:'הערות', lySyms:'סימבולים', lyDims:'מידות', lyAreas:'שטחים',
+  lyMgr:'שכבות ▾', lyPlanTitle:'שכבות התכנית', lyMarkTitle:'שכבות סימון', lyFills:'צבעי חדרים (מילוי)', lyFade:'דהיית התכנית',
+  lyNoOcg:'בקובץ הזה אין שכבות PDF. בקובץ AutoCAD / Revit שיוצא עם שכבות, הן יופיעו כאן אחת-אחת.',
+  dsPlan:n=>'סגנון המידות נלקח מהתכנית עצמה ('+n+' מידות זוהו): גובה טקסט, צבע, עובי קו, מרווח.',
+  dsRef:'בתכנית אין מידות לקריאה — גובה הטקסט נלקח מטקסט התכנית, והמראה לפי רפרנס המידות של RD&A.',
+  cadLen:'אורך', cadKeys:'D מידה · A שטח · S מידה חכמה · F3 Snap · F8 Ortho · גלגלת = זום · כפתור אמצעי = הזזה',
+  tTypedNoCalib:'כדי להקליד אורך צריך קנה מידה',
   tDim:'קו מידה', tArea:'מדידת שטח', tCalib:'כיול', tPin:'הערה ממוספרת', tCloud:'ענן הערה',
   clearMarkupBtn:'נקה סימונים',
   lgFail:'שגוי', lgWarn:'תיקון קל', lgInfo:'מידע / לבדיקה', lgEl:'חשמל', lgIt:'תקשורת',
   lgMove:'תנועה', lgDim:'קווי מידה', lgArea:'מדידת שטח', calibratedNote:'קנה מידה מכויל',
   /* --- tool hints + prompts + toasts --- */
-  hintDim:'לחץ נקודת התחלה ואז נקודת סיום',
+  hintDim:'נקודת התחלה ואז נקודת סיום · אפשר להקליד אורך ו-Enter · Esc לסיום',
   hintArea:'לחץ נקודה-נקודה על קונטור החדר · Enter או לחיצה על הנקודה הראשונה לסגירה',
   hintCalib:'שרטט קו על מידה ידועה בתוכנית',
   hintPin:'לחץ על התכנית למיקום הערה ממוספרת',
@@ -670,6 +702,7 @@ he:{
   tExportMade:'Export נוצר — ניתן לערוך ולשמור מחדש', tXlsxErr:'שגיאה ביצירת Excel',
   tPages:n=>n+' עמודים — בחר "שמור כ-PDF" בתיבת ההדפסה',
   tManualMode:'לא זוהתה שכבת טקסט — מצב סימון ידני', tImgLoaded:'תמונה נטענה — מצב סימון ידני',
+  planAdd:'+ הוסף תוכניות', tPlansAdded:n=>n+' תוכניות נוספו לרשימה',
   confirmClear:'למחוק את כל הסימבולים, קווי המידה, מדידות השטח, העננים וההערות הידניות?',
   /* --- tabs, tiles --- */
   tabIron:'ברזל', tabNotes:'הערות', tabProg:'פרוגרמה', tabOpen:'לא נראה', tabMarks:'סימונים', tabNorms:'תקנים',
@@ -702,6 +735,15 @@ he:{
   scaleOnMsg:'קווי מידה חדשים יקבלו אורך אוטומטי בסנטימטרים.',
   scaleOffMsg:'כייל פעם אחת על מידה ידועה — לאחר מכן כל קו מידה יחושב אוטומטית.',
   calibNow:'כייל עכשיו',
+  autoDimsBtn:'מידות אוטומטיות לכל החדרים', autoDimsOffBtn:'הסר מידות אוטומטיות',
+  dimsHideBtn:'הסתר קווי מידה', dimsShowBtn:'הצג קווי מידה',
+  autoDimTag:n=>' · אוטומטי'+(n?' · '+n:''),
+  tAutoDims:n=>n+' קווי מידה נוספו אוטומטית', tAutoDimsOff:'המידות האוטומטיות הוסרו',
+  scRevit:'קנה מידה מדויק מגיאומטריית רוויט.',
+  scText:(d,n,c)=>'קנה מידה 1:'+d+' מתוך ה-PDF'+(n?', אומת מול '+n+' חדרים עם שטח (סטייה '+c+'%)':'')+'.',
+  scArea:(n,d)=>'קנה מידה נגזר מ-'+n+' חדרים עם שטח m²'+(d?' (ה-1:'+d+' בגיליון לא תאם)':'')+'.',
+  scHand:'קנה מידה מכיול ידני.',
+  autoSkipped:n=>n+' חדרים לא נמדדו אוטומטית — אין להם מילוי צבע, או שהמידה לא תאמה לשטח בתגית. אפשר לשרטט להם ידנית.',
   /* --- panel: notes --- */
   grpFail:'שגוי — לתיקון', grpWarn:'תיקון קל', grpInfo:'מידע / ידני', grpOk:'תקין',
   noNotes:'אין הערות — התוכנית עברה את כל הבדיקות.',
@@ -792,11 +834,11 @@ he:{
   rvtLinksTitle:'קישורים חיצוניים', rvtLinkOk:'נטען', rvtLinkBad:'לא נמצא', rvtNoLinks:'אין קישורים חיצוניים בקובץ.',
   rvtLevelLabel:'שם התכנית / הקומה שברצונך לבדוק',
   rvtLevelPh:'לדוגמה: FL03, קומה 3',
-  rvtHow1:'Revit 2025 ומעלה: ודא ש-Macros מאופשרים — Options ← Macros ← Enable application macros, ואז סגור ופתח מחדש את Revit (חד-פעמי).',
-  rvtHow2:'ב-Revit 2025+ בלבד: אם זו הפעם הראשונה, ודא ש-.NET SDK 8 ו-Visual Studio Code מותקנים במחשב (נדרש להרצת עורך המאקרו).',
-  rvtHow3:'Manage ← Macros ← Macro Manager ← "My Macros" (Application, לא Document) ← Create, הדבק את קוד המאקרו שהורדת, ולחץ Run.',
-  rvtHow4:'סייר קבצים ייפתח לבד עם קובץ ה-JSON מסומן — גררו אותו לכפתור "העלה JSON מהמאקרו" למטה. השם שהקלדת מעלה יבחר את הקומה הנכונה מתוך הייצוא.',
-  rvtDlMacro:'הורד מאקרו (.cs)', rvtUploadJson:'העלה JSON מהמאקרו',
+  rvtHow1:'חד-פעמי: התקינו את לשונית RDA ב-pyRevit — מעתיקים את התיקייה RDA.extension ל-%APPDATA%\\pyRevit\\Extensions ולוחצים pyRevit ← Reload.',
+  rvtHow2:'פותחים את המודל ב-Revit ← לשונית RDA ← Test Fit ← Export Test Fit. קריאה בלבד — המודל לא משתנה ולא נשמר.',
+  rvtHow3:'סייר קבצים נפתח עם הקובץ testfit-export.json מסומן — גוררים אותו לדף הזה או לכפתור "העלה JSON מרוויט".',
+  rvtHow4:'השם שהקלדתם למעלה בוחר את הקומה מתוך הייצוא. בלי pyRevit אפשר להשתמש במאקרו (.cs), אבל ב-Revit 2025+ הוא דורש .NET SDK 8 ו-VS Code.',
+  rvtDlMacro:'מאקרו חלופי (.cs)', rvtUploadJson:'העלה JSON מרוויט',
   rvtLevelNoMatch:n=>`לא נמצאה קומה בשם "${n}" בקובץ — נבחרה הקומה עם הכי הרבה חדרים במקום.`,
   rvtLevelMatched:n=>`נבחרה הקומה "${n}" לפי מה שהקלדת.`,
   errDwg:(fmt,app,path)=>'<b>'+fmt+' הוא פורמט בינארי סגור — לא ניתן לפענוח בדפדפן.</b>'+
@@ -852,6 +894,7 @@ he:{
   /* --- iron rules --- */
   iRoomDims:'מידות כל חדר במטרים',
   iRoomDimsOk:n=>'זוהו '+n+' מידות במטרים בתוכנית.',
+  iRoomDimsAuto:n=>'נוספו אוטומטית אורך ורוחב ל-'+n+' חדרים.',
   iRoomDimsBad:(n,t)=>'זוהו '+n+' מידות בלבד מול '+t+' תגיות. סמן מידות חסרות בכלי "קו מידה".',
   iOverall:'קווי מידה — אורך ורוחב',
   iOverallOk:'זוהו קווי מידה כלליים בתוכנית.',
@@ -907,19 +950,25 @@ en:{
   expHtmT:'HTML — interactive report', expHtmS:'Self-contained, editable by the client',
   expJsnT:'JSON — save state', expJsnS:'Reload later in the platform',
   heroH1:'Check a <em>Test Fit</em><br>in seconds.',
-  dzBig:'Drop a plan here', dzSmall:'PDF exported from Revit · or click to choose a file',
+  dzBig:'Drop a plan here', dzSmall:'PDF exported from Revit · several files at once · or click to choose',
   rvtSoon:'RVT', loadingPlan:'Analysing plan…',
   scopeNote:'An internal Roy David Architects tool — runs entirely in the browser, no server, nothing uploaded anywhere. '+
     'Do not upload files for outside clients here, and do not share this link outside the office. '+
     'The check is an informative observation derived from benchmarks, not a regulatory opinion; accessibility, egress, fire safety and code compliance require review by a licensed consultant.',
   /* --- layers, tools, legend --- */
   lyNotes:'Notes', lySyms:'Symbols', lyDims:'Dimensions', lyAreas:'Areas',
+  lyMgr:'Layers ▾', lyPlanTitle:'Plan layers', lyMarkTitle:'Markup layers', lyFills:'Room colour fills', lyFade:'Fade plan',
+  lyNoOcg:'This file carries no PDF layers. A plan exported from AutoCAD / Revit with layers lists each one here.',
+  dsPlan:n=>'Dimension style read from the plan itself ('+n+' dimensions found): text height, colour, line weight, gap.',
+  dsRef:'The plan has no readable dimensions: text height comes from the plan text, the look from the RD&A dimension reference.',
+  cadLen:'Length', cadKeys:'D dim · A area · S smart dim · F3 Snap · F8 Ortho · wheel = zoom · middle button = pan',
+  tTypedNoCalib:'Typing a length needs a scale',
   tDim:'Dimension', tArea:'Measure area', tCalib:'Calibrate', tPin:'Numbered note', tCloud:'Cloud note',
   clearMarkupBtn:'Clear markup',
   lgFail:'Fail', lgWarn:'Minor fix', lgInfo:'Info / to verify', lgEl:'Electrical', lgIt:'Data',
   lgMove:'Circulation', lgDim:'Dimensions', lgArea:'Area measurement', calibratedNote:'Scale calibrated',
   /* --- tool hints + prompts + toasts --- */
-  hintDim:'Click a start point, then an end point',
+  hintDim:'Start point, then end point · type a length + Enter · Esc to finish',
   hintArea:'Click point by point around the room outline · Enter, or click the first point, to close',
   hintCalib:'Draw a line over a known dimension on the plan',
   hintPin:'Click the plan to place a numbered note',
@@ -938,6 +987,7 @@ en:{
   tExportMade:'Export created — editable and re-savable', tXlsxErr:'Could not create the Excel file',
   tPages:n=>n+' pages — choose "Save as PDF" in the print dialog',
   tManualMode:'No text layer found — manual markup mode', tImgLoaded:'Image loaded — manual markup mode',
+  planAdd:'+ Add plans', tPlansAdded:n=>n+' plans added to the list',
   confirmClear:'Delete all symbols, dimension lines, area measurements, clouds and manual notes?',
   /* --- tabs, tiles --- */
   tabIron:'Core', tabNotes:'Notes', tabProg:'Program', tabOpen:'Unseen', tabMarks:'Markup', tabNorms:'Norms',
@@ -970,6 +1020,15 @@ en:{
   scaleOnMsg:'New dimension lines are measured automatically in centimetres.',
   scaleOffMsg:'Calibrate once against a known dimension — every later line is then computed automatically.',
   calibNow:'Calibrate now',
+  autoDimsBtn:'Auto-dimension every room', autoDimsOffBtn:'Remove auto dimensions',
+  dimsHideBtn:'Hide dimensions', dimsShowBtn:'Show dimensions',
+  autoDimTag:n=>' · auto'+(n?' · '+n:''),
+  tAutoDims:n=>n+' dimension lines added automatically', tAutoDimsOff:'Auto dimensions removed',
+  scRevit:'Exact scale from the Revit geometry.',
+  scText:(d,n,c)=>'Scale 1:'+d+' from the PDF'+(n?', checked against '+n+' rooms with an area ('+c+'% off)':'')+'.',
+  scArea:(n,d)=>'Scale derived from '+n+' rooms with an m² area'+(d?' (the sheet\'s 1:'+d+' did not match)':'')+'.',
+  scHand:'Scale from a hand calibration.',
+  autoSkipped:n=>n+' rooms were not measured automatically — no colour fill, or the size did not match the tag\'s area. Draw them by hand.',
   /* --- panel: notes --- */
   grpFail:'Fail — to fix', grpWarn:'Minor fix', grpInfo:'Info / manual', grpOk:'Pass',
   noNotes:'No notes — the plan passed every check.',
@@ -1060,11 +1119,11 @@ en:{
   rvtLinksTitle:'External links', rvtLinkOk:'Loaded', rvtLinkBad:'Not found', rvtNoLinks:'No external links in this file.',
   rvtLevelLabel:'Name of the plan / floor you want to check',
   rvtLevelPh:'e.g. FL03, Level 3',
-  rvtHow1:'Revit 2025+: make sure Macros are enabled — Options → Macros → Enable application macros, then close and reopen Revit (one-time).',
-  rvtHow2:'Revit 2025+ only: the first time, make sure .NET SDK 8 and Visual Studio Code are installed (needed to run the macro editor).',
-  rvtHow3:'Manage → Macros → Macro Manager → "My Macros" (Application, not Document) → Create, paste in the macro code you downloaded, and click Run.',
-  rvtHow4:'A File Explorer window opens on its own with the JSON file selected — drag it onto the "Upload the macro’s JSON" button below. The name you typed above picks the right floor out of that export.',
-  rvtDlMacro:'Download macro (.cs)', rvtUploadJson:'Upload the macro’s JSON',
+  rvtHow1:'One-time: install the RDA tab in pyRevit — copy the RDA.extension folder to %APPDATA%\\pyRevit\\Extensions and click pyRevit → Reload.',
+  rvtHow2:'Open the model in Revit → RDA tab → Test Fit → Export Test Fit. Read-only — the model is not changed or saved.',
+  rvtHow3:'File Explorer opens with the -testfit-export.json file selected — drag it onto this page or the "Upload JSON from Revit" button.',
+  rvtHow4:'The name you typed above picks the floor out of the export. Without pyRevit, use the macro (.cs) — on Revit 2025+ it needs .NET SDK 8 and VS Code.',
+  rvtDlMacro:'Fallback macro (.cs)', rvtUploadJson:'Upload JSON from Revit',
   rvtLevelNoMatch:n=>`No level named "${n}" was found in the file — used the level with the most rooms instead.`,
   rvtLevelMatched:n=>`Selected the "${n}" level, matching what you typed.`,
   errDwg:(fmt,app,path)=>'<b>'+fmt+' is a closed binary format — a browser cannot read it.</b>'+
@@ -1120,6 +1179,7 @@ en:{
   /* --- iron rules --- */
   iRoomDims:'Every room dimensioned',
   iRoomDimsOk:n=>n+' dimensions detected on the plan.',
+  iRoomDimsAuto:n=>'Length and width added automatically for '+n+' rooms.',
   iRoomDimsBad:(n,t)=>'Only '+n+' dimensions detected against '+t+' tags. Mark the missing ones with the dimension tool.',
   iOverall:'Overall dimension lines — length and width',
   iOverallOk:'Overall dimension lines detected on the plan.',
@@ -1422,15 +1482,31 @@ async function parsePdf(data, fileName){
   const content = await page.getTextContent();
 
   const buckets=[0,0,0,0], items0=[], everyText=[], seen=new Set();
+  /* numbers that may be the plan's own dimensions, and every text height —
+     the dimension style is read off these (9c) */
+  const nums=[], txtH={area:[], all:[]};
   for(const it of content.items){
     const t=it.transform, str=it.str.trim();
     if(!str) continue;
     everyText.push(str.toLowerCase());
+    const fh=Math.hypot(t[2],t[3]);
+    if(fh>0){ txtH.all.push(fh); if(/m²|m2/.test(str)) txtH.area.push(fh); }
+    if(/^\d{1,4}(?:[.,]\d{1,2})?$/.test(str)) nums.push({str, t:t.slice(), w:it.width||0});
     const k=str+'|'+Math.round(t[4])+'|'+Math.round(t[5]);
     if(seen.has(k)) continue; seen.add(k);
     const b=((Math.round(Math.atan2(t[1],t[0])/(Math.PI/2))%4)+4)%4;
     buckets[b]++; items0.push({str,t,w:it.width||0,b});
   }
+  /* a dimension's number stands alone on its line — the "33" of "33 W 148" does not */
+  nums.forEach(n=>{
+    const t=n.t, fh=Math.hypot(t[2],t[3]), fw=Math.hypot(t[0],t[1])||1, ux=t[0]/fw, uy=t[1]/fw;
+    n.alone=!content.items.some(o=>{
+      const q=o.transform;
+      if(!o.str.trim() || (q[4]===t[4] && q[5]===t[5])) return false;
+      const dx=q[4]-t[4], dy=q[5]-t[5], along=dx*ux+dy*uy, across=-dx*uy+dy*ux;
+      return Math.abs(across)<=fh*0.4 && along<n.w+fh*0.5 && along+(o.width||0)>-fh*0.5;
+    });
+  });
   const dom=buckets.indexOf(Math.max(...buckets));
   const th=dom*Math.PI/2, cos=Math.round(Math.cos(th)), sin=Math.round(Math.sin(th));
   const raw=[];
@@ -1494,7 +1570,7 @@ async function parsePdf(data, fileName){
   const vp1=page.getViewport({scale:1});
   tags.forEach(t=>{ const p=vp1.convertToViewportPoint(t.pdfX,t.pdfY); t.nx=p[0]/vp1.width; t.ny=p[1]/vp1.height; });
 
-  return { tags, allText:everyText, page, vp1, fileName };
+  return { tags, allText:everyText, page, vp1, fileName, pdf, nums, txtH };
 }
 
 /* =====================================================================
@@ -1885,10 +1961,12 @@ function ironChecks(parse, rooms){
   const hasDim=STATE.dims.length>0;
   const R=[];
 
+  const autoRooms=new Set(STATE.dims.filter(d=>d.auto==='room').map(d=>d.room)).size;
+  const byText=dimTok >= Math.max(4, Math.round(rooms.length*0.5));
   R.push({ id:'roomdims', n:T('iRoomDims'),
-    auto: dimTok >= Math.max(4, Math.round(rooms.length*0.5)),
+    auto: byText || autoRooms>=Math.max(2,Math.round(rooms.length*0.25)),
     manual: STATE.dims.length>=Math.max(2,Math.round(rooms.length*0.25)),
-    okMsg:T('iRoomDimsOk',dimTok),
+    okMsg: byText ? T('iRoomDimsOk',dimTok) : T('iRoomDimsAuto',autoRooms),
     badMsg:T('iRoomDimsBad',dimTok,rooms.length),
     tool:'dim' });
 
@@ -2172,14 +2250,14 @@ function layout(){
   const c=cv.getContext('2d');
   c.setTransform(dpr,0,0,dpr,0,0); c.clearRect(0,0,w,h);
   c.imageSmoothingEnabled=true; c.imageSmoothingQuality='high';
-  c.drawImage(BASE,0,0,w,h);
+  drawBase(c,w,h);
   drawOverlay(); placeSymbols();
   $('#zlabel').textContent=Math.round(ZOOM*100)+'%';
   $('#tFit').classList.toggle('on', Math.abs(ZOOM-1)<0.01);
 }
 
 const CLR={f:'#E1504B',w:'#E38B00',i:'#0000FF',o:'#16A34A'};
-const DIM_CLR='#D6009A', AREA_CLR='#0000FF';
+const DIM_CLR='#808080', AREA_CLR='#0000FF';
 let MARKERS=[];
 
 function lvColor(lv){ return CLR[lv]||'#8A8A8A'; }
@@ -2335,26 +2413,8 @@ function paintCloud(c,w,h,k,n,sel){
 }
 
 function paintDims(c,w,h,k){
-  STATE.dims.forEach(d=>{
-    const x1=d.x1*w, y1=d.y1*h, x2=d.x2*w, y2=d.y2*h;
-    const col=d.calib?'#0000FF':DIM_CLR;
-    c.strokeStyle=col; c.lineWidth=1.6*k;
-    c.beginPath(); c.moveTo(x1,y1); c.lineTo(x2,y2); c.stroke();
-    const a=Math.atan2(y2-y1,x2-x1), t=7*k;
-    [[x1,y1],[x2,y2]].forEach(([px,py])=>{
-      c.beginPath();
-      c.moveTo(px-Math.sin(a)*t, py+Math.cos(a)*t);
-      c.lineTo(px+Math.sin(a)*t, py-Math.cos(a)*t);
-      c.stroke();
-    });
-    const lbl=d.label||'—', mx=(x1+x2)/2, my=(y1+y2)/2;
-    c.font='600 '+(11*k).toFixed(1)+'px Helvetica,Arial';
-    c.textAlign='center'; c.textBaseline='middle'; c.direction=isHe()?'rtl':'ltr';
-    const tw=c.measureText(lbl).width+9*k, th=16*k;
-    c.fillStyle='#fff'; c.fillRect(mx-tw/2,my-th/2,tw,th);
-    c.strokeStyle=col; c.lineWidth=1.2*k; c.strokeRect(mx-tw/2,my-th/2,tw,th);
-    c.fillStyle=col; c.fillText(lbl,mx,my+0.5*k);
-  });
+  const S=dimStyle();
+  STATE.dims.forEach(d=>{ dimBg(d,S); dimDraw(c,d,w,h,S,SEL===d.id); });
 }
 
 function paintAreas(c,w,h,k){
@@ -2398,6 +2458,7 @@ function drawOverlay(){
   c.setTransform(dpr,0,0,dpr,0,0); c.clearRect(0,0,w,h);
   MARKERS=paintMarkup(c,w,h,{layers:LAYERS, sel:SEL});
   drawPending(c,w,h);
+  drawCadCursor(c,w,h);
 }
 
 /* rubber-band feedback for the in-progress dim / polygon / cloud */
@@ -2405,8 +2466,11 @@ function drawPending(c,w,h){
   if(!PENDING) return;
   c.save();
   if(PENDING.kind==='dim' && PENDING.x1!=null){
-    c.strokeStyle=DIM_CLR; c.lineWidth=1.5; c.setLineDash([5,4]);
-    c.beginPath(); c.moveTo(PENDING.x1*w,PENDING.y1*h); c.lineTo(PENDING.mx*w,PENDING.my*h); c.stroke();
+    /* the dimension being drawn already looks like the finished one */
+    const d={x1:PENDING.x1, y1:PENDING.y1, x2:PENDING.mx, y2:PENDING.my, calib:TOOL==='calib'};
+    const m=STATE.calib?dimPx(d)*STATE.calib.mPerPx:null;
+    d.txt=TOOL==='calib'?'?':(m!=null?dimTxt(m):'?');
+    dimDraw(c,d,w,h,dimStyle(),false);
   }
   if(PENDING.kind==='area' && PENDING.pts.length){
     const p=PENDING.pts;
@@ -2462,9 +2526,9 @@ function polyPerimeter(pts){
    *shown* in centimetres — a manual entry stores the metres it was typed as. */
 function relabelMeasures(){
   STATE.dims.forEach(d=>{
-    if(d.manualM!=null) d.label=fmtCm(d.manualM);
-    else if(STATE.calib) d.label=fmtCm(dimPx(d)*STATE.calib.mPerPx);
-    else d.label='?';
+    const m=d.manualM!=null?d.manualM:(STATE.calib?dimPx(d)*STATE.calib.mPerPx:null);
+    d.label=m!=null?fmtCm(m):'?';
+    d.txt=m!=null?dimTxt(m):'?';   /* on the plan: the bare number, as the plan writes it */
   });
   STATE.areas.forEach(a=>{
     const m2=polyArea(a.pts);
@@ -2528,6 +2592,449 @@ function smartDim(p, both){
 function dimMeters(d){
   if(d.manualM!=null) return d.manualM;
   return STATE.calib ? dimPx(d)*STATE.calib.mPerPx : null;
+}
+
+/* =====================================================================
+   9c. DIMENSION STYLE — taken from the plan, never invented.
+   A PDF that carries its own dimensions (a number with a dimension line
+   running out on both sides of it) gives the text height, width factor,
+   colours, line weight, text gap and units. A plan without any keeps its
+   own text height (the m² tags) and the RD&A reference look: 50% grey
+   Arial, dot ends, an opaque text background that breaks the line.
+   Sizes are fractions of the plan's height, so a dimension scales with
+   the drawing exactly like the plan's own text.
+   ===================================================================== */
+const DIM_REF={ clr:'#808080', lclr:'#808080', gap:0.29, dot:0.18, ext:0.25, wf:1, unit:'cm' };
+let DSTYLE=null, DSTYLE_BASE=null, DSTYLE_PARSE=null;
+const med=a=>{ const s=a.slice().sort((p,q)=>p-q); return s.length?s[Math.floor(s.length/2)]:null; };
+const lumOf=p=>0.299*p[0]+0.587*p[1]+0.114*p[2];
+const rgbHex=p=>'#'+p.map(v=>Math.round(v).toString(16).padStart(2,'0')).join('');
+const medRGB=list=>[0,1,2].map(i=>med(list.map(p=>p[i])));
+
+function dimStyle(){
+  if(DSTYLE && DSTYLE_BASE===BASE && DSTYLE_PARSE===STATE.parse) return DSTYLE;
+  if(!BASE) return Object.assign({fs:0.01, lw:0.0008, src:'ref'}, DIM_REF);
+  const H=BASE.height, P=STATE.parse||{};
+  let S=planDims();
+  if(!S){
+    let fs=null;
+    if(P.vp1 && P.txtH){
+      const a=P.txtH.area.length?P.txtH.area:P.txtH.all;
+      if(a.length) fs=med(a)*BASE.width/P.vp1.width;
+    }
+    if(!fs && P.geo) fs=11;                 /* the Revit base writes its room tags at 11 px */
+    if(!fs) fs=H/90;
+    S=Object.assign({}, DIM_REF, { fs:fs/H, lw:Math.max(1,fs*0.06)/H, src:'ref' });
+  }
+  DSTYLE=S; DSTYLE_BASE=BASE; DSTYLE_PARSE=STATE.parse;
+  return S;
+}
+
+/* A dimension on the sheet = a number whose baseline has a thin line just
+   under it, running out past both ends of the text. Room numbers, tags in
+   boxes and furniture labels fail one of those tests. */
+function planDims(){
+  const P=STATE.parse;
+  if(!P||!P.nums||!P.nums.length||!P.vp1||!BASE) return null;
+  const I=inkData(), W=I.w, H=I.h, D=I.d, sc=BASE.width/P.vp1.width, hits=[];
+  const px=(x,y)=>{ x=Math.round(x); y=Math.round(y); if(x<0||y<0||x>=W||y>=H) return null; const i=(y*W+x)*4; return [D[i],D[i+1],D[i+2]]; };
+  P.nums.forEach(n=>{
+    const t=n.t, fh=Math.hypot(t[2],t[3]), fw=Math.hypot(t[0],t[1]);
+    if(!fh||!fw||n.alone===false) return;
+    const o=P.vp1.convertToViewportPoint(t[4],t[5]);
+    const pu=P.vp1.convertToViewportPoint(t[4]+t[0]/fw, t[5]+t[1]/fw);
+    const pv=P.vp1.convertToViewportPoint(t[4]+t[2]/fh, t[5]+t[3]/fh);
+    const ux=pu[0]-o[0], uy=pu[1]-o[1], vx=pv[0]-o[0], vy=pv[1]-o[1];
+    if(Math.abs(ux)>0.02 && Math.abs(uy)>0.02) return;          /* square to the sheet only */
+    const F=fh*sc, Wt=n.w*sc, bx=o[0]*sc, by=o[1]*sc;
+    if(F<4) return;
+    const at=(a,b)=>px(bx+ux*a+vx*b, by+uy*a+vy*b);              /* a along the text, b up from the baseline */
+    const cover=(b,a0,a1)=>{ let k=0,m=0; for(let a=a0;a<=a1;a++){ const p=at(a,b); if(!p) continue; m++; if(lumOf(p)<235) k++; } return m?k/m:0; };
+    const span=Math.round(F*1.2), q=Math.max(2,Math.round(F*0.2));
+    let line=-1, thick=0;
+    for(let b=1;b<=Math.ceil(F*0.9);b++){
+      const ok=cover(-b,-span,-q)>=0.8 && cover(-b,Wt+q,Wt+span)>=0.8;
+      if(ok){ if(line<0) line=b; thick++; }
+      else if(line>=0) break;
+    }
+    if(line<0 || thick>Math.max(2,F*0.2)) return;
+    /* thin: clear paper just past the line on both sides of it */
+    const clear=b=>cover(b,-span,-q)<0.5 && cover(b,Wt+q,Wt+span)<0.5;
+    if(!clear(-(line+thick+1)) || (line>2 && !clear(-(line-2)))) return;
+    /* nothing ruled across the top of it either — that is a tag in a box */
+    for(let b=Math.round(F*0.8);b<=Math.round(F*1.3);b++) if(cover(b,-q,Wt+q)>=0.8) return;
+    const lp=[], tp=[], bp=[];
+    for(let a=-span;a<=-q;a++){
+      for(let b=line;b<line+thick;b++){ const p=at(a,-b); if(p) lp.push(p); }
+      const p=at(a,-(line+thick+1)); if(p) bp.push(p);
+    }
+    for(let a=0;a<=Wt;a++) for(let b=0;b<=F*0.7;b++){ const p=at(a,b); if(p&&lumOf(p)<215) tp.push(p); }
+    if(tp.length<4) return;
+    tp.sort((p,r)=>lumOf(p)-lumOf(r));
+    const tc=tp[Math.floor(tp.length*0.1)];
+    /* a hairline plots lighter than its pen: same pen as the text when the
+       line is lighter than it, and the weight is what the paler pixel implies */
+    const lc=medRGB(lp), bgL=med(bp.map(lumOf)), lL=lumOf(lc), tL=lumOf(tc);
+    const pale=lL>tL && bgL>tL+20;
+    hits.push({ F, gap:(line-0.5)/F, wf:fw/fh, tc, dec:/[.,]/.test(n.str),
+      lc:pale?tc:lc, lw:pale?Math.max(0.3,Math.min(thick, thick*(bgL-lL)/(bgL-tL))):thick });
+  });
+  if(hits.length<2) return null;
+  /* the plan's dimension style is the one most of them share */
+  let grp=[];
+  hits.forEach(a=>{ const g=hits.filter(b=>Math.abs(b.F-a.F)<=a.F*0.08); if(g.length>grp.length) grp=g; });
+  if(grp.length<2) return null;
+  const F=med(grp.map(g=>g.F));
+  return {
+    fs:F/BASE.height, lw:med(grp.map(g=>g.lw))/BASE.height,
+    gap:med(grp.map(g=>g.gap)), wf:med(grp.map(g=>g.wf)),
+    clr:rgbHex(medRGB(grp.map(g=>g.tc))), lclr:rgbHex(medRGB(grp.map(g=>g.lc))),
+    dot:DIM_REF.dot, ext:DIM_REF.ext,
+    unit:grp.filter(g=>g.dec).length>grp.length/2?'m':'cm', src:'plan', n:grp.length
+  };
+}
+function dimTxt(m){ return dimStyle().unit==='m' ? m.toFixed(2) : String(Math.round(m*100)); }
+function dimStyleOut(){ const S=dimStyle(); return {fs:S.fs, lw:S.lw, gap:S.gap, dot:S.dot, ext:S.ext, wf:S.wf, clr:S.clr, lclr:S.lclr}; }
+
+/* the opaque text background takes the colour the text sits on — the
+   room's fill — so the number reads like the plan's own */
+function dimBg(d,S){
+  const lt=d.lt!=null?d.lt:0.5, key=[d.x1,d.y1,d.x2,d.y2,lt,S.fs].join();
+  if(d.bg && d.bgK===key) return;
+  const I=inkData(), len=Math.hypot((d.x2-d.x1)*I.w,(d.y2-d.y1)*I.h)||1;
+  let ux=(d.x2-d.x1)*I.w/len, uy=(d.y2-d.y1)*I.h/len;
+  if(ux<-1e-6||(Math.abs(ux)<1e-6&&uy>0)){ ux=-ux; uy=-uy; }
+  const F=S.fs*I.h, off=S.gap*F+0.36*F, r=Math.max(2,Math.round(F*0.8));
+  const cx=Math.round((d.x1+(d.x2-d.x1)*lt)*I.w+uy*off), cy=Math.round((d.y1+(d.y2-d.y1)*lt)*I.h-ux*off);
+  const cnt=new Map();
+  for(let y=cy-r;y<=cy+r;y++) for(let x=cx-r;x<=cx+r;x++){
+    if(x<0||y<0||x>=I.w||y>=I.h) continue;
+    const i=(y*I.w+x)*4, p=[I.d[i],I.d[i+1],I.d[i+2]];
+    if(lumOf(p)<170) continue;
+    const k=(p[0]<<16)|(p[1]<<8)|p[2]; cnt.set(k,(cnt.get(k)||0)+1);
+  }
+  let best=0, col=0xffffff; cnt.forEach((v,k)=>{ if(v>best){ best=v; col=k; } });
+  d.bg='#'+col.toString(16).padStart(6,'0'); d.bgK=key;
+}
+
+/* ONE dimension painter — the live plan, the print composite and the
+   interactive export all draw with this exact function (see exportHtml) */
+function dimDraw(c,d,w,h,S,sel){
+  var x1=d.x1*w, y1=d.y1*h, x2=d.x2*w, y2=d.y2*h, len=Math.hypot(x2-x1,y2-y1);
+  if(len<0.5) return;
+  var ux=(x2-x1)/len, uy=(y2-y1)/len;
+  /* text reads left to right, or bottom to top on a vertical dimension */
+  if(ux<-1e-6||(Math.abs(ux)<1e-6&&uy>0)){ ux=-ux; uy=-uy; }
+  var vx=uy, vy=-ux;
+  var F=S.fs*h, lw=Math.max(0.6,S.lw*h), cap=0.716*F, gap=S.gap*F, e=S.ext*F;
+  var bg=d.bg||'#ffffff';
+  /* same colour as the plan's dimensions, darkened only as far as it takes
+     to stay legible (3:1) on a darker room fill */
+  function lumHex(hx){ var v=parseInt(hx.slice(1),16), c=[v>>16,(v>>8)&255,v&255].map(function(x){ x/=255; return x<=0.03928?x/12.92:Math.pow((x+0.055)/1.055,2.4); }); return 0.2126*c[0]+0.7152*c[1]+0.0722*c[2]; }
+  function ink(fg){ var b=lumHex(bg), f=fg;
+    for(var i=0;i<12 && (b+0.05)/(lumHex(f)+0.05)<3;i++){ var v=parseInt(f.slice(1),16); f='#'+[v>>16,(v>>8)&255,v&255].map(function(x){ return ('0'+Math.round(x*0.85).toString(16)).slice(-2); }).join(''); }
+    return f; }
+  var col=d.calib?'#0000FF':ink(S.clr), lcol=d.calib?'#0000FF':ink(S.lclr);
+  var lt=d.lt!=null?d.lt:0.5, mx=x1+(x2-x1)*lt, my=y1+(y2-y1)*lt, lbl=String(d.txt||d.label||'—');
+  c.save();
+  if(sel){
+    c.strokeStyle='#CFFF04'; c.lineWidth=lw+Math.max(5,F*0.4); c.lineCap='round';
+    c.beginPath(); c.moveTo(x1,y1); c.lineTo(x2,y2); c.stroke();
+  }
+  c.strokeStyle=lcol; c.lineWidth=lw; c.lineCap='butt';
+  c.beginPath(); c.moveTo(x1,y1); c.lineTo(x2,y2);
+  [[x1,y1],[x2,y2]].forEach(function(p){ c.moveTo(p[0]-vx*e,p[1]-vy*e); c.lineTo(p[0]+vx*e,p[1]+vy*e); });
+  c.stroke();
+  c.fillStyle=lcol;
+  var r=Math.max(lw*1.1, S.dot*F/2);
+  [[x1,y1],[x2,y2]].forEach(function(p){ c.beginPath(); c.arc(p[0],p[1],r,0,6.2832); c.fill(); });
+  c.font=F.toFixed(2)+'px Arial,Helvetica,sans-serif';
+  c.direction='ltr'; c.textAlign='center'; c.textBaseline='alphabetic';
+  var tw=c.measureText(lbl).width*S.wf, pad=0.12*F;
+  c.translate(mx,my); c.rotate(Math.atan2(uy,ux));
+  c.fillStyle=bg;
+  c.fillRect(-tw/2-pad, -(gap+cap+pad), tw+2*pad, gap+cap+pad+lw/2+0.5);
+  c.scale(S.wf,1); c.fillStyle=col;
+  c.fillText(lbl,0,-gap);
+  c.restore();
+}
+
+/* =====================================================================
+   9b. AUTO DIMENSIONS — a length and a width for every tagged room,
+   wall face to wall face, drawn exactly like a hand-drawn dimension.
+   Revit plan: cut straight from the room polygon (exact).
+   PDF plan: each room is measured from its colour fill, and every room
+   with an m² tag must match it. The scale is what most rooms agree on;
+   the sheet's own "1 : N" text is used only when the rooms confirm it.
+   ===================================================================== */
+/* Revit paints each room in its colour-scheme fill, and that fill runs exactly
+   to the room boundary — the finished wall face, the same line Revit's area is
+   measured to. Furniture is drawn on top of it, so the fill's outer edge is the
+   room's edge whatever stands inside. One flood from the tag gives the room. */
+/* the room's fill = the commonest light, non-white colour around its tag */
+function fillColorAt(I, cx, cy){
+  const W=I.w, H=I.h, d=I.d, cnt=new Map();
+  for(let dy=-30;dy<=30;dy+=2) for(let dx=-30;dx<=30;dx+=2){
+    const x=cx+dx, y=cy+dy; if(x<0||y<0||x>=W||y>=H) continue;
+    const i=(y*W+x)*4, r=d[i], g=d[i+1], b=d[i+2];
+    if(r>=250&&g>=250&&b>=250) continue;
+    if(0.299*r+0.587*g+0.114*b<120) continue;
+    const k=(r<<16)|(g<<8)|b; cnt.set(k,(cnt.get(k)||0)+1);
+  }
+  let col=-1, best=0; cnt.forEach((v,k)=>{ if(v>best){ best=v; col=k; } });
+  return best<40 ? -1 : col;
+}
+function fillBox(cx, cy){
+  const I=inkData(), W=I.w, H=I.h, d=I.d;
+  const col=fillColorAt(I, cx, cy);
+  if(col<0) return null;
+  const R=col>>16, G=(col>>8)&255, B=col&255;
+  const same=i=>Math.abs(d[i*4]-R)<=6&&Math.abs(d[i*4+1]-G)<=6&&Math.abs(d[i*4+2]-B)<=6;
+  /* seed on the nearest pixel of that colour */
+  let seed=-1;
+  for(let r=0;r<=30&&seed<0;r++) for(let a=0;a<Math.max(1,r*8)&&seed<0;a++){
+    const x=Math.round(cx+r*Math.cos(a*2*Math.PI/Math.max(1,r*8))), y=Math.round(cy+r*Math.sin(a*2*Math.PI/Math.max(1,r*8)));
+    if(x>=0&&y>=0&&x<W&&y<H&&same(y*W+x)) seed=y*W+x;
+  }
+  if(seed<0) return null;
+  const seen=new Uint8Array(W*H), st=new Int32Array(W*H);
+  const rMin=new Int32Array(H).fill(W), rMax=new Int32Array(H).fill(-1);
+  const cMin=new Int32Array(W).fill(H), cMax=new Int32Array(W).fill(-1);
+  let sp=0, n=0, x0=W, x1=-1, y0=H, y1=-1, cap=W*H*0.2;
+  st[sp++]=seed; seen[seed]=1;
+  while(sp){
+    const i=st[--sp], x=i%W, y=(i-x)/W;
+    if(++n>cap) return null;                        /* leaked into the whole sheet */
+    if(x<rMin[y]) rMin[y]=x; if(x>rMax[y]) rMax[y]=x;
+    if(y<cMin[x]) cMin[x]=y; if(y>cMax[x]) cMax[x]=y;
+    if(x<x0)x0=x; if(x>x1)x1=x; if(y<y0)y0=y; if(y>y1)y1=y;
+    if(x>0  &&!seen[i-1]&&same(i-1)){ seen[i-1]=1; st[sp++]=i-1; }
+    if(x<W-1&&!seen[i+1]&&same(i+1)){ seen[i+1]=1; st[sp++]=i+1; }
+    if(y>0  &&!seen[i-W]&&same(i-W)){ seen[i-W]=1; st[sp++]=i-W; }
+    if(y<H-1&&!seen[i+W]&&same(i+W)){ seen[i+W]=1; st[sp++]=i+W; }
+  }
+  if(x1-x0<8||y1-y0<8||x0<=0||y0<=0||x1>=W-1||y1>=H-1) return null;
+  /* furniture only ever cuts a row of fill short, never widens it — so the
+     flood's outer bounds are the room's walls, even when desks stand against
+     them on most rows */
+  const rows=[], cols=[];
+  for(let y=y0;y<=y1;y++) if(rMax[y]>=0) rows.push([rMin[y],rMax[y],y]);
+  for(let x=x0;x<=x1;x++) if(cMax[x]>=0) cols.push([cMin[x],cMax[x],x]);
+  const L={v:x0,n:rows.filter(s=>s[0]<=x0+1).length,of:rows.length}, Rr={v:x1,n:rows.filter(s=>s[1]>=x1-1).length,of:rows.length};
+  const T_={v:y0,n:cols.filter(s=>s[0]<=y0+1).length,of:cols.length}, Bb={v:y1,n:cols.filter(s=>s[1]>=y1-1).length,of:cols.length};
+  const pick=(list,a,b,lo,hi,f)=>{
+    const want=lo+(hi-lo)*f; let at=null;
+    list.forEach(s=>{ if(Math.abs(s[0]-a)<=1&&Math.abs(s[1]-b)<=1&&(at==null||Math.abs(s[2]-want)<Math.abs(at-want))) at=s[2]; });
+    return at;
+  };
+  /* the line goes on a row that touches both walls; an L-shaped room may have none */
+  let hy=pick(rows,L.v,Rr.v,T_.v,Bb.v,0.22), vx=pick(cols,T_.v,Bb.v,L.v,Rr.v,0.78);
+  const rect=hy!=null&&vx!=null;
+  if(hy==null) hy=Math.round(y0+(y1-y0)*0.22);
+  if(vx==null) vx=Math.round(x0+(x1-x0)*0.78);
+  /* what lies just past each edge: a wall (gray cut, dark ink) or the next
+     room's fill. A desk row is a thin line with white behind it — that edge
+     is furniture, not the room's end */
+  const solid=(x,y)=>{ if(x<0||y<0||x>=W||y>=H) return false;
+    const i=(y*W+x)*4; return !(d[i]>=235&&d[i+1]>=235&&d[i+2]>=235); };
+  const edge=(fixed, from, to, dir, horiz)=>{
+    let ok=0, n=0;
+    for(let t=from;t<=to;t+=Math.max(1,Math.round((to-from)/24))){
+      n++;
+      let hit=0; for(let o=3;o<=7;o++){ const q=fixed+dir*o; if(horiz?solid(t,q):solid(q,t)) hit++; }
+      if(hit>=4) ok++;
+    }
+    return n?ok/n:0;
+  };
+  const walls=Math.min(edge(L.v,T_.v,Bb.v,-1,false), edge(Rr.v,T_.v,Bb.v,1,false),
+                       edge(T_.v,L.v,Rr.v,-1,true),  edge(Bb.v,L.v,Rr.v,1,true));
+  return { x0:L.v, x1:Rr.v, y0:T_.v, y1:Bb.v, hy, vx, walls,
+    rect };
+}
+/* the value most rays agree on (±2px), not the mean — a door gap is a minority */
+function modeOf(vals){
+  const v=vals.filter(x=>x!=null).sort((a,b)=>a-b);
+  if(!v.length) return null;
+  let best=v[0], bestN=0;
+  v.forEach(a=>{ const n=v.filter(b=>Math.abs(b-a)<=2).length; if(n>bestN){ bestN=n; best=a; } });
+  return { v:best, n:bestN, of:v.length };
+}
+
+/* Revit's wall cut is one pure gray, the commonest neutral tone on the sheet */
+function wallGray(){
+  const I=inkData(), d=I.d, n=I.w*I.h;
+  if(I.gray!==undefined) return I.gray;
+  const hist=new Uint32Array(256);
+  for(let i=0;i<n;i+=3){ const r=d[i*4]; if(r>90&&r<240&&r===d[i*4+1]&&r===d[i*4+2]) hist[r]++; }
+  let g=0; for(let v=1;v<256;v++) if(hist[v]>hist[g]) g=v;
+  I.gray = hist[g]>n/3*0.01 ? g : null;
+  return I.gray;
+}
+/* walk each edge outward, across furniture, until a wall (the gray cut) or
+   another room's fill; the step most rows agree on moves the edge */
+function extendBox(b, maxExt){
+  const I=inkData(), W=I.w, H=I.h, d=I.d, gray=wallGray();
+  if(gray==null) return null;
+  const stop=(x,y)=>{
+    if(x<0||y<0||x>=W||y>=H) return true;
+    const i=(y*W+x)*4, r=d[i], g=d[i+1], bl=d[i+2];
+    if(Math.abs(r-gray)<=4&&Math.abs(g-gray)<=4&&Math.abs(bl-gray)<=4) return true;
+    const sat=Math.max(r,g,bl)-Math.min(r,g,bl);
+    return sat>12 && (0.299*r+0.587*g+0.114*bl)<250;   /* a coloured room fill */
+  };
+  const walk=(x,y,dx,dy)=>{ for(let s=0;s<=maxExt;s++) if(stop(x+dx*s,y+dy*s)) return s; return null; };
+  const side=(fixed,lo,hi,dx,dy)=>{
+    const vals=[];
+    for(let f=0.2;f<=0.8;f+=0.05){
+      const t=Math.round(lo+(hi-lo)*f);
+      vals.push(dx ? walk(fixed+dx,t,dx,0) : walk(t,fixed+dy,0,dy));
+    }
+    const m=modeOf(vals);
+    return m && m.n>=vals.length*0.4 ? m.v : null;
+  };
+  const l=side(b.x0,b.y0,b.y1,-1,0), r=side(b.x1,b.y0,b.y1,1,0);
+  const t=side(b.y0,b.x0,b.x1,0,-1), bo=side(b.y1,b.x0,b.x1,0,1);
+  if(l==null||r==null||t==null||bo==null) return null;
+  const x0=b.x0-l, x1=b.x1+r, y0=b.y0-t, y1=b.y1+bo;
+  return { x0, x1, y0, y1, hy:Math.round(y0+(y1-y0)*0.22), vx:Math.round(x0+(x1-x0)*0.78), walls:1 };
+}
+
+/* the sheet's own scale: "1 : 100" in its text, and the pixel size of a point */
+function pdfScale(parse){
+  if(!parse.vp1 || !BASE) return null;
+  const counts={};
+  (parse.allText||[]).forEach(t=>{ const m=/(?:^|\D)1\s*:\s*(\d{2,4})(?:\D|$)/.exec(t); if(m) counts[m[1]]=(counts[m[1]]||0)+1; });
+  const best=Object.keys(counts).sort((a,b)=>counts[b]-counts[a])[0];
+  if(!best) return null;
+  const pxPerPt=BASE.width/parse.vp1.width;
+  return { den:+best, mPerPx:(+best)*0.0254/72/pxPerPt };
+}
+
+function autoDimsPdf(){
+  const W=BASE.width, H=BASE.height;
+  const boxes=[];
+  STATE.parse.tags.forEach((t,i)=>{
+    /* a room with no colour fill (an AutoCAD sheet) is not measured: rays on
+       bare ink stop at every desk and chair, and a wrong length is worse than none */
+    const b=fillBox(Math.round(t.nx*W), Math.round(t.ny*H));
+    if(!b || b.x1-b.x0<8 || b.y1-b.y0<8) return;
+    /* two tags in one room give it one pair of dimensions */
+    if(boxes.some(o=>Math.abs(o.x0-b.x0)<4&&Math.abs(o.x1-b.x1)<4&&Math.abs(o.y0-b.y0)<4&&Math.abs(o.y1-b.y1)<4)) return;
+    boxes.push(Object.assign(b, { tag:t, i }));
+  });
+
+  /* scale: every filled room with an m² tag proposes one (√area ÷ its box);
+     the largest group that agrees within 2% wins — a room only partly found
+     (desks splitting its fill) proposes a wrong one and stays outside the group */
+  const px2=b=>(b.x1-b.x0+1)*(b.y1-b.y0+1);
+  const props=boxes.filter(b=>b.tag.area>0&&b.rect).map(b=>Math.sqrt(b.tag.area/px2(b)));
+  let grp=[];
+  props.forEach(a=>{ const g=props.filter(b=>Math.abs(b/a-1)<=0.02); if(g.length>grp.length) grp=g; });
+  const fromArea=grp.length>=3 ? grp.slice().sort((a,b)=>a-b)[grp.length>>1] : null;
+  const txt=pdfScale(STATE.parse);
+  let cal=null;
+  /* the sheet's "1:N" is exact only if the sheet was printed at it — a fit-to-page
+     print says 1:100 and is not; the rooms decide */
+  if(txt && fromArea && Math.abs(fromArea/txt.mPerPx-1)<=0.015)
+    cal={ mPerPx:txt.mPerPx, src:'text', den:txt.den, check:fromArea/txt.mPerPx-1, n:grp.length };
+  else if(fromArea) cal={ mPerPx:fromArea, src:'area', n:grp.length, den:txt?txt.den:null, check:txt?fromArea/txt.mPerPx-1:null };
+  else if(txt) cal={ mPerPx:txt.mPerPx, src:'text', den:txt.den, n:0 };
+
+  /* a room with an m² tag must measure to it (±12%) — otherwise its box is
+     incomplete and no dimension is better than a wrong one */
+  const k=cal?cal.mPerPx:null;
+  /* desks and cabinets stand on the fill against a wall, so a short box gets
+     one chance: each edge walks out over furniture to the wall behind it */
+  if(k) boxes.forEach((b,j)=>{
+    if(!(b.tag.area>0)) return;
+    const r=px2(b)*k*k/b.tag.area;
+    if(r>=0.88 && r<=1.12) return;
+    const e=extendBox(b, Math.round(1.3/k));
+    if(e) boxes[j]=Object.assign(e,{ tag:b.tag, i:b.i });
+  });
+  const kept=boxes.filter(b=>{
+    /* no room is narrower than a door */
+    if(k && Math.min(b.x1-b.x0+1, b.y1-b.y0+1)*k<0.9) return false;
+    if(!(b.tag.area>0) || !k) return b.rect && b.walls>=0.6;
+    const r=px2(b)*k*k/b.tag.area;
+    return r>=0.88 && r<=1.12;
+  });
+  STATE.autoSkipped=STATE.parse.tags.length-kept.length;
+  return { boxes:kept, cal };
+}
+
+/* Revit: cut a horizontal and a vertical line through the polygon itself */
+function polyCut(poly, axis, at){
+  const xs=[];
+  for(let i=0;i<poly.length;i++){
+    const a=poly[i], b=poly[(i+1)%poly.length];
+    const ua=axis==='h'?a.y:a.x, ub=axis==='h'?b.y:b.x;
+    if((ua<=at&&ub>at)||(ub<=at&&ua>at)){
+      const t=(at-ua)/(ub-ua);
+      xs.push(axis==='h'?a.x+(b.x-a.x)*t:a.y+(b.y-a.y)*t);
+    }
+  }
+  xs.sort((a,b)=>a-b);
+  let best=null;
+  for(let i=0;i+1<xs.length;i+=2) if(!best||xs[i+1]-xs[i]>best[1]-best[0]) best=[xs[i],xs[i+1]];
+  return best;
+}
+function autoDimsRevit(){
+  const G=STATE.parse.geo;
+  const N=p=>({ nx:(p.x-G.minX+G.margin)*G.scale/G.w, ny:(G.h-(p.y-G.minY+G.margin)*G.scale)/G.h });
+  const out=[];
+  STATE.parse.tags.forEach((t,i)=>{
+    const P=t.poly; if(!P||P.length<3) return;
+    const xs=P.map(p=>p.x), ys=P.map(p=>p.y);
+    const minX=Math.min(...xs), maxX=Math.max(...xs), minY=Math.min(...ys), maxY=Math.max(...ys);
+    const hy=minY+(maxY-minY)*0.78, vx=minX+(maxX-minX)*0.78;   /* world Y is up: 0.78 = upper part */
+    const h=polyCut(P,'h',hy), v=polyCut(P,'v',vx);
+    if(h) out.push({ a:N({x:h[0],y:hy}), b:N({x:h[1],y:hy}), i });
+    if(v) out.push({ a:N({x:vx,y:v[1]}), b:N({x:vx,y:v[0]}), i, lt:0.72 });
+  });
+  return out;
+}
+
+/* replaces the room dimensions; a hand calibration is never overwritten */
+function autoDims(){
+  if(!STATE.parse || !BASE || !STATE.parse.tags.length) return 0;
+  STATE.dims=STATE.dims.filter(d=>d.auto!=='room');
+  const segs=[];
+  STATE.autoSkipped=0;
+  if(STATE.parse.geo){
+    autoDimsRevit().forEach(s=>segs.push({ x1:s.a.nx, y1:s.a.ny, x2:s.b.nx, y2:s.b.ny, i:s.i, lt:s.lt }));
+  } else {
+    const { boxes, cal }=autoDimsPdf();
+    const handCal=STATE.calib && !STATE.calib.src;
+    if(cal && !handCal) STATE.calib=cal;
+    const W=BASE.width, H=BASE.height;
+    boxes.forEach(b=>{
+      segs.push({ x1:b.x0/W, y1:(b.hy+0.5)/H, x2:(b.x1+1)/W, y2:(b.hy+0.5)/H, i:b.i });
+      segs.push({ x1:(b.vx+0.5)/W, y1:b.y0/H, x2:(b.vx+0.5)/W, y2:(b.y1+1)/H, i:b.i, lt:0.72 });
+    });
+  }
+  segs.forEach(s=>STATE.dims.push({ id:'d'+(STATE.seq++), x1:s.x1, y1:s.y1, x2:s.x2, y2:s.y2,
+    norm:'', auto:'room', room:s.i, lt:s.lt }));
+  STATE.autoDims='on';
+  relabelMeasures();
+  return segs.length;
+}
+function roomDimName(d){
+  const r=STATE.parse&&STATE.parse.tags[d.room];
+  return r ? (r.name||'') : '';
+}
+function autoDimsBtn(){ const n=autoDims(); refresh(); toast(T('tAutoDims', n)); }
+function autoDimsOff(){
+  STATE.dims=STATE.dims.filter(d=>d.auto!=='room'); STATE.autoDims='off';
+  refresh(); toast(T('tAutoDimsOff'));
+}
+/* a short line describing where the scale came from, for the scale card */
+function scaleSource(){
+  const c=STATE.calib; if(!c) return '';
+  if(STATE.parse && STATE.parse.geo) return T('scRevit');
+  if(c.src==='text') return T('scText', c.den, c.n, c.check!=null?Math.abs(c.check*100).toFixed(1):null);
+  if(c.src==='area') return T('scArea', c.n, c.den);
+  return T('scHand');
 }
 const normName = n => L(n.n);
 function normReq(n){
@@ -2764,11 +3271,13 @@ function skipNextClick(){ SKIPUNTIL=Date.now()+300; }
 $('#planBox').addEventListener('click', e=>{
   if(e.target.closest('.sym')) return;
   if(Date.now()<SKIPUNTIL){ SKIPUNTIL=0; return; }
-  const p=planPoint(e);
+  const p=CADTOOLS.includes(TOOL)?cadPoint(e):planPoint(e);
   if(!TOOL){
     const {w,h}=boxSize(); const mx=p.nx*w, my=p.ny*h;
     const hit=MARKERS.find(m=>mx>=m.bx-5&&mx<=m.bx+m.S+5&&my>=m.by-5&&my<=m.by+m.S+5);
     if(hit){ selectNote(hit.id); return; }
+    const dh=LAYERS.dims && hitDim(mx,my,w,h);
+    if(dh){ SEL=dh.id; drawOverlay(); placeSymbols(); return; }
     const ah=STATE.areas.find(a=>pointInPoly(p,a.pts));
     if(ah){ SEL=ah.id; setTab('sym'); drawOverlay(); return; }
     SEL=null; drawOverlay(); placeSymbols();
@@ -2807,7 +3316,13 @@ $('#planBox').addEventListener('click', e=>{
   }
   if(TOOL==='dim'||TOOL==='calib'){
     if(!PENDING){ PENDING={kind:'dim', x1:p.nx,y1:p.ny,mx:p.nx,my:p.ny}; drawOverlay(); return; }
-    const d={ id:'d'+(STATE.seq++), x1:PENDING.x1, y1:PENDING.y1, x2:p.nx, y2:p.ny, calib:TOOL==='calib',
+    finishDim(p.nx, p.ny);
+  }
+});
+function finishDim(x2, y2){
+  CAD.typed='';
+  {
+    const d={ id:'d'+(STATE.seq++), x1:PENDING.x1, y1:PENDING.y1, x2, y2, calib:TOOL==='calib',
       norm:TOOL==='calib'?'':STATE.normArm };
     const px=dimPx(d);
     if(TOOL==='calib'){
@@ -2827,16 +3342,22 @@ $('#planBox').addEventListener('click', e=>{
       const cm=parseFloat(String(v).replace(',','.'));
       if(cm>0) d.manualM=cm/100;
     }
-    STATE.dims.push(d); PENDING=null; armTool(null);
+    STATE.dims.push(d); PENDING=null;   /* stays armed, like DIMLINEAR on repeat — Esc ends it */
     relabelMeasures(); refresh();
   }
-});
+}
 $('#planBox').addEventListener('dblclick', e=>{
   if(TOOL==='area'&&PENDING&&PENDING.pts.length>=3){ e.preventDefault(); skipNextClick(); finishArea(); }
 });
 $('#planBox').addEventListener('mousemove', e=>{
-  if(PENDING&&PENDING.kind!=='cloud'){ const p=planPoint(e); PENDING.mx=p.nx; PENDING.my=p.ny; drawOverlay(); }
+  const cad=CADTOOLS.includes(TOOL);
+  const p=cad?cadPoint(e):planPoint(e);
+  CAD.cur=cad?p:null;
+  if(PENDING&&PENDING.kind!=='cloud'){ PENDING.mx=p.nx; PENDING.my=p.ny; }
+  cadStatus(p);
+  if(cad||(PENDING&&PENDING.kind!=='cloud')) drawOverlay();
 });
+$('#planBox').addEventListener('mouseleave', ()=>{ if(CAD.cur){ CAD.cur=null; drawOverlay(); } cadStatus(null); });
 
 function finishArea(){
   if(!PENDING||PENDING.pts.length<3){ PENDING=null; armTool(null); drawOverlay(); return; }
@@ -2899,6 +3420,8 @@ function finishCloud(){
 $('#planBox').addEventListener('dragover', e=>e.preventDefault());
 $('#planBox').addEventListener('drop', e=>{
   e.preventDefault();
+  /* files dropped on an open plan join the plan list */
+  if(e.dataTransfer.files.length) return routeFiles(e.dataTransfer.files);
   const k=e.dataTransfer.getData('sym'); if(!k) return;
   const p=planPoint(e);
   STATE.symbols.push({id:'s'+(STATE.seq++), k, nx:p.nx, ny:p.ny, label:''});
@@ -2908,13 +3431,284 @@ function dimPx(d){
   const dx=(d.x2-d.x1)*BASE.width, dy=(d.y2-d.y1)*BASE.height;
   return Math.hypot(dx,dy);
 }
+
+/* =====================================================================
+   10a. DRAFTING AIDS — the way a DWG viewer behaves.
+   SNAP (F3): the cursor locks onto dimension / area end points, and onto
+   the plan's own edges — a wall face, a partition — within a few pixels.
+   On a Revit plan the room boundary line IS the wall face, so it snaps to
+   the line's centre. ORTHO (F8, or hold Shift to flip it): dimensions and
+   area edges run square to the sheet. While drawing, the status bar reads
+   the live length / ΔX / ΔY (or area / perimeter); with the first point of
+   a dimension down, typing a length and Enter ends it at exactly that.
+   ===================================================================== */
+const CAD={ snap:true, ortho:true, cur:null, typed:'' };
+const CADTOOLS=['dim','calib','area'];
+function cadAnchor(){
+  if(!PENDING) return null;
+  if(PENDING.kind==='dim' && PENDING.x1!=null) return {x:PENDING.x1, y:PENDING.y1};
+  if(PENDING.kind==='area' && PENDING.pts.length) return PENDING.pts[PENDING.pts.length-1];
+  return null;
+}
+function cadPoint(e){
+  const p=planPoint(e);
+  let x=p.nx, y=p.ny, snap=null, axis=null;
+  if(!BASE) return {nx:x, ny:y, snap, axis};
+  const A=cadAnchor(), ortho=CAD.ortho!==!!e.shiftKey;
+  if(A && ortho){
+    axis=Math.abs((x-A.x)*BASE.width)>=Math.abs((y-A.y)*BASE.height)?'h':'v';
+    if(axis==='h') y=A.y; else x=A.x;
+  }
+  if(CAD.snap){
+    const s=snapEnd(x,y,axis,A)||snapEdge(x,y,axis);
+    if(s){ x=s.x; y=s.y; snap=s.kind; }
+  }
+  return {nx:x, ny:y, snap, axis};
+}
+function snapEnd(x,y,axis,A){
+  const {w,h}=boxSize(), pts=[];
+  STATE.dims.forEach(d=>pts.push({x:d.x1,y:d.y1},{x:d.x2,y:d.y2}));
+  STATE.areas.forEach(a=>(a.pts||[]).forEach(q=>pts.push(q)));
+  if(PENDING&&PENDING.kind==='area') PENDING.pts.forEach(q=>pts.push(q));
+  let best=null, bd=10;
+  pts.forEach(q=>{
+    if(A && q.x===A.x && q.y===A.y) return;
+    const dd=axis==='h'?Math.abs(q.x-x)*w : axis==='v'?Math.abs(q.y-y)*h : Math.hypot((q.x-x)*w,(q.y-y)*h);
+    if(dd<bd){ bd=dd; best=axis==='h'?{x:q.x,y}:axis==='v'?{x,y:q.y}:{x:q.x,y:q.y}; }
+  });
+  return best && Object.assign(best,{kind:'end'});
+}
+function snapEdge(x,y,axis){
+  const I=inkData(), {w}=boxSize(), r=Math.max(2,Math.ceil(8*I.w/Math.max(1,w)));
+  const X=x*I.w, Y=y*I.h, vec=vectorBase();
+  const L=(px,py)=>{ if(px<0||py<0||px>=I.w||py>=I.h) return 255; const i=(py*I.w+px)*4; return 0.299*I.d[i]+0.587*I.d[i+1]+0.114*I.d[i+2]; };
+  /* nearest place along one axis where the drawing changes tone sharply */
+  const scan=hor=>{
+    const ref=hor?X:Y, c0=Math.floor(ref), fix=hor?Math.floor(Y):Math.floor(X);
+    const at=i=>hor?L(i,fix):L(fix,i);
+    let best=null;
+    const take=pos=>{ const dd=Math.abs(pos-ref); if(dd<=r && (!best||dd<best.dd)) best={pos,dd}; };
+    if(vec){
+      let st=null;
+      for(let i=c0-r-8;i<=c0+r+8;i++){ const ink=at(i)<128; if(ink&&st==null) st=i; if(!ink&&st!=null){ take((st+i)/2); st=null; } }
+    } else {
+      for(let i=c0-r;i<=c0+r;i++){
+        const dv=Math.abs(at(i+1)-at(i));
+        const a=at(i-1), b=at(i+2);
+        if(dv>=25 && dv>=Math.abs(at(i)-a) && dv>=Math.abs(b-at(i+1)) && Math.abs(b-a)>=45){
+          /* sub-pixel: an anti-aliased edge pixel is part one tone, part the other */
+          const f=j=>Math.max(0,Math.min(1,(b-at(j))/(b-a)));
+          take(i+f(i)+f(i+1));
+        }
+      }
+    }
+    return best;
+  };
+  if(axis==='h'){ const b=scan(true); return b&&{x:b.pos/I.w, y, kind:'edge'}; }
+  if(axis==='v'){ const b=scan(false); return b&&{x, y:b.pos/I.h, kind:'edge'}; }
+  const bh=scan(true), bv=scan(false);
+  if(!bh&&!bv) return null;
+  return { x:bh?bh.pos/I.w:x, y:bv?bv.pos/I.h:y, kind:'edge' };
+}
+function drawCadCursor(c,w,h){
+  const p=CAD.cur;
+  if(!p || !CADTOOLS.includes(TOOL)) return;
+  const x=p.nx*w, y=p.ny*h;
+  c.save();
+  /* full-sheet crosshair, as in a CAD viewport */
+  c.strokeStyle='rgba(27,27,27,.28)'; c.lineWidth=1;
+  c.beginPath(); c.moveTo(0,y+0.5); c.lineTo(w,y+0.5); c.moveTo(x+0.5,0); c.lineTo(x+0.5,h); c.stroke();
+  if(p.snap){
+    const s=6;
+    c.strokeStyle='#1B1B1B'; c.lineWidth=3;
+    const mark=()=>{ c.beginPath();
+      if(p.snap==='end') c.rect(x-s,y-s,2*s,2*s);
+      else { c.moveTo(x,y-s-1); c.lineTo(x+s+1,y); c.lineTo(x,y+s+1); c.lineTo(x-s-1,y); c.closePath(); }
+      c.stroke(); };
+    mark(); c.strokeStyle='#CFFF04'; c.lineWidth=1.6; mark();
+  }
+  c.restore();
+}
+function cadToggle(k){
+  CAD[k]=!CAD[k];
+  const b=$('#cad'+k[0].toUpperCase()+k.slice(1)); if(b) b.classList.toggle('on',CAD[k]);
+  toast(k.toUpperCase()+' '+(CAD[k]?'ON':'OFF'));
+}
+function cadStatus(p){
+  const el=$('#cadRead'); if(!el) return;
+  const m=STATE.calib?STATE.calib.mPerPx:null, u=' '+T(dimStyle().unit==='m'?'uM':'uCm');
+  let t='';
+  if(BASE && m && PENDING && PENDING.kind==='dim' && PENDING.x1!=null){
+    const dx=Math.abs(PENDING.mx-PENDING.x1)*BASE.width*m, dy=Math.abs(PENDING.my-PENDING.y1)*BASE.height*m;
+    t=T('cadLen')+' '+dimTxt(Math.hypot(dx,dy))+u+'   ΔX '+dimTxt(dx)+'   ΔY '+dimTxt(dy);
+  } else if(BASE && m && PENDING && PENDING.kind==='area' && PENDING.pts.length>=2){
+    const pts=PENDING.pts.concat([{x:PENDING.mx,y:PENDING.my}]);
+    t=fmtM2(polyArea(pts))+'   '+T('perim')+' '+polyPerimeter(pts).toFixed(2)+' '+T('uM');
+  } else if(BASE && m && p){
+    t='X '+(p.nx*BASE.width*m).toFixed(2)+'   Y '+(p.ny*BASE.height*m).toFixed(2)+' '+T('uM');
+  }
+  if(CAD.typed) t+='   ⌨ '+CAD.typed+u+' ↵';
+  el.textContent=t;
+}
+function typedDim(){
+  const v=parseFloat(CAD.typed.replace(',','.'));
+  if(!(v>0)){ CAD.typed=''; cadStatus(CAD.cur); return; }
+  if(!STATE.calib){ CAD.typed=''; toast(T('tTypedNoCalib')); return; }
+  const lenM=dimStyle().unit==='m'?v:v/100, px=lenM/STATE.calib.mPerPx;
+  let dx=(PENDING.mx-PENDING.x1)*BASE.width, dy=(PENDING.my-PENDING.y1)*BASE.height;
+  const n=Math.hypot(dx,dy); if(n<1e-6){ dx=1; dy=0; } else { dx/=n; dy/=n; }
+  finishDim(PENDING.x1+dx*px/BASE.width, PENDING.y1+dy*px/BASE.height);
+}
+/* a click on a dimension line or its number selects it (Delete removes it) */
+function hitDim(mx,my,w,h){
+  const S=dimStyle(), F=S.fs*h;
+  let best=null, bd=Math.max(6,F*0.9);
+  STATE.dims.forEach(d=>{
+    const x1=d.x1*w, y1=d.y1*h, x2=d.x2*w, y2=d.y2*h, L2=(x2-x1)**2+(y2-y1)**2;
+    if(!L2) return;
+    const t=Math.max(0,Math.min(1,((mx-x1)*(x2-x1)+(my-y1)*(y2-y1))/L2));
+    const dd=Math.hypot(mx-(x1+t*(x2-x1)), my-(y1+t*(y2-y1)));
+    if(dd<bd){ bd=dd; best=d; }
+  });
+  return best;
+}
+
+/* ---- wheel zooms at the cursor, middle button pans — CAD habits ---- */
+$('#planHost').addEventListener('wheel', e=>{
+  if(!BASE || e.ctrlKey) return;
+  e.preventDefault();
+  const host=$('#planHost'), b=$('#planBox').getBoundingClientRect();
+  const fx=(e.clientX-b.left)/b.width, fy=(e.clientY-b.top)/b.height;
+  setZoom(ZOOM*(e.deltaY<0?1.2:1/1.2));
+  const nb=$('#planBox').getBoundingClientRect();
+  host.scrollLeft+=(nb.left+fx*nb.width)-e.clientX;
+  host.scrollTop+=(nb.top+fy*nb.height)-e.clientY;
+},{passive:false});
+$('#planHost').addEventListener('pointerdown', e=>{
+  if(e.button!==1) return;
+  e.preventDefault();
+  const host=$('#planHost'), sx=e.clientX, sy=e.clientY, l0=host.scrollLeft, t0=host.scrollTop;
+  host.setPointerCapture(e.pointerId); host.style.cursor='grabbing';
+  const mv=ev=>{ host.scrollLeft=l0-(ev.clientX-sx); host.scrollTop=t0-(ev.clientY-sy); };
+  const up=()=>{ host.removeEventListener('pointermove',mv); host.removeEventListener('pointerup',up); host.style.cursor=''; };
+  host.addEventListener('pointermove',mv); host.addEventListener('pointerup',up);
+});
+
+/* =====================================================================
+   10b. LAYERS — the plan's own layers next to the markup layers.
+   A PDF plotted with layers (AutoCAD / Revit "export layers") lists its
+   OCGs here and each one switches on and off. Every plan also gets the
+   room colour fills as a layer, and a fade for the whole drawing, like an
+   XREF fade, so the review marks stand out. Analysis always reads the
+   full, unfaded drawing — only the view changes.
+   ===================================================================== */
+const BASEV={ fills:true, fade:0, canvas:null, key:'', ocgCanvas:null, ocgFor:null, ocgKey:'' };
+function baseView(){
+  if(!BASE) return null;
+  const ocg=BASEV.ocgCanvas && BASEV.ocgFor===BASE;
+  if(BASEV.fills && !ocg) return BASE;
+  const key=(BASEV.fills?'f':'-')+(ocg?BASEV.ocgKey:'');
+  if(BASEV.canvas && BASEV.for===BASE && BASEV.key===key) return BASEV.canvas;
+  const src=ocg?BASEV.ocgCanvas:BASE, c=document.createElement('canvas');
+  c.width=src.width; c.height=src.height;
+  const x=c.getContext('2d',{willReadFrequently:true}); x.drawImage(src,0,0);
+  if(!BASEV.fills){
+    const cols=roomFills();
+    if(cols.length){
+      const im=x.getImageData(0,0,c.width,c.height), d=im.data;
+      for(let i=0;i<d.length;i+=4){
+        for(const q of cols) if(Math.abs(d[i]-q[0])<=6&&Math.abs(d[i+1]-q[1])<=6&&Math.abs(d[i+2]-q[2])<=6){ d[i]=d[i+1]=d[i+2]=255; break; }
+      }
+      x.putImageData(im,0,0);
+    }
+  }
+  BASEV.canvas=c; BASEV.for=BASE; BASEV.key=key;
+  return c;
+}
+/* the fill colours actually used by the tagged rooms */
+function roomFills(){
+  const I=inkData(), P=STATE.parse, set=new Map();
+  ((P&&P.tags)||[]).forEach(t=>{
+    if(t.nx==null) return;
+    const col=fillColorAt(I, Math.round(t.nx*I.w), Math.round(t.ny*I.h));
+    if(col>=0) set.set(col,1);
+  });
+  return [...set.keys()].map(k=>[k>>16,(k>>8)&255,k&255]);
+}
+function drawBase(c,w,h){
+  c.drawImage(baseView(),0,0,w,h);
+  if(BASEV.fade){ c.fillStyle='rgba(255,255,255,'+BASEV.fade+')'; c.fillRect(0,0,w,h); }
+}
+async function pdfLayers(){
+  const P=STATE.parse;
+  if(!P||!P.pdf) return [];
+  if(P.ocg) return P.ocg;
+  try{
+    const cfg=await P.pdf.getOptionalContentConfig(), g=cfg.getGroups()||{};
+    P.ocgCfg=cfg;
+    P.ocg=Object.keys(g).map(id=>({id, name:g[id].name||id, on:g[id].visible!==false}));
+  }catch(e){ P.ocg=[]; }
+  return P.ocg;
+}
+async function setPdfLayer(id,on){
+  const P=STATE.parse, L=(P.ocg||[]).find(l=>l.id===id);
+  if(!L) return;
+  L.on=on; P.ocgCfg.setVisibility(id,on);
+  if(P.ocg.every(l=>l.on)){ BASEV.ocgCanvas=null; }
+  else {
+    const c=document.createElement('canvas'); c.width=BASE.width; c.height=BASE.height;
+    const vp=P.page.getViewport({scale:BASE.width/P.vp1.width});
+    await P.page.render({canvasContext:c.getContext('2d'), viewport:vp, intent:'print',
+      optionalContentConfigPromise:Promise.resolve(P.ocgCfg)}).promise;
+    BASEV.ocgCanvas=c; BASEV.ocgFor=BASE; BASEV.ocgKey=P.ocg.map(l=>l.on?1:0).join('');
+  }
+  layout();
+}
+function closeLayerPop(){ const p=$('#layerPop'); if(p) p.classList.remove('on'); }
+async function toggleLayerPop(e){
+  if(e) e.stopPropagation();
+  const p=$('#layerPop');
+  if(p.classList.contains('on')){ p.classList.remove('on'); return; }
+  await renderLayerPop(); p.classList.add('on');
+}
+async function renderLayerPop(){
+  const ocg=await pdfLayers();
+  const ck=(on,act,lbl,extra)=>`<label class="lrow"><input type="checkbox" ${on?'checked':''} onchange="${act}"><span>${esc(lbl)}</span>${extra||''}</label>`;
+  const cnt=n=>`<i class="lcnt">${n}</i>`;
+  const S=dimStyle();
+  $('#layerPop').innerHTML=
+    `<div class="lph">${T('lyPlanTitle')}</div>`+
+    (ocg.length ? ocg.map(l=>ck(l.on,`setPdfLayer('${l.id}',this.checked)`,l.name)).join('')
+                : `<div class="lnote">${T('lyNoOcg')}</div>`)+
+    ck(BASEV.fills,`BASEV.fills=this.checked;layout()`,T('lyFills'))+
+    `<label class="lrow"><span>${T('lyFade')}</span><input type="range" min="0" max="0.8" step="0.1" value="${BASEV.fade}" oninput="BASEV.fade=+this.value;this.nextElementSibling.textContent=Math.round(this.value*100)+'%';layout()"><i class="lcnt">${Math.round(BASEV.fade*100)}%</i></label>`+
+    `<div class="lph">${T('lyMarkTitle')}</div>`+
+    ck(LAYERS.dims,`toggleLayer('dims')`,T('lyDims'),cnt(STATE.dims.length))+
+    ck(LAYERS.areas,`toggleLayer('areas')`,T('lyAreas'),cnt(STATE.areas.length))+
+    ck(LAYERS.notes,`toggleLayer('notes')`,T('lyNotes'),cnt(STATE.notes.length))+
+    ck(LAYERS.syms,`toggleLayer('syms')`,T('lySyms'),cnt(STATE.symbols.length))+
+    `<div class="lnote">${S.src==='plan'?T('dsPlan',S.n):T('dsRef')}</div>`;
+}
+document.addEventListener('click', e=>{ const p=$('#layerPop'); if(p && p.classList.contains('on') && !e.target.closest('#layerPop')) p.classList.remove('on'); });
 document.addEventListener('keydown', e=>{
   const typing = /INPUT|TEXTAREA/.test(document.activeElement.tagName) || document.activeElement.isContentEditable;
-  if(e.key==='Escape'){ armTool(null); PENDING=null; drawOverlay(); closeExportMenu(); }
+  if(e.key==='Escape'){ CAD.typed=''; armTool(null); PENDING=null; drawOverlay(); closeExportMenu(); closeLayerPop(); cadStatus(null); }
+  if(e.key==='F3'||e.key==='F8'){ e.preventDefault(); cadToggle(e.key==='F3'?'snap':'ortho'); return; }
+  /* typed length: with the first point down, type the length and Enter */
+  if(!typing && TOOL==='dim' && PENDING && PENDING.x1!=null && !e.ctrlKey && !e.metaKey){
+    if(/^[0-9.,]$/.test(e.key)){ e.preventDefault(); CAD.typed+=e.key; cadStatus(CAD.cur); return; }
+    if(e.key==='Backspace' && CAD.typed){ e.preventDefault(); CAD.typed=CAD.typed.slice(0,-1); cadStatus(CAD.cur); return; }
+    if(e.key==='Enter' && CAD.typed){ e.preventDefault(); typedDim(); return; }
+  }
+  if(!typing && !TOOL && !e.ctrlKey && !e.metaKey && !e.altKey){
+    const k={d:'dim', a:'area', s:'smart'}[e.key.toLowerCase()];
+    if(k && BASE){ e.preventDefault(); armTool(k); return; }
+  }
   if(e.key==='Enter' && TOOL==='area' && PENDING && PENDING.pts.length>=3 && !typing){
     e.preventDefault(); finishArea();
   }
   if((e.key==='Delete'||e.key==='Backspace') && SEL && !typing){
+    STATE.dims=STATE.dims.filter(d=>d.id!==SEL);
     STATE.symbols=STATE.symbols.filter(s=>s.id!==SEL);
     STATE.areas=STATE.areas.filter(a=>a.id!==SEL);
     STATE.notes=STATE.notes.filter(n=>!(n.id===SEL&&(n.src==='custom'||n.src==='cloud')));
@@ -2923,7 +3717,7 @@ document.addEventListener('keydown', e=>{
 });
 
 function setZoom(z){ ZOOM=Math.min(6,Math.max(0.3,z)); layout(); }
-function toggleLayer(k){ LAYERS[k]=!LAYERS[k]; $('#ly'+k[0].toUpperCase()+k.slice(1)).classList.toggle('on',LAYERS[k]); layout(); }
+function toggleLayer(k){ LAYERS[k]=!LAYERS[k]; $('#ly'+k[0].toUpperCase()+k.slice(1)).classList.toggle('on',LAYERS[k]); layout(); renderPanel(); }
 function togglePanel(){ document.body.classList.toggle('collapsed'); $('#btnPanel').classList.toggle('on'); setTimeout(layout,30); }
 function clearMarkup(){
   if(!confirm(T('confirmClear'))) return;
@@ -3003,7 +3797,7 @@ function viewIron(){
      <div class="iron ${STATE.calib?'o':'w'}">
        <div class="ih"><span class="chip ${STATE.calib?'o':'w'}">${STATE.calib?T('scaleOn'):T('scaleOff')}</span>
        <span class="it">${T('scaleLabel')}</span></div>
-       <div class="ib">${STATE.calib?T('scaleOnMsg'):T('scaleOffMsg')}</div>
+       <div class="ib">${STATE.calib?esc(scaleSource())+' '+T('scaleOnMsg'):T('scaleOffMsg')}</div>
        <div class="cact"><button class="xb" onclick="armTool('calib')">${T('calibNow')}</button></div>
      </div>`;
 }
@@ -3226,11 +4020,18 @@ function viewSymbols(){
     </div>`;
   }).join('') : `<div class="empty">${T('noSyms')}</div>`;
 
-  h+=`<div class="grp-title">${T('dimsTitle')} · ${STATE.dims.length}</div>`;
+  h+=`<div class="grp-title">${T('dimsTitle')} · ${STATE.dims.length}</div>
+    <div class="cact" style="margin-bottom:8px">
+      <button class="xb" onclick="autoDimsBtn()">${T('autoDimsBtn')}</button>
+      ${STATE.dims.some(d=>d.auto==='room')?`<button class="xb" onclick="autoDimsOff()">${T('autoDimsOffBtn')}</button>`:''}
+      <button class="xb" onclick="toggleLayer('dims')">${T(LAYERS.dims?'dimsHideBtn':'dimsShowBtn')}</button>
+    </div>
+    ${STATE.calib?`<div class="cb" style="margin-bottom:8px;opacity:.7">${esc(scaleSource())}</div>`:''}
+    ${STATE.autoSkipped&&STATE.autoDims==='on'?`<div class="cb" style="margin-bottom:8px;color:#E38B00">${esc(T('autoSkipped',STATE.autoSkipped))}</div>`:''}`;
   h+= STATE.dims.length ? STATE.dims.map(d=>`
     <div class="card" style="border-inline-start-color:${d.calib?'#0000FF':DIM_CLR}"><div class="ch">
       <span class="num" style="background:${d.calib?'#0000FF':DIM_CLR}">↔</span>
-      <span class="ct">${esc(d.label||'—')}${d.calib?esc(T('calibLine')):''}</span>
+      <span class="ct">${esc(d.label||'—')}${d.calib?esc(T('calibLine')):''}${d.auto==='room'?esc(T('autoDimTag', roomDimName(d))):''}</span>
       <button class="xb" onclick="STATE.dims=STATE.dims.filter(x=>x.id!=='${d.id}');refresh()">${T('del')}</button>
     </div>${d.calib?'':`<div class="asg"><label>${T('nLbl')}</label>
       <select onchange="setDimNorm('${d.id}',this.value)">${normOptions(d.norm||'')}</select></div>`}
@@ -3350,6 +4151,11 @@ async function run(parse, prebuiltBase){
   $('#workView').classList.add('on');
 
   if(prebuiltBase) BASE=prebuiltBase; else await renderBase(parse.page);
+  /* every room gets a length and a width, unless they were removed on this plan */
+  if(STATE.autoDims!=='off' && !STATE.dims.some(d=>d.auto==='room')){
+    autoDims();
+    STATE.ironR=ironChecks(parse, STATE.rooms);
+  }
   layout(); renderPanel();
 }
 
@@ -3456,7 +4262,7 @@ function renderRoomsBase(rooms){
     c.fillText(areaM2?areaM2.toFixed(1)+' '+T('uM2'):'', cpx.x, cpx.y+8);
     r._centroidPx={x:cpx.x/w, y:cpx.y/h};
   });
-  return { canvas:cv, w, h, scale, minX, minY, maxX, maxY };
+  return { canvas:cv, w, h, scale, margin, minX, minY, maxX, maxY };
 }
 
 async function applyRoomExport(exp, levelHint){
@@ -3485,7 +4291,8 @@ async function applyRoomExport(exp, levelHint){
     };
   });
   const allText=picked.rooms.flatMap(r=>[r.name,r.department,r.comments].filter(v=>typeof v==='string'&&v).map(s=>s.toLowerCase()));
-  const parse={ tags, allText, fileName:(exp.meta&&exp.meta.fileName)||'revit-export', page:null, vp1:null };
+  const parse={ tags, allText, fileName:(exp.meta&&exp.meta.fileName)||'revit-export', page:null, vp1:null,
+    geo:{ w:built.w, h:built.h, scale:built.scale, margin:built.margin, minX:built.minX, minY:built.minY } };
 
   if(exp.meta){
     STATE.meta = Object.assign({}, STATE.meta, {
@@ -4146,10 +4953,73 @@ uploadView.addEventListener('dragover',e=>{ e.preventDefault(); dz.classList.add
 uploadView.addEventListener('dragleave',e=>{ if(e.target===uploadView||!uploadView.contains(e.relatedTarget)) dz.classList.remove('drag'); });
 uploadView.addEventListener('drop',e=>{
   e.preventDefault(); dz.classList.remove('drag');
-  if(e.dataTransfer.files[0]) routeFile(e.dataTransfer.files[0]);
+  routeFiles(e.dataTransfer.files);
 });
-$('#fileInput').addEventListener('change',e=>{ if(e.target.files[0]) routeFile(e.target.files[0]); });
+$('#fileInput').addEventListener('change',e=>{ routeFiles(e.target.files); e.target.value=''; });
 $('#jsonInput').addEventListener('change',e=>{ if(e.target.files[0]) readJson(e.target.files[0]); });
+
+/* =====================================================================
+   14a. SEVERAL PLANS — PDFs/images picked or dropped together become a list
+   in the header. One plan is open at a time; its hand markup (notes, clouds,
+   symbols, dimensions, areas, calibration, assignments, project details) is
+   parked when you switch away and put back when you return. The programme
+   JSON stays shared across all of them.
+   ===================================================================== */
+const PLAN_RE=/\.(pdf|png|jpe?g|webp)$/i;
+let PLANS=[], PLAN_I=-1;
+
+async function routeFiles(list){
+  const files=[...(list||[])];
+  if(!files.length) return;
+  const plans=files.filter(f=>PLAN_RE.test(f.name)), rest=files.filter(f=>!PLAN_RE.test(f.name));
+  if(plans.length){
+    const first=PLANS.length;
+    plans.forEach(f=>PLANS.push({file:f, review:null}));
+    if(plans.length>1) toast(T('tPlansAdded', plans.length));
+    await openPlan(first);
+  }
+  for(const f of rest) await routeFile(f);
+}
+
+function parkPlan(){
+  const p=PLANS[PLAN_I]; if(!p) return;
+  p.review={
+    /* hand notes, plus rule notes whose text was edited (buildNotes re-applies those by id) */
+    notes:STATE.notes.filter(n=>n.src==='custom'||n.src==='cloud'||n.edited),
+    symbols:STATE.symbols, dims:STATE.dims, areas:STATE.areas, manual:STATE.manual,
+    iron:STATE.iron, calib:STATE.calib, assign:STATE.assign, meta:STATE.meta, open:STATE.open,
+    autoDims:STATE.autoDims, autoSkipped:STATE.autoSkipped
+  };
+}
+
+async function openPlan(i){
+  if(!PLANS[i]) return;
+  parkPlan();
+  const r=PLANS[i].review||{};
+  Object.assign(STATE, {
+    notes:r.notes||[], symbols:r.symbols||[], dims:r.dims||[], areas:r.areas||[],
+    manual:r.manual||{}, iron:r.iron||{}, calib:r.calib||null, assign:r.assign||{},
+    meta:r.meta||{}, open:r.open||{}, autoDims:r.autoDims||'', autoSkipped:r.autoSkipped||0
+  });
+  SEL=null; PENDING=null;
+  if(TOOL) armTool(null);
+  PLAN_I=i;
+  renderPlanPick();
+  await routeFile(PLANS[i].file);
+}
+
+function pickPlan(v){
+  if(v==='add'){ renderPlanPick(); $('#fileInput').click(); return; }
+  openPlan(+v);
+}
+
+function renderPlanPick(){
+  const sel=$('#planPick');
+  sel.style.display=PLANS.length?'':'none';
+  sel.innerHTML=PLANS.map((p,i)=>`<option value="${i}">${i+1}/${PLANS.length} · ${esc(p.file.name.replace(PLAN_RE,''))}</option>`).join('')+
+    `<option value="add">${esc(T('planAdd'))}</option>`;
+  sel.value=String(PLAN_I);
+}
 
 function routeFile(f){
   const n=f.name.toLowerCase();
@@ -4433,25 +5303,45 @@ $('#rvtUploadBtn').addEventListener('click', ()=> $('#jsonInput').click());
 function readJson(f){
   const r=new FileReader();
   r.onload=async()=>{
-    try{
-      const j=JSON.parse(r.result);
-      /* two independent schemas can share one file: `rooms` is an as-built
-         survey (from the Revit macro) that becomes the plan itself, `program`
-         is a target/QA list checked against whatever plan is already loaded */
-      if(Array.isArray(j.rooms) && j.rooms.length){
-        showLoading(true);
-        try{ await applyRoomExport(j, RVT_LEVEL_HINT); }
-        catch(err){ showError(T('errParse', esc(err.message))); }
-        showLoading(false);
-      }
-      if(j.program || j.qa || j.meta){
-        if(!(Array.isArray(j.rooms)&&j.rooms.length)) applyProgram(j);
-        else if(j.program) applyProgram(j);
-      }
-      if(j.review && BASE) restoreReview(j.review);
-    }catch(err){ showError(T('errBadJson', esc(err.message))); }
+    try{ await ingestJson(JSON.parse(r.result)); }
+    catch(err){ showError(T('errBadJson', esc(err.message))); }
   };
   r.readAsText(f);
+}
+async function ingestJson(j){
+  /* two independent schemas can share one file: `rooms` is an as-built
+     survey (from the Revit macro) that becomes the plan itself, `program`
+     is a target/QA list checked against whatever plan is already loaded */
+  if(Array.isArray(j.rooms) && j.rooms.length){
+    showLoading(true);
+    try{ await applyRoomExport(j, RVT_LEVEL_HINT); }
+    catch(err){ showError(T('errParse', esc(err.message))); }
+    showLoading(false);
+  }
+  if(j.program || j.qa || j.meta){
+    if(!(Array.isArray(j.rooms)&&j.rooms.length)) applyProgram(j);
+    else if(j.program) applyProgram(j);
+  }
+  if(j.review && BASE) restoreReview(j.review);
+}
+
+/* one click from Revit: the pyRevit Export Test Fit button writes
+   testfit-inbox.js beside this page and opens it with ?inbox — a script tag,
+   because a file:// page may not fetch the JSON from the project folder */
+if(/[?&]inbox=/.test(location.search)){
+  const s=document.createElement('script');
+  s.src='testfit-inbox.js?t='+Date.now();
+  s.onload=async()=>{
+    const ib=window.RDA_INBOX;
+    history.replaceState(null,'',location.pathname);
+    if(!ib || !ib.data) return;
+    RVT_LEVEL_HINT=ib.level||'';
+    $('#rvtLevelHint').value=RVT_LEVEL_HINT;
+    try{ await ingestJson(ib.data); }
+    catch(err){ showError(T('errBadJson', esc(err.message))); }
+  };
+  s.onerror=()=>showError(T('errBadJson', 'testfit-inbox.js'));
+  document.body.appendChild(s);
 }
 function restoreReview(rv){
   if(rv.symbols) STATE.symbols=rv.symbols;
@@ -4630,7 +5520,7 @@ function renderComposite(maxW){
   const x=c.getContext('2d');
   x.fillStyle='#fff'; x.fillRect(0,0,W,H);
   x.imageSmoothingEnabled=true; x.imageSmoothingQuality='high';
-  x.drawImage(BASE,0,0,W,H);
+  drawBase(x,W,H);
   paintMarkup(x,W,H,{layers:{notes:true,syms:true,dims:true,areas:true}, sel:null});
   paintSymbolsOn(x,W,H);
   return c;
@@ -4689,7 +5579,7 @@ function planSheet(dataUrl){
       <span><i style="background:#E38B00"></i>${T('lgWarn')}</span>
       <span><i style="background:#0000FF"></i>${T('lgInfoArea')}</span>
       <span><i style="background:#16A34A"></i>${T('lgOkMove')}</span>
-      <span><i style="background:#D6009A"></i>${T('lgDim')}</span>
+      <span><i style="background:#808080"></i>${T('lgDim')}</span>
       <span><i style="background:#7C3AED"></i>${T('lgEl')}</span>
       <span><i style="background:#0EA5E9"></i>${T('lgIt')}</span>
     </div>`;
@@ -4863,14 +5753,10 @@ function exportHtml(){
   closeExportMenu();
   if(!BASE){ toast(T('tNoPlan')); return; }
   const maxW=2000;
-  let img=BASE;
-  if(BASE.width>maxW){
-    const c=document.createElement('canvas');
-    c.width=maxW; c.height=Math.round(BASE.height*maxW/BASE.width);
-    const x=c.getContext('2d'); x.imageSmoothingQuality='high';
-    x.drawImage(BASE,0,0,c.width,c.height);
-    img=c;
-  }
+  /* the plan as it is shown — hidden layers stay hidden, the fade stays */
+  const img=document.createElement('canvas');
+  img.width=Math.min(maxW,BASE.width); img.height=Math.round(BASE.height*img.width/BASE.width);
+  { const x=img.getContext('2d'); x.imageSmoothingQuality='high'; x.fillStyle='#fff'; x.fillRect(0,0,img.width,img.height); drawBase(x,img.width,img.height); }
   const dataUrl=img.toDataURL('image/png');
 
   const symdefs={};
@@ -4891,6 +5777,7 @@ function exportHtml(){
     notes:STATE.notes.map(n=>({id:n.id,num:n.num,lv:n.lv,shape:n.shape,pts:n.pts,
       title:n.title,sub:n.sub,body:n.body,nx:n.nx,ny:n.ny})),
     symbols:STATE.symbols, dims:STATE.dims, areas:STATE.areas, manual:STATE.manual, symdefs,
+    dimStyle:dimStyleOut(),
     iron:STATE.ironR.map(r=>({n:r.n,level:r.level,src:r.src,msg:r.msg})),
     prog:progRows(),
     progTitle:(P&&P.program&&P.program.length)?T('progProject'):T('progOffice'),
@@ -4939,11 +5826,11 @@ function exportHtml(){
 '<div id="lg">'+
 lgi('#E1504B','lgFail')+lgi('#E38B00','lgWarn')+lgi('#0000FF','lgInfo')+
 lgi('#7C3AED','lgEl')+lgi('#0EA5E9','lgIt')+lgi('#16A34A','lgMove')+
-lgi('#D6009A','lgDim')+'</div>\n</div>\n'+
+lgi('#808080','lgDim')+'</div>\n</div>\n'+
 '<aside id="panel"><div id="tiles"></div><div id="tabs"></div><div id="body"></div></aside>\n'+
 '</div>\n<div id="print"></div>\n<div id="toast"></div>\n'+
 '<script type="application/json" id="stateJSON">'+JSON.stringify(st).replace(/</g,'\\u003c')+'<\/script>\n'+
-'<script>'+js+'<\/script>\n</body>\n</html>';
+'<script>'+dimDraw.toString()+'\n'+js+'<\/script>\n</body>\n</html>';
 
   dl(exportBase()+'-review.html', html, 'text/html');
   toast(T('tExportMade'));
@@ -5198,25 +6085,7 @@ function draw(){
     lines.forEach(function(l,i){ c.fillText(l, cx, cy-th/2+3*k+lh/2+i*lh); });
     c.restore();
   });
-  if(LAY.dims) (S.dims||[]).forEach(function(d){
-    var x1=d.x1*f.w, y1=d.y1*f.h, x2=d.x2*f.w, y2=d.y2*f.h;
-    var col=d.calib?'#0000FF':'#D6009A';
-    c.strokeStyle=col; c.lineWidth=1.6*k;
-    c.beginPath(); c.moveTo(x1,y1); c.lineTo(x2,y2); c.stroke();
-    var a=Math.atan2(y2-y1,x2-x1), t=7*k;
-    [[x1,y1],[x2,y2]].forEach(function(p){
-      c.beginPath();
-      c.moveTo(p[0]-Math.sin(a)*t, p[1]+Math.cos(a)*t);
-      c.lineTo(p[0]+Math.sin(a)*t, p[1]-Math.cos(a)*t); c.stroke();
-    });
-    var lb=d.label||'—', mx=(x1+x2)/2, my=(y1+y2)/2;
-    c.font='600 '+(11*k).toFixed(1)+'px Helvetica,Arial';
-    c.textAlign='center'; c.textBaseline='middle'; c.direction=isHe()?'rtl':'ltr';
-    var tw=c.measureText(lb).width+9*k, th=16*k;
-    c.fillStyle='#fff'; c.fillRect(mx-tw/2,my-th/2,tw,th);
-    c.strokeStyle=col; c.lineWidth=1.2*k; c.strokeRect(mx-tw/2,my-th/2,tw,th);
-    c.fillStyle=col; c.fillText(lb,mx,my+0.5*k);
-  });
+  if(LAY.dims) (S.dims||[]).forEach(function(d){ dimDraw(c,d,f.w,f.h,S.dimStyle,false); });
   if(LAY.notes){
     S.notes.forEach(function(n){
       if(n.shape!=='cloud') return;
@@ -5406,7 +6275,7 @@ function vSym(){
 
   h+='<div class="gt">'+esc(TT.dimsTitle)+' · '+(S.dims||[]).length+'</div>';
   h+=(S.dims||[]).length ? S.dims.map(function(d,i){
-    var col=d.calib?'#0000FF':'#D6009A';
+    var col=d.calib?'#0000FF':'#808080';
     return '<div class="card" style="border-inline-start-color:'+col+'"><div class="ch">'+
       '<span class="num" style="background:'+col+'">↔</span>'+
       '<span class="ct">'+esc(TT.dimWord)+' '+(i+1)+'</span><span class="cs">'+esc(d.label||'—')+'</span></div></div>';
