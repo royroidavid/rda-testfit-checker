@@ -55,6 +55,26 @@
   .hb.lang:hover{background:var(--accent); color:var(--black); border-color:var(--accent);}
   #legend b{font-weight:400;}
 
+  /* ---------- dark screen ----------
+     The tokens swap, so everything built on them follows. The plan itself
+     stays on white paper, the header stays black, and print is never dark. */
+  @media screen{
+    html[data-theme="dark"]{
+      color-scheme:dark;
+      --black:#ECECEC; --white:#161616; --gray:#0E0E0E; --border:#343434; --soft:#7A7A7A;
+    }
+    html[data-theme="dark"] header{background:#000; color:#ECECEC;}
+    html[data-theme="dark"] .hb{color:#ECECEC;}
+    html[data-theme="dark"] #planPick option{background:#000; color:#ECECEC;}
+    html[data-theme="dark"] .hb.on,
+    html[data-theme="dark"] .hb.lang:hover,
+    html[data-theme="dark"] .mini.pri:hover{color:#1B1B1B;}
+    html[data-theme="dark"] .h1 em{color:#1B1B1B;}
+    html[data-theme="dark"] .card.sel{background:rgba(207,255,4,.10);}
+    html[data-theme="dark"] .card .cb[contenteditable="true"]:focus{background:var(--white);}
+    html[data-theme="dark"] #planBox{box-shadow:0 0 0 1px #343434, 0 6px 30px rgba(0,0,0,.6);}
+  }
+
   /* export dropdown */
   .hmenu{position:relative;}
   .hdrop{
@@ -504,6 +524,7 @@
 
 <header>
   <button class="hb lang" id="btnLang" onclick="toggleLang()">EN</button>
+  <button class="hb lang" id="btnTheme" onclick="toggleTheme()">☾</button>
   <div class="brand">RD&amp;A</div>
   <div class="tool">Test Fit Checker</div>
   <div class="fname" id="fname"></div>
@@ -658,7 +679,7 @@ he:{
   /* --- units --- */
   uCm:'ס״מ', uM:'מ׳', uM2:'מ״ר', uPpl:'מק׳', uSeats:'עמדות',
   /* --- header + landing --- */
-  langBtn:'EN', langTitle:'Switch to English',
+  langBtn:'EN', langTitle:'Switch to English', themeDark:'מסך שחור', themeLight:'מסך לבן',
   panel:'פאנל', projectDetails:'פרטי פרויקט', newPlan:'תוכנית חדשה', exportBtn:'ייצוא ▾',
   expPdfT:'PDF — דוח מודפס', expPdfS:'כותרת פרויקט · תכנית · טבלאות · מספור עמודים',
   expXlsT:'Excel — טבלאות', expXlsS:'.xlsx · הערות · פרוגרמה · חדרים · מדידות',
@@ -857,6 +878,10 @@ he:{
   mDensLow:d=>'צפיפות '+d+' מ״ר/עובד — קצה תחתון',
   mDensHigh:d=>'צפיפות '+d+' מ״ר/עובד — מעל הטווח היעיל',
   mDensOk:d=>'צפיפות '+d+' מ״ר/עובד',
+  mOsGroup:(d,n,a,p)=>'Open Space'+(d?' של '+d:'')+(n>1?' — '+n+' חלקים יחד':'')+': '+a+' מ״ר ל-'+p+' עובדים',
+  rvtPlanFit:p=>`התכנית נטענה מרוויט כמו שהיא (PDF וקטורי עם קירות, ריהוט וצבעים), ונתוני החדרים הונחו עליה — התאמה לקירות ${p}%.`,
+  rvtPlanNoFit:'לא הצלחתי להניח את החדרים על ה-PDF של התכנית, ולכן מוצגים קווי החדרים בלבד.',
+  rvtPlanOther:l=>`ה-PDF מרוויט הוא של הקומה ${l} — לקומה הזו מוצגים קווי החדרים בלבד.`,
   mStationsNoArea:n=>n+' עמדות — אין תגית שטח',
   mPerSeatTight:(d,m)=>d+' מ״ר למקום — צפוף (מינ׳ '+m+')',
   mPerSeatHigh:d=>d+' מ״ר למקום — מעל הטווח', mPerSeatOk:d=>d+' מ״ר למקום',
@@ -943,7 +968,7 @@ en:{
   /* --- units --- */
   uCm:'cm', uM:'m', uM2:'m²', uPpl:'ppl', uSeats:'stations',
   /* --- header + landing --- */
-  langBtn:'עב', langTitle:'מעבר לעברית',
+  langBtn:'עב', langTitle:'מעבר לעברית', themeDark:'Black screen', themeLight:'White screen',
   panel:'Panel', projectDetails:'Project details', newPlan:'New plan', exportBtn:'Export ▾',
   expPdfT:'PDF — printed report', expPdfS:'Project title · plan · tables · page numbers',
   expXlsT:'Excel — tables', expXlsS:'.xlsx · notes · program · rooms · measurements',
@@ -1142,6 +1167,10 @@ en:{
   mDensLow:d=>'Density '+d+' m²/person — bottom of the range',
   mDensHigh:d=>'Density '+d+' m²/person — above the efficient range',
   mDensOk:d=>'Density '+d+' m²/person',
+  mOsGroup:(d,n,a,p)=>'Open Space'+(d?' of '+d:'')+(n>1?' — '+n+' parts together':'')+': '+a+' m² for '+p+' people',
+  rvtPlanFit:p=>`The plan came from Revit as it is (vector PDF with walls, furniture and colours), with the room data laid over it — ${p}% fit to the walls.`,
+  rvtPlanNoFit:'Could not lay the rooms over the plan PDF, so only the room outlines are shown.',
+  rvtPlanOther:l=>`The Revit PDF is of level ${l} — this level shows the room outlines only.`,
   mStationsNoArea:n=>n+' stations — no area tag',
   mPerSeatTight:(d,m)=>d+' m² per seat — tight (min '+m+')',
   mPerSeatHigh:d=>d+' m² per seat — above the range', mPerSeatOk:d=>d+' m² per seat',
@@ -1463,7 +1492,7 @@ let PDFPAGE=null, BASE=null, VP1=null, ZOOM=1, TOOL=null, SEL=null, PENDING=null
 const LAYERS = { notes:true, syms:true, dims:true, areas:true };
 const $ = s => document.querySelector(s);
 
-function toast(m){ const t=$('#toast'); t.textContent=m; t.classList.add('on'); clearTimeout(t._x); t._x=setTimeout(()=>t.classList.remove('on'),2200); }
+function toast(m){ const t=$('#toast'); t.textContent=m; t.classList.add('on'); clearTimeout(t._x); t._x=setTimeout(()=>t.classList.remove('on'),Math.max(2200,String(m).length*60)); }
 function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
 
 /* =====================================================================
@@ -1578,12 +1607,16 @@ async function parsePdf(data, fileName){
    ===================================================================== */
 function classify(name, tag){
   if(tag&&tag.isDept) return 'workstations';
+  /* a room named "28 ppl" is a department's open-space desks */
+  if(tag&&tag.os) return 'openspace';
   /* a programme code typed into Revit's Number says what the room is */
   if(tag&&tag.codeType&&hasSchedule()) return tag.codeType;
   /* the Revit import keeps the bare room name apart from its number, so a
      code like FL01-IT-01 can never be mistaken for words in the name */
   const n=((tag&&tag.rname!=null&&hasSchedule())?tag.rname:(name||'')).toLowerCase();
-  if(!n) return 'unknown';
+  /* a tag with a headcount and no name is open-space desks too */
+  if(!n) return (tag&&tag.ppl)?'openspace':'unknown';
+  if(/^\d+\s*ppl\b/.test(n)) return 'openspace';
   const he=classifyHe(n);
   if(he) return he;
   if(/open ?space/.test(n)) return 'openspace';
@@ -1887,8 +1920,10 @@ function checkRoomStd(tag){
     return out;
   }
   if(type==='openspace'){
-    if(tag.area&&tag.ppl){
-      const d=tag.area/tag.ppl;
+    const g=tag.os, area=g?g.area:tag.area, ppl=g?g.ppl:tag.ppl;
+    if(g) info(T('mOsGroup', g.dept, g.n, g.area.toFixed(1), g.ppl));
+    if(area&&ppl){
+      const d=area/ppl;
       if(d<R.densityMin) fail(T('mDensTight',d.toFixed(2),R.densityMin));
       else if(d<R.densityWarnLow) warn(T('mDensLow',d.toFixed(2)));
       else if(d>R.densityWarnHigh) warn(T('mDensHigh',d.toFixed(2)));
@@ -2044,7 +2079,7 @@ function floorChecks(parse, rooms){
       m:T('fAreaCoverMsg',noArea,areaRelevant.length,pct) });
   }
   const capRelevant=rooms.filter(r=>['meeting','boardroom','openspace'].includes(r.check.type));
-  const noCap=capRelevant.filter(r=>r.tag.ppl==null).length;
+  const noCap=capRelevant.filter(r=>r.tag.ppl==null&&!r.tag.os).length;
   if(noCap) out.push({ level:'warn', n:T('fCapCover'), m:T('fCapCoverMsg',noCap,capRelevant.length) });
   const dq=rooms.length?Math.round(100*rooms.filter(r=>r.tag.name).length/rooms.length):0;
   out.push({level:dq>=95?'ok':dq>=80?'warn':'fail', n:T('fDataQ'), m:T('fDataQMsg',dq)});
@@ -3657,7 +3692,8 @@ async function setPdfLayer(id,on){
   if(P.ocg.every(l=>l.on)){ BASEV.ocgCanvas=null; }
   else {
     const c=document.createElement('canvas'); c.width=BASE.width; c.height=BASE.height;
-    const vp=P.page.getViewport({scale:BASE.width/P.vp1.width});
+    const sc=BASE.width/P.vp1.width;
+    const vp=P.page.getViewport({scale:sc, offsetX:-(P.vp1.offX||0)*sc, offsetY:-(P.vp1.offY||0)*sc});
     await P.page.render({canvasContext:c.getContext('2d'), viewport:vp, intent:'print',
       optionalContentConfigPromise:Promise.resolve(P.ocgCfg)}).promise;
     BASEV.ocgCanvas=c; BASEV.ocgFor=BASE; BASEV.ocgKey=P.ocg.map(l=>l.on?1:0).join('');
@@ -4241,7 +4277,7 @@ function renderRoomsBase(rooms){
     c.beginPath();
     pts.forEach((p,i)=> i?c.lineTo(p.x,p.y):c.moveTo(p.x,p.y));
     c.closePath();
-    c.fillStyle='#F4F4F4'; c.fill();
+    c.fillStyle=/^#[0-9a-f]{6}$/i.test(r.color||'')?r.color:'#F4F4F4'; c.fill();
     c.strokeStyle='#1B1B1B'; c.lineWidth=1.4; c.stroke();
     holes.forEach(hl=>{
       const hp=hl.map(toPx);
@@ -4268,9 +4304,46 @@ function renderRoomsBase(rooms){
 async function applyRoomExport(exp, levelHint){
   const picked=pickPrimaryLevel(exp, levelHint);
   if(!picked.rooms.length) throw new Error(isHe()?'לא נמצאו חדרים בקובץ':'No rooms found in the file');
-  const built=renderRoomsBase(picked.rooms);
 
-  const tags=picked.rooms.map(r=>{
+  /* everything in the view's own axes, so a rotated plan lines up with its PDF */
+  const plan=(exp.plan&&typeof exp.plan==='object')?exp.plan:null;
+  const proj=viewProj(plan), pt=p=>(Array.isArray(p)&&Number.isFinite(p[0])&&Number.isFinite(p[1]))?proj(p):p;
+  const rooms=picked.rooms.map(r=>Object.assign({}, r, {
+    boundary:(Array.isArray(r.boundary)?r.boundary:[]).map(l=>Array.isArray(l)?l.map(pt):l),
+    loc:Array.isArray(r.loc)?pt(r.loc):null
+  }));
+
+  /* the plan exactly as Revit draws it — walls, doors, furniture, tags,
+     colour fill — with the room data laid over it */
+  let built=null, P=null, fit=null, planNote='';
+  if(plan && plan.pdf64){
+    if(plan.level && plan.level!==picked.level) planNote=T('rvtPlanOther', plan.level);
+    else {
+      try{
+        P=await parsePdf(b64bytes(plan.pdf64), plan.pdfFile||'plan.pdf');
+        await renderBase(P.page);
+        await cropSheet(P);
+        fit=alignPlan(rooms, Object.assign({}, plan, {
+          center:Array.isArray(plan.center)?pt(plan.center):null,
+          tags:(Array.isArray(plan.tags)?plan.tags:[]).filter(t=>t&&Number.isFinite(t.x)&&Number.isFinite(t.y))
+            .map(t=>({room:t.room, p:proj([t.x,t.y])}))
+        }), P);
+      }catch(e){ console.warn(e); fit=null; }
+      if(!fit || fit.hit<0.35){ planNote=T('rvtPlanNoFit'); P=null; fit=null; }
+      else planNote=T('rvtPlanFit', Math.round(fit.hit*100));
+    }
+  }
+  if(fit){
+    const W=BASE.width, H=BASE.height;
+    built={ canvas:BASE, w:W, h:H, scale:fit.A, margin:0, minX:-fit.bx/fit.A, minY:(fit.by-H)/fit.A };
+    rooms.forEach(r=>{
+      const lp=outerLoop(r); if(!lp.outer) return;
+      const c=polyCentroid(lp.outer);
+      r._centroidPx={ x:(fit.A*c.x+fit.bx)/W, y:(fit.by-fit.A*c.y)/H };
+    });
+  } else built=renderRoomsBase(rooms);
+
+  const tags=rooms.map(r=>{
     const area=numOr(r.areaM2,null);
     /* Revit Number may hold a programme code (FL01-MR-02) — it is kept on
        its own, and also tells classify() the room type outright */
@@ -4290,8 +4363,11 @@ async function applyRoomExport(exp, levelHint){
       pdfX:0, pdfY:0
     };
   });
-  const allText=picked.rooms.flatMap(r=>[r.name,r.department,r.comments].filter(v=>typeof v==='string'&&v).map(s=>s.toLowerCase()));
-  const parse={ tags, allText, fileName:(exp.meta&&exp.meta.fileName)||'revit-export', page:null, vp1:null,
+  groupOpenSpaces(tags);
+  const allText=rooms.flatMap(r=>[r.name,r.department,r.comments].filter(v=>typeof v==='string'&&v).map(s=>s.toLowerCase()))
+    .concat(P?P.allText:[]);
+  const parse={ tags, allText, fileName:(exp.meta&&exp.meta.fileName)||'revit-export',
+    page:P?P.page:null, vp1:P?P.vp1:null, pdf:P?P.pdf:null, nums:P?P.nums:null, txtH:P?P.txtH:null,
     geo:{ w:built.w, h:built.h, scale:built.scale, margin:built.margin, minX:built.minX, minY:built.minY } };
 
   if(exp.meta){
@@ -4312,7 +4388,194 @@ async function applyRoomExport(exp, levelHint){
     ? `יובאו ${picked.rooms.length} חדרים מרוויט (${picked.level||'—'}) — קנה המידה מדויק, אין צורך בכיול.`
     : `Imported ${picked.rooms.length} rooms from Revit (${picked.level||'—'}) — the scale is exact, no calibration needed.`;
   const hintNote = levelHint ? ' '+(picked.hintMatched ? T('rvtLevelMatched',picked.level) : T('rvtLevelNoMatch',levelHint)) : '';
-  toast(base+hintNote);
+  toast(base+hintNote+(planNote?' '+planNote:''));
+}
+
+/* Revit's room "28 ppl" is a department's open-space desks. One open space
+   is often several Revit rooms with the same department and headcount; the
+   headcount belongs to all of them together, so it is counted once and the
+   density is taken over their combined area. */
+function groupOpenSpaces(tags){
+  const G={};
+  tags.forEach(t=>{
+    const m=PPL_RE.exec((t.rname||'').trim()); if(!m) return;
+    t._p=parseInt(m[1])+(m[2]?parseInt(m[2]):0);
+    const k=(t.department||'').toLowerCase()+'|'+t._p;
+    (G[k]=G[k]||[]).push(t);
+  });
+  Object.values(G).forEach(g=>{
+    const area=+g.reduce((s,t)=>s+(t.area||0),0).toFixed(2);
+    g.forEach((t,i)=>{
+      t.os={ dept:t.department||'', ppl:t._p, area, n:g.length, i };
+      t.ppl=i?null:t._p;
+      delete t._p;
+      if(t.department) t.name=t.department+' · '+t.name;
+    });
+  });
+}
+
+/* A view printed from Revit sits in the middle of a standard sheet. Crop the
+   sheet to the drawing and render that at full resolution. P.vp1 becomes the
+   cropped page, so every page-to-BASE conversion keeps working. */
+async function cropSheet(P){
+  const I=inkData(), W=I.w, H=I.h, d=I.d;
+  let x0=W, y0=H, x1=-1, y1=-1;
+  for(let y=0;y<H;y++) for(let x=0;x<W;x++){
+    const p=(y*W+x)*4;
+    if(d[p+3]>40 && 0.299*d[p]+0.587*d[p+1]+0.114*d[p+2]<245){
+      if(x<x0)x0=x; if(x>x1)x1=x; if(y<y0)y0=y; if(y>y1)y1=y; }
+  }
+  if(x1<0) return;
+  const full=P.vp1, k=full.width/W, pad=0.02*Math.max(x1-x0, y1-y0);
+  const a0=Math.max(0,(x0-pad)*k), b0=Math.max(0,(y0-pad)*k);
+  const a1=Math.min(full.width,(x1+1+pad)*k), b1=Math.min(full.height,(y1+1+pad)*k);
+  const bw=a1-a0, bh=b1-b0;
+  if(bw*bh>0.8*full.width*full.height) return;
+  const s=Math.min(4, 2400/Math.max(bw,bh));
+  const vp=P.page.getViewport({scale:s, offsetX:-a0*s, offsetY:-b0*s});
+  const c=document.createElement('canvas'); c.width=Math.round(bw*s); c.height=Math.round(bh*s);
+  await P.page.render({canvasContext:c.getContext('2d'), viewport:vp, intent:'print'}).promise;
+  BASE=c;
+  P.vp1={ width:bw, height:bh, offX:a0, offY:b0, fullW:full.width, fullH:full.height,
+    convertToViewportPoint:(x,y)=>{ const q=full.convertToViewportPoint(x,y); return [q[0]-a0, q[1]-b0]; } };
+  P.tags.forEach(t=>{ const q=P.vp1.convertToViewportPoint(t.pdfX,t.pdfY); t.nx=q[0]/bw; t.ny=q[1]/bh; });
+}
+
+function b64bytes(s){
+  const bin=atob(s), u=new Uint8Array(bin.length);
+  for(let i=0;i<bin.length;i++) u[i]=bin.charCodeAt(i);
+  return u;
+}
+/* model XY -> the view's own right/up axes */
+function viewProj(plan){
+  const R=plan&&Array.isArray(plan.right)?plan.right:null, U=plan&&Array.isArray(plan.up)?plan.up:null;
+  if(!R||!U||![R[0],R[1],U[0],U[1]].every(Number.isFinite)) return p=>[p[0],p[1]];
+  return p=>[p[0]*R[0]+p[1]*R[1], p[0]*U[0]+p[1]*U[1]];
+}
+/* Distance from every BASE pixel to the nearest wall ink (dark and grey,
+   so a coloured room fill is not mistaken for a wall), capped at 255. */
+function wallDist(){
+  const I=inkData(), W=I.w, H=I.h, d=I.d, D=new Uint8Array(W*H);
+  for(let i=0,p=0;i<W*H;i++,p+=4){
+    const r=d[p], g=d[p+1], b=d[p+2];
+    D[i]=(d[p+3]>40 && 0.299*r+0.587*g+0.114*b<150 && Math.max(r,g,b)-Math.min(r,g,b)<48)?0:255;
+  }
+  for(let y=0;y<H;y++) for(let x=0;x<W;x++){
+    const i=y*W+x; let v=D[i]; if(!v) continue;
+    if(x>0 && D[i-1]+1<v) v=D[i-1]+1;
+    if(y>0){ const j=i-W;
+      if(D[j]+1<v) v=D[j]+1;
+      if(x>0 && D[j-1]+1<v) v=D[j-1]+1;
+      if(x<W-1 && D[j+1]+1<v) v=D[j+1]+1; }
+    D[i]=v;
+  }
+  for(let y=H-1;y>=0;y--) for(let x=W-1;x>=0;x--){
+    const i=y*W+x; let v=D[i]; if(!v) continue;
+    if(x<W-1 && D[i+1]+1<v) v=D[i+1]+1;
+    if(y<H-1){ const j=i+W;
+      if(D[j]+1<v) v=D[j]+1;
+      if(x<W-1 && D[j+1]+1<v) v=D[j+1]+1;
+      if(x>0 && D[j-1]+1<v) v=D[j-1]+1; }
+    D[i]=v;
+  }
+  return D;
+}
+/* Where the Revit rooms sit on the PDF. The scale is known outright (the
+   view's scale, printed at 100%), so only the offset is searched: first
+   guesses from the room tags the PDF shows and from the crop centre, then
+   the offset where the room boundaries (wall finish faces) run along the
+   wall lines. Returns BASE px = A*x+bx, A*-y+by and the share of boundary
+   samples that land on a wall. */
+function alignPlan(rooms, plan, P){
+  const vs=numN(plan.viewScale), zoom=numN(plan.zoom);
+  if(!vs || !zoom || !BASE || !P.vp1) return null;
+  const W=BASE.width, H=BASE.height, s=W/P.vp1.width;
+  const A=72/0.0254/vs*zoom/100*s;
+  const rx=[], ry=[];
+  let x0=Infinity, x1=-Infinity, y0=Infinity, y1=-Infinity;
+  rooms.forEach(r=>{ (r.boundary||[]).forEach(loop=>{
+    if(!Array.isArray(loop)) return;
+    const q=loop.filter(p=>Array.isArray(p)&&Number.isFinite(p[0])&&Number.isFinite(p[1]));
+    for(let i=0;i<q.length;i++){
+      const a=q[i], b=q[(i+1)%q.length];
+      const ax=A*a[0], ay=-A*a[1], bx=A*b[0], by=-A*b[1];
+      const n=Math.max(1, Math.round(Math.hypot(bx-ax, by-ay)/3));
+      for(let k=0;k<n;k++){ rx.push(ax+(bx-ax)*k/n); ry.push(ay+(by-ay)*k/n); }
+      x0=Math.min(x0,a[0]); x1=Math.max(x1,a[0]); y0=Math.min(y0,a[1]); y1=Math.max(y1,a[1]);
+    }
+  }); });
+  if(rx.length<20) return null;
+  const D=wallDist(), CAP=12;
+  const score=(ox,oy,step)=>{
+    let sum=0, n=0;
+    for(let i=0;i<rx.length;i+=step){
+      const x=Math.floor(rx[i]+ox), y=Math.floor(ry[i]+oy);
+      sum+=(x<0||y<0||x>=W||y>=H)?CAP:Math.min(CAP, D[y*W+x]); n++;
+    }
+    return sum/n;
+  };
+  const sub=Math.max(1, Math.floor(rx.length/1500));
+  const search=g=>{
+    let b={s:Infinity, x:g.x, y:g.y};
+    for(let dy=-g.R;dy<=g.R;dy+=g.st) for(let dx=-g.R;dx<=g.R;dx+=g.st){
+      const v=score(g.x+dx, g.y+dy, sub); if(v<b.s) b={s:v, x:g.x+dx, y:g.y+dy};
+    }
+    let f={s:Infinity, x:b.x, y:b.y};
+    for(let dy=-g.st;dy<=g.st;dy++) for(let dx=-g.st;dx<=g.st;dx++){
+      const v=score(b.x+dx, b.y+dy, 1); if(v<f.s) f={s:v, x:b.x+dx, y:b.y+dy};
+    }
+    return f;
+  };
+
+  const guesses=[], wide=Math.round(Math.max(W,H)*0.08);
+  /* a room tag on the sheet with this room's area or name votes for an offset */
+  const anchor={};
+  (plan.tags||[]).forEach(t=>{ anchor[t.room]=t.p; });
+  const votes=[];
+  rooms.forEach(r=>{
+    const a=anchor[r.id]||r.loc; if(!a) return;
+    const ar=numN(r.areaM2), nm=roomName(r).toLowerCase();
+    (P.tags||[]).forEach(t=>{
+      const byArea=ar!=null && t.area!=null && Math.abs(t.area-ar)<=0.051;
+      const byName=nm.length>=3 && t.name && t.name.toLowerCase().includes(nm);
+      if(byArea||byName) votes.push([t.nx*W-A*a[0], t.ny*H+A*a[1], byArea&&byName?2:1]);
+    });
+  });
+  if(votes.length){
+    const bins={}, B=14;
+    votes.forEach(v=>{ const k=Math.round(v[0]/B)+','+Math.round(v[1]/B); bins[k]=(bins[k]||0)+v[2]; });
+    const top=Object.keys(bins).sort((p,q)=>bins[q]-bins[p])[0].split(',').map(Number);
+    const near=votes.filter(v=>Math.abs(v[0]/B-top[0])<=1.5 && Math.abs(v[1]/B-top[1])<=1.5);
+    const wsum=near.reduce((t,v)=>t+v[2],0);
+    guesses.push({ x:near.reduce((t,v)=>t+v[0]*v[2],0)/wsum, y:near.reduce((t,v)=>t+v[1]*v[2],0)/wsum, R:48, st:3 });
+  }
+  /* Revit centres the view on the paper; the sheet may be cropped to the drawing */
+  const V=P.vp1, pcx=((V.fullW||V.width)/2-(V.offX||0))*s, pcy=((V.fullH||V.height)/2-(V.offY||0))*s;
+  if(plan.center) guesses.push({ x:pcx-A*plan.center[0], y:pcy+A*plan.center[1], R:wide, st:4 });
+  guesses.push({ x:W/2-A*(x0+x1)/2, y:H/2+A*(y0+y1)/2, R:wide, st:4 });
+
+  let best=null;
+  guesses.forEach(g=>{ const r=search(g); if(!best||r.s<best.s) best=r; });
+  /* sub-pixel: the same score on a smooth (bilinear) distance, in quarter pixels */
+  const Df=(x,y)=>{
+    x-=0.5; y-=0.5;                         /* pixel i holds the distance at its centre, i+0.5 */
+    if(x<0||y<0||x>=W-1||y>=H-1) return CAP;
+    const xi=Math.floor(x), yi=Math.floor(y), fx=x-xi, fy=y-yi, i=yi*W+xi;
+    const v=(D[i]*(1-fx)+D[i+1]*fx)*(1-fy)+(D[i+W]*(1-fx)+D[i+W+1]*fx)*fy;
+    return Math.min(CAP, v);
+  };
+  let fine={s:Infinity, x:best.x, y:best.y};
+  for(let dy=-1;dy<=1.001;dy+=0.25) for(let dx=-1;dx<=1.001;dx+=0.25){
+    let sum=0; for(let i=0;i<rx.length;i++) sum+=Df(rx[i]+best.x+dx, ry[i]+best.y+dy);
+    if(sum<fine.s) fine={s:sum, x:best.x+dx, y:best.y+dy};
+  }
+  best.x=fine.x; best.y=fine.y;
+  let hit=0;
+  for(let i=0;i<rx.length;i++){
+    const x=Math.round(rx[i]+best.x), y=Math.round(ry[i]+best.y);
+    if(x>=0&&y>=0&&x<W&&y<H&&D[y*W+x]<=2) hit++;
+  }
+  return { A, bx:best.x, by:best.y, hit:hit/rx.length, mean:best.s };
 }
 
 /* =====================================================================
@@ -4523,7 +4786,11 @@ function applyStatic(){
     const hd=lb.parentNode;
     if(isHe()) hd.appendChild(lb);
     else hd.insertBefore(lb, hd.firstChild);
+    /* the screen-colour switch sits right beside it, on the inner side */
+    const tb=$('#btnTheme');
+    if(tb) hd.insertBefore(tb, isHe()?lb:lb.nextSibling);
   }
+  applyTheme();
   document.title = 'RDA — Test Fit Checker';
   fillNormSel();
 }
@@ -4547,6 +4814,19 @@ function setLang(l){
   }
 }
 function toggleLang(){ setLang(isHe()?'en':'he'); }
+
+/* screen colour — white or black, remembered like the language */
+let THEME=(()=>{ try{ return localStorage.getItem('rda-theme')==='dark'?'dark':'light'; }catch(e){ return 'light'; } })();
+function applyTheme(){
+  document.documentElement.dataset.theme=THEME;
+  const tb=$('#btnTheme');
+  if(tb){ tb.textContent=THEME==='dark'?'☀':'☾'; tb.title=T(THEME==='dark'?'themeLight':'themeDark'); }
+}
+function toggleTheme(){
+  THEME=THEME==='dark'?'light':'dark';
+  try{ localStorage.setItem('rda-theme', THEME); }catch(e){}
+  applyTheme();
+}
 /* hand-made notes keep the user's own words, but their generated labels follow */
 function retitleManualNotes(){
   STATE.notes.forEach(n=>{
